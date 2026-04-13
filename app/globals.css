@@ -250,3 +250,34 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); 
   .dist-banner { flex-direction: column; }
   .products-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
 }
+
+/* Category pills */
+.cat-pill {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 18px;
+  display: flex; align-items: center; gap: 8px;
+  white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
+  color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.03em;
+}
+.cat-pill:hover {
+  background: var(--red); color: white;
+  border-color: var(--red);
+}
+
+/* Search input dark variant */
+.search-dark {
+  background: rgba(255,255,255,0.1) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+.search-dark::placeholder { color: rgba(255,255,255,0.4) !important; }
+.search-dark:focus { border-color: var(--red) !important; }
+
+/* Top promo bar */
+.promo-bar {
+  background: var(--red); color: white;
+  text-align: center; padding: 7px; font-size: 12px;
+  font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+}
