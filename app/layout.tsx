@@ -5,8 +5,8 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'BuyMuscle - Suplementación Deportiva',
-  description: 'Tienda de suplementación deportiva en Sevilla. Proteínas, creatinas, pre-entrenos y más.',
+  title: 'BUYMUSCLE | Tienda Online de Suplementación Deportiva',
+  description: 'Tienda de suplementación deportiva en Sevilla. Proteínas, creatinas, pre-entrenos y más de 300 productos.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
