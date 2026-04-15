@@ -1,11 +1,9 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase, Product } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import Link from 'next/link'
-
-type Category = { id:number; name:string }
 
 const CAT_TREE = [
   { label:'NUTRICIÓN DEPORTIVA', cats:['Proteínas','Proteína Whey','Proteína Isolatada','Proteína Vegetal','Caseínas','Ganadores de Peso','Barritas Protéicas','Bebidas Protéicas','Snacks Protéicos','Creatinas Monohidratos','Pre-entrenos','Recuperadores','BCAA','Aminoácidos','Glutaminas','Beta Alanina','L-Carnitina','Termogénicos','Carbohidratos','Avenas','Crema de Arroz','Geles Energéticos'] },
@@ -17,7 +15,7 @@ const CAT_TREE = [
   { label:'OTROS', cats:['Veganos','Packs','Bebidas','Bebidas Energéticas','Barritas Energéticas','Hidratos de Carbono','Pre-Pedidos','Ofertas','Novedades'] },
 ]
 
-export default function TiendaPage() {
+function TiendaContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
@@ -56,7 +54,6 @@ export default function TiendaPage() {
 
           {/* SIDEBAR */}
           <aside style={{background:'var(--surface)', border:'1px solid var(--border)', position:'sticky', top:'120px'}}>
-            {/* Search */}
             <div style={{padding:'0.75rem', borderBottom:'1px solid var(--border)'}}>
               <form onSubmit={e => { e.preventDefault(); const val=(e.currentTarget.querySelector('input') as HTMLInputElement).value; router.push(val?`/tienda?q=${encodeURIComponent(val)}`:'/tienda') }}>
                 <div style={{display:'flex', gap:4}}>
@@ -65,13 +62,10 @@ export default function TiendaPage() {
                 </div>
               </form>
             </div>
-
-            {/* Categorías */}
             {CAT_TREE.map((group, gi) => (
               <div key={gi} style={{borderBottom:'1px solid var(--border)'}}>
                 <button onClick={() => toggleGroup(gi)} style={{width:'100%', padding:'10px 12px', display:'flex', justifyContent:'space-between', alignItems:'center', fontFamily:'var(--font-body)', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', color:'var(--text)', background:'none', cursor:'pointer', borderBottom: openGroups.has(gi)?'1px solid var(--border)':'none'}}>
-                  {group.label}
-                  <span style={{fontSize:10, color:'var(--muted)'}}>{openGroups.has(gi)?'▲':'▼'}</span>
+                  {group.label}<span style={{fontSize:10, color:'var(--muted)'}}>{openGroups.has(gi)?'▲':'▼'}</span>
                 </button>
                 {openGroups.has(gi) && (
                   <div>
@@ -85,18 +79,14 @@ export default function TiendaPage() {
                 )}
               </div>
             ))}
-            <Link href="/tienda" style={{display:'block', padding:'10px 12px', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em', color:'var(--red)', textAlign:'center'}}>
-              Ver todos los productos
-            </Link>
+            <Link href="/tienda" style={{display:'block', padding:'10px 12px', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em', color:'var(--red)', textAlign:'center'}}>Ver todos los productos</Link>
           </aside>
 
           {/* MAIN */}
           <div>
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem', flexWrap:'wrap', gap:8}}>
               <div>
-                <h1 style={{fontSize:22, fontWeight:800, textTransform:'uppercase', margin:0}}>
-                  {cat || (q ? `Resultados: "${q}"` : 'Todo el catálogo')}
-                </h1>
+                <h1 style={{fontSize:22, fontWeight:800, textTransform:'uppercase', margin:0}}>{cat || (q ? `Resultados: "${q}"` : 'Todo el catálogo')}</h1>
                 <p style={{fontSize:13, color:'var(--muted)', margin:'2px 0 0'}}>{loading?'Cargando...':`${total} productos`}</p>
               </div>
               {(cat||q) && <Link href="/tienda" style={{fontSize:12, color:'var(--muted)'}}>✕ Quitar filtro</Link>}
@@ -111,19 +101,15 @@ export default function TiendaPage() {
             )}
 
             {loading ? (
-              <div className="products-grid">
-                {Array.from({length:12}).map((_,i) => <div key={i} className="skeleton" style={{height:280}}/>)}
-              </div>
+              <div className="products-grid">{Array.from({length:12}).map((_,i) => <div key={i} className="skeleton" style={{height:280}}/>)}</div>
             ) : products.length === 0 ? (
               <div style={{textAlign:'center', padding:'4rem 2rem', color:'var(--muted)'}}>
                 <div style={{fontSize:48, marginBottom:'1rem'}}>🔍</div>
                 <p style={{fontWeight:700, fontSize:18}}>No se encontraron productos</p>
-                <p style={{marginTop:8}}>Prueba con otros filtros o <Link href="/tienda" style={{color:'var(--red)'}}>ver todo</Link></p>
+                <p style={{marginTop:8}}>Prueba otros filtros o <Link href="/tienda" style={{color:'var(--red)'}}>ver todo</Link></p>
               </div>
             ) : (
-              <div className="products-grid">
-                {products.map(p => <ProductCard key={p.id} product={p}/>)}
-              </div>
+              <div className="products-grid">{products.map(p => <ProductCard key={p.id} product={p}/>)}</div>
             )}
 
             {totalPages > 1 && (
@@ -142,4 +128,12 @@ export default function TiendaPage() {
       </div>
     </div>
   )
-        }
+}
+
+export default function TiendaPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight:'100vh', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center'}}><div style={{fontSize:14, color:'var(--muted)'}}>Cargando tienda...</div></div>}>
+      <TiendaContent />
+    </Suspense>
+  )
+          }
