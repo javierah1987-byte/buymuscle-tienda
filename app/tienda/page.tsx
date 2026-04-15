@@ -1,11 +1,10 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase, Product } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import Link from 'next/link'
 
-type Product = { id:number; name:string; price_incl_tax:number; price_excl_tax:number; stock:number; image_url:string|null; categories?:{name:string} }
 type Category = { id:number; name:string }
 
 const CAT_TREE = [
@@ -24,17 +23,12 @@ export default function TiendaPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [categories, setCategories] = useState<Category[]>([])
   const [openGroups, setOpenGroups] = useState<Set<number>>(new Set([0,1,2]))
 
   const cat = searchParams.get('cat') || ''
   const q = searchParams.get('q') || ''
   const page = parseInt(searchParams.get('page') || '1')
   const PER_PAGE = 24
-
-  useEffect(() => {
-    supabase.from('categories').select('id,name').order('name').then(({data}) => setCategories(data||[]))
-  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -45,7 +39,7 @@ export default function TiendaPage() {
     }
     if (q) query = query.ilike('name', `%${q}%`)
     const {data, count} = await query.order('id', {ascending:false}).range((page-1)*PER_PAGE, page*PER_PAGE-1)
-    setProducts(data||[])
+    setProducts((data||[]) as Product[])
     setTotal(count||0)
     setLoading(false)
   }, [cat, q, page])
@@ -53,7 +47,6 @@ export default function TiendaPage() {
   useEffect(() => { load() }, [load])
 
   const toggleGroup = (i:number) => setOpenGroups(prev => { const n=new Set(prev); n.has(i)?n.delete(i):n.add(i); return n })
-
   const totalPages = Math.ceil(total / PER_PAGE)
 
   return (
@@ -92,8 +85,6 @@ export default function TiendaPage() {
                 )}
               </div>
             ))}
-
-            {/* Ver todo */}
             <Link href="/tienda" style={{display:'block', padding:'10px 12px', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em', color:'var(--red)', textAlign:'center'}}>
               Ver todos los productos
             </Link>
@@ -101,7 +92,6 @@ export default function TiendaPage() {
 
           {/* MAIN */}
           <div>
-            {/* Header */}
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem', flexWrap:'wrap', gap:8}}>
               <div>
                 <h1 style={{fontSize:22, fontWeight:800, textTransform:'uppercase', margin:0}}>
@@ -109,14 +99,9 @@ export default function TiendaPage() {
                 </h1>
                 <p style={{fontSize:13, color:'var(--muted)', margin:'2px 0 0'}}>{loading?'Cargando...':`${total} productos`}</p>
               </div>
-              {cat && (
-                <Link href="/tienda" style={{fontSize:12, color:'var(--muted)', display:'flex', alignItems:'center', gap:4}}>
-                  ✕ Quitar filtro
-                </Link>
-              )}
+              {(cat||q) && <Link href="/tienda" style={{fontSize:12, color:'var(--muted)'}}>✕ Quitar filtro</Link>}
             </div>
 
-            {/* Pills de subcategorías relacionadas */}
             {!cat && !q && (
               <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap', marginBottom:'1rem'}}>
                 {['Proteínas','Creatinas Monohidratos','Pre-entrenos','BCAA','Vitaminas','Quemadores','Snacks Protéicos','Veganos','StreetFlavour'].map(c => (
@@ -125,7 +110,6 @@ export default function TiendaPage() {
               </div>
             )}
 
-            {/* Grid */}
             {loading ? (
               <div className="products-grid">
                 {Array.from({length:12}).map((_,i) => <div key={i} className="skeleton" style={{height:280}}/>)}
@@ -134,7 +118,7 @@ export default function TiendaPage() {
               <div style={{textAlign:'center', padding:'4rem 2rem', color:'var(--muted)'}}>
                 <div style={{fontSize:48, marginBottom:'1rem'}}>🔍</div>
                 <p style={{fontWeight:700, fontSize:18}}>No se encontraron productos</p>
-                <p style={{marginTop:8}}>Prueba con otros filtros o <Link href="/tienda" style={{color:'var(--red)'}}>ver todo el catálogo</Link></p>
+                <p style={{marginTop:8}}>Prueba con otros filtros o <Link href="/tienda" style={{color:'var(--red)'}}>ver todo</Link></p>
               </div>
             ) : (
               <div className="products-grid">
@@ -142,25 +126,15 @@ export default function TiendaPage() {
               </div>
             )}
 
-            {/* Paginación */}
             {totalPages > 1 && (
               <div style={{display:'flex', justifyContent:'center', gap:'0.5rem', marginTop:'2rem', flexWrap:'wrap'}}>
-                {page > 1 && (
-                  <Link href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${page-1}`} className="btn-outline" style={{padding:'8px 16px', fontSize:13}}>← Anterior</Link>
-                )}
+                {page > 1 && <Link href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${page-1}`} className="btn-outline" style={{padding:'8px 16px', fontSize:13}}>← Anterior</Link>}
                 {Array.from({length: Math.min(totalPages, 7)}, (_,i) => {
                   const p2 = page <= 4 ? i+1 : page > totalPages-3 ? totalPages-6+i : page-3+i
                   if(p2 < 1 || p2 > totalPages) return null
-                  return (
-                    <Link key={p2} href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${p2}`}
-                      style={{padding:'8px 14px', fontSize:13, fontWeight:p2===page?700:400, background:p2===page?'var(--red)':'var(--surface)', color:p2===page?'white':'var(--text)', border:'1px solid var(--border)'}}>
-                      {p2}
-                    </Link>
-                  )
+                  return <Link key={p2} href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${p2}`} style={{padding:'8px 14px', fontSize:13, fontWeight:p2===page?700:400, background:p2===page?'var(--red)':'var(--surface)', color:p2===page?'white':'var(--text)', border:'1px solid var(--border)'}}>{p2}</Link>
                 })}
-                {page < totalPages && (
-                  <Link href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${page+1}`} className="btn-outline" style={{padding:'8px 16px', fontSize:13}}>Siguiente →</Link>
-                )}
+                {page < totalPages && <Link href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${page+1}`} className="btn-outline" style={{padding:'8px 16px', fontSize:13}}>Siguiente →</Link>}
               </div>
             )}
           </div>
@@ -168,4 +142,4 @@ export default function TiendaPage() {
       </div>
     </div>
   )
-}
+        }
