@@ -2,15 +2,24 @@
 import Link from 'next/link'
 import { Product } from '@/lib/supabase'
 import { useCart } from '@/lib/cart'
+import { useAuth } from '@/lib/auth'
 import { useState } from 'react'
 
-export default function ProductCard({ product, discountPct = 0 }: { product: Product; discountPct?: number }) {
+const LEVEL_COLORS: Record<string, string> = {
+  Bronze: '#cd7f32', Silver: '#a8a9ad', Gold: '#ffd700'
+}
+
+export default function ProductCard({ product, discountPct: forcedDiscount }: { product: Product; discountPct?: number }) {
   const { add } = useCart()
+  const { discountPct: authDiscount, levelName } = useAuth()
   const [added, setAdded] = useState(false)
 
+  // Usar descuento forzado (si viene del contexto) o el del auth
+  const discountPct = forcedDiscount !== undefined ? forcedDiscount : authDiscount
   const price = discountPct > 0
     ? product.price_incl_tax * (1 - discountPct / 100)
     : product.price_incl_tax
+  const priceColor = discountPct > 0 && levelName ? LEVEL_COLORS[levelName] : 'var(--red)'
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -28,13 +37,11 @@ export default function ProductCard({ product, discountPct = 0 }: { product: Pro
           loading="lazy"
           onError={e => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/f5f5f5/ccc?text=BM' }}
         />
-        {/* Badges */}
-        <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{position:'absolute',top:8,left:8,display:'flex',flexDirection:'column',gap:4}}>
           {product.stock === 0 && <span className="badge badge-red">Agotado</span>}
           {discountPct > 0 && <span className="badge badge-red">-{discountPct}%</span>}
         </div>
       </div>
-
       <div className="info">
         <div className="cat">{(product as any).categories?.name || 'Suplemento'}</div>
         <div className="name" title={product.name}>
@@ -42,23 +49,19 @@ export default function ProductCard({ product, discountPct = 0 }: { product: Pro
         </div>
         <div className="price-row">
           <div>
-            <div className="price">{price.toFixed(2)} €</div>
+            <div className="price" style={{color: priceColor}}>{price.toFixed(2)} €</div>
             {discountPct > 0 && (
-              <div style={{ fontSize: 12, color: 'var(--muted)', textDecoration: 'line-through' }}>
+              <div style={{fontSize:12,color:'var(--muted)',textDecoration:'line-through'}}>
                 {product.price_incl_tax.toFixed(2)} €
               </div>
             )}
           </div>
-          <button
-            className="btn-primary"
-            style={{ padding: '8px 14px', fontSize: 12 }}
-            onClick={handleAdd}
-            disabled={product.stock === 0}
-          >
+          <button className="btn-primary" style={{padding:'8px 14px',fontSize:12}}
+            onClick={handleAdd} disabled={product.stock === 0}>
             {added ? '✓' : product.stock === 0 ? 'Agotado' : 'Añadir'}
           </button>
         </div>
-        <div style={{ marginTop: 6 }}>
+        <div style={{marginTop:6}}>
           {product.stock > 0
             ? <span className="stock-ok">● En stock ({product.stock} uds)</span>
             : <span className="stock-no">● Sin stock</span>}
