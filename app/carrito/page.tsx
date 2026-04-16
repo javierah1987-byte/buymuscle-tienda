@@ -1,269 +1,241 @@
 'use client'
-import { useState } from 'react'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useState } from 'react'
 
-const SHIPPING_FREE = 50
+const SHIPPING_FREE_FROM = 50
 const SHIPPING_COST = 4.99
 
-type Step = 'cart' | 'checkout' | 'confirmation'
-interface OrderForm {
-  name:string; email:string; phone:string
-  address:string; city:string; postal_code:string
-  notes:string; payment_method:string
-}
-
 export default function CarritoPage() {
-  const { items, remove, updateQty, total, count, clear } = useCart()
-  const { isDistributor, discountPct } = useAuth()
-  const [step, setStep] = useState<Step>('cart')
-  const [form, setForm] = useState<OrderForm>({ name:'', email:'', phone:'', address:'', city:'', postal_code:'', notes:'', payment_method:'card' })
-  const [loading, setLoading] = useState(false)
-  const [orderNum, setOrderNum] = useState('')
-  const [holdedId, setHoldedId] = useState('')
-  const [error, setError] = useState('')
+  const { items, remove, updateQty, total, count } = useCart()
+  const { isDistributor, levelName, discountPct } = useAuth()
+  const [step, setStep] = useState<1|2|3>(1)
+  const [form, setForm] = useState({ name:'', email:'', phone:'', address:'', city:'', postal:'' })
+  const [payment, setPayment] = useState<'card'|'bizum'|'transfer'>('card')
+  const [placing, setPlacing] = useState(false)
+  const [orderDone, setOrderDone] = useState<string|null>(null)
 
-  const shipping = total >= SHIPPING_FREE ? 0 : SHIPPING_COST
-  const iva = total * 0.21 / 1.21
-  const base = total - iva
+  const shipping = total >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST
   const grandTotal = total + shipping
 
-  const handleCheckout = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.name || !form.email || !form.address || !form.city || !form.postal_code) {
-      setError('Por favor rellena todos los campos obligatorios'); return
-    }
-    setLoading(true); setError('')
+  const handleOrder = async () => {
+    setPlacing(true)
     try {
-      // 1. Crear pedido en Supabase
-      const { data: order, error: orderErr } = await supabase.from('orders').insert({
-        channel: isDistributor ? 'online_distributor' : 'online_retail',
-        customer_name: form.name,
-        customer_email: form.email,
-        customer_phone: form.phone,
-        shipping_address: form.address,
-        shipping_city: form.city,
-        shipping_postal_code: form.postal_code,
-        notes: form.notes,
-        payment_method: form.payment_method,
-        subtotal: base,
-        tax_amount: iva,
-        shipping_cost: shipping,
-        discount_pct: discountPct,
-        total: grandTotal,
-        status: 'pending'
-      }).select('id, order_number').single()
-      if (orderErr) throw orderErr
-
-      // 2. Insertar líneas
-      await supabase.from('order_lines').insert(
-        items.map(item => ({
-          order_id: order.id,
-          product_id: item.product.id,
-          product_name: item.product.name,
-          quantity: item.qty,
-          unit_price: item.price,
-          tax_rate: 21,
-          line_total: item.price * item.qty
-        }))
-      )
-
-      // 3. Descontar stock
-      for (const item of items) {
-        await supabase.from('products')
-          .update({ stock: Math.max(0, item.product.stock - item.qty) })
-          .eq('id', item.product.id)
-      }
-
-      // 4. Crear factura en Holded (async, no bloqueante)
-      fetch('/api/holded/create-invoice', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id })
-      }).then(r => r.json()).then(data => {
-        if (data.invoiceId) setHoldedId(data.invoiceId)
-      }).catch(() => {}) // No bloquear si falla Holded
-
-      setOrderNum(order.order_number)
-      clear()
-      setStep('confirmation')
-    } catch (err: any) {
-      setError('Error al procesar el pedido: ' + (err.message || 'Inténtalo de nuevo'))
-    }
-    setLoading(false)
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          items, total: grandTotal,
+          shipping_cost: shipping,
+          customer_name: form.name,
+          customer_email: form.email,
+          customer_phone: form.phone,
+          shipping_address: form.address,
+          shipping_city: form.city,
+          shipping_postal_code: form.postal,
+          payment_method: payment,
+          discountPct
+        })
+      })
+      const data = await res.json()
+      if (data.order_number) {
+        setOrderDone(data.order_number)
+        setStep(3)
+      }
+    } catch(e) { console.error(e) }
+    setPlacing(false)
   }
 
-  // CONFIRMACIÓN
-  if (step === 'confirmation') return (
-    <div style={{background:'var(--bg)',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'2rem'}}>
-      <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'3rem',maxWidth:480,width:'100%',textAlign:'center'}}>
-        <div style={{fontSize:64,marginBottom:'1rem'}}>✅</div>
-        <h1 style={{fontFamily:'var(--font-body)',fontSize:28,fontWeight:900,textTransform:'uppercase',color:'var(--text)',marginBottom:'0.5rem'}}>¡Pedido realizado!</h1>
-        <p style={{color:'var(--muted)',marginBottom:'1.5rem'}}>Gracias por tu compra. Hemos recibido tu pedido correctamente.</p>
-        <div style={{background:'var(--bg)',border:'1px solid var(--border)',padding:'1rem',marginBottom:'1rem'}}>
-          <div style={{fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'var(--muted)',marginBottom:4}}>Número de pedido</div>
-          <div style={{fontSize:24,fontWeight:900,color:'var(--red)',fontFamily:'var(--font-body)'}}>{orderNum}</div>
+  if (orderDone) return (
+    <div style={{background:'#f5f5f5',minHeight:'80vh',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{background:'white',border:'1px solid #e8e8e8',padding:'3rem',textAlign:'center',maxWidth:480}}>
+        <div style={{fontSize:56,marginBottom:'1rem'}}>✅</div>
+        <h1 style={{fontSize:22,fontWeight:800,textTransform:'uppercase',color:'#111',marginBottom:'0.5rem'}}>¡Pedido confirmado!</h1>
+        <div style={{fontSize:14,color:'#666',marginBottom:'1.5rem'}}>
+          Tu número de pedido es <strong style={{color:'var(--red)'}}>{orderDone}</strong>.<br/>
+          Recibirás un email de confirmación en breve.
         </div>
-        {holdedId && (
-          <div style={{background:'rgba(40,167,69,0.06)',border:'1px solid rgba(40,167,69,0.2)',padding:'0.75rem',marginBottom:'1rem',fontSize:13,color:'#28a745'}}>
-            📄 Factura generada en Holded automáticamente
-          </div>
-        )}
-        <p style={{fontSize:13,color:'var(--muted)',marginBottom:'2rem'}}>
-          Recibirás confirmación en <strong>{form.email}</strong>. Tu pedido saldrá en 24/48h.
-        </p>
-        <Link href="/tienda" className="btn-primary" style={{fontSize:14,padding:'12px 28px',justifyContent:'center'}}>Seguir comprando</Link>
+        <Link href="/tienda" style={{display:'inline-block',background:'var(--red)',color:'white',padding:'12px 28px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.05em'}}>
+          Seguir comprando
+        </Link>
       </div>
     </div>
   )
 
-  // CHECKOUT
-  if (step === 'checkout') return (
-    <div style={{background:'var(--bg)',minHeight:'100vh',paddingBottom:'4rem'}}>
-      <div className="container" style={{paddingTop:'2rem',maxWidth:900}}>
-        <button onClick={()=>setStep('cart')} style={{fontSize:13,color:'var(--muted)',background:'none',border:'none',cursor:'pointer',marginBottom:'1.5rem',display:'flex',alignItems:'center',gap:4}}>← Volver al carrito</button>
+  return (
+    <div style={{background:'#f5f5f5',minHeight:'80vh',padding:'1.5rem 0 3rem'}}>
+      <div className="container">
+        {/* Breadcrumb */}
+        <div style={{display:'flex',gap:6,alignItems:'center',fontSize:12,color:'#999',marginBottom:'1.5rem'}}>
+          <Link href="/" style={{color:'#999',textDecoration:'none'}}>Inicio</Link><span>›</span>
+          <Link href="/tienda" style={{color:'#999',textDecoration:'none'}}>Tienda</Link><span>›</span>
+          <span style={{color:'#333',fontWeight:600}}>Mi Carrito</span>
+        </div>
 
-        <div style={{display:'flex',gap:0,marginBottom:'2rem',background:'var(--white)',border:'1px solid var(--border)'}}>
-          {[{n:1,l:'Carrito'},{n:2,l:'Datos envío'},{n:3,l:'Confirmación'}].map((s,i)=>(
-            <div key={i} style={{flex:1,padding:'12px',textAlign:'center',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em',borderRight:i<2?'1px solid var(--border)':'none',background:s.n===2?'var(--red)':'transparent',color:s.n===2?'white':s.n<2?'var(--red)':'var(--muted)'}}>
+        {/* Steps */}
+        <div style={{display:'flex',gap:0,marginBottom:'2rem',background:'white',border:'1px solid #e8e8e8'}}>
+          {[{n:1,l:'CARRITO'},{n:2,l:'DATOS'},{n:3,l:'CONFIRMACIÓN'}].map(s=>(
+            <div key={s.n} style={{flex:1,padding:'12px 16px',textAlign:'center',fontSize:12,fontWeight:700,letterSpacing:'0.05em',
+              background: step===s.n ? 'var(--red)' : step>s.n ? '#28a745' : 'white',
+              color: step>=s.n ? 'white' : '#999',
+              borderRight:'1px solid #e8e8e8',cursor:'pointer'}}
+              onClick={()=>step>s.n&&setStep(s.n as 1|2|3)}>
               {s.n}. {s.l}
             </div>
           ))}
         </div>
 
-        <form onSubmit={handleCheckout}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 340px',gap:'1.5rem',alignItems:'start'}}>
-            <div>
-              <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'1.5rem',marginBottom:'1rem'}}>
-                <h2 style={{fontSize:16,fontWeight:800,textTransform:'uppercase',marginBottom:'1.25rem'}}>Datos de contacto</h2>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
-                  <div style={{gridColumn:'1/-1'}}><label>Nombre completo *</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="Nombre y apellidos" required/></div>
-                  <div><label>Email *</label><input type="email" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} placeholder="tu@email.com" required/></div>
-                  <div><label>Teléfono</label><input value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))} placeholder="600 000 000"/></div>
-                </div>
-              </div>
-
-              <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'1.5rem',marginBottom:'1rem'}}>
-                <h2 style={{fontSize:16,fontWeight:800,textTransform:'uppercase',marginBottom:'1.25rem'}}>Dirección de envío</h2>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
-                  <div style={{gridColumn:'1/-1'}}><label>Dirección *</label><input value={form.address} onChange={e=>setForm(p=>({...p,address:e.target.value}))} placeholder="Calle, número, piso..." required/></div>
-                  <div><label>Ciudad *</label><input value={form.city} onChange={e=>setForm(p=>({...p,city:e.target.value}))} placeholder="Ciudad" required/></div>
-                  <div><label>Código postal *</label><input value={form.postal_code} onChange={e=>setForm(p=>({...p,postal_code:e.target.value}))} placeholder="41000" required maxLength={5}/></div>
-                  <div style={{gridColumn:'1/-1'}}><label>Notas del pedido</label><input value={form.notes} onChange={e=>setForm(p=>({...p,notes:e.target.value}))} placeholder="Instrucciones especiales (opcional)"/></div>
-                </div>
-              </div>
-
-              <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'1.5rem'}}>
-                <h2 style={{fontSize:16,fontWeight:800,textTransform:'uppercase',marginBottom:'1.25rem'}}>Método de pago</h2>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'0.75rem'}}>
-                  {[{v:'card',l:'💳 Tarjeta'},{v:'bizum',l:'📱 Bizum'},{v:'transfer',l:'🏦 Transferencia'}].map(m=>(
-                    <button key={m.v} type="button" onClick={()=>setForm(p=>({...p,payment_method:m.v}))}
-                      style={{padding:'12px 8px',border:form.payment_method===m.v?'2px solid var(--red)':'1px solid var(--border)',background:form.payment_method===m.v?'rgba(255,30,65,0.04)':'var(--white)',color:form.payment_method===m.v?'var(--red)':'var(--muted)',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,cursor:'pointer',transition:'all 0.12s'}}>
-                      {m.l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'1.25rem',position:'sticky',top:'120px'}}>
-              <h3 style={{fontSize:14,fontWeight:800,textTransform:'uppercase',marginBottom:'1rem',paddingBottom:'0.75rem',borderBottom:'1px solid var(--border)'}}>Resumen ({count} {count===1?'artículo':'artículos'})</h3>
-              {items.map(item=>(
-                <div key={item.product.id} style={{display:'flex',gap:'0.75rem',marginBottom:'0.75rem',paddingBottom:'0.75rem',borderBottom:'1px solid var(--border)'}}>
-                  <img src={item.product.image_url||'https://placehold.co/48x48/f5f5f5/ccc?text=BM'} alt="" style={{width:48,height:48,objectFit:'contain',background:'var(--bg)',flexShrink:0}}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:700,textTransform:'uppercase',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.product.name}</div>
-                    <div style={{fontSize:12,color:'var(--muted)'}}>x{item.qty}</div>
-                  </div>
-                  <div style={{fontSize:13,fontWeight:700,color:'var(--red)',flexShrink:0}}>{(item.price*item.qty).toFixed(2)} €</div>
-                </div>
-              ))}
-              <div style={{display:'flex',flexDirection:'column',gap:8,paddingTop:'0.75rem'}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'var(--muted)'}}><span>Base imponible</span><span>{base.toFixed(2)} €</span></div>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'var(--muted)'}}><span>IVA (21%)</span><span>{iva.toFixed(2)} €</span></div>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:shipping===0?'#28a745':'var(--muted)'}}><span>Envío</span><span style={{fontWeight:shipping===0?700:400}}>{shipping===0?'GRATIS':shipping.toFixed(2)+' €'}</span></div>
-                {isDistributor && discountPct>0 && <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--red)'}}><span>Descuento distribuidor</span><span>-{discountPct}%</span></div>}
-                <div style={{display:'flex',justifyContent:'space-between',paddingTop:8,borderTop:'2px solid var(--text)',marginTop:4}}>
-                  <span style={{fontSize:16,fontWeight:800,textTransform:'uppercase'}}>TOTAL</span>
-                  <span style={{fontSize:22,fontWeight:900,color:'var(--red)'}}>{grandTotal.toFixed(2)} €</span>
-                </div>
-              </div>
-              {error && <div style={{background:'rgba(255,30,65,0.06)',border:'1px solid var(--red)',padding:'0.75rem',marginTop:'0.75rem',fontSize:13,color:'var(--red)'}}>{error}</div>}
-              <button type="submit" disabled={loading} className="btn-primary" style={{width:'100%',marginTop:'1rem',padding:'14px',fontSize:15,justifyContent:'center'}}>
-                {loading?'Procesando...':`Confirmar pedido · ${grandTotal.toFixed(2)} €`}
-              </button>
-              <div style={{marginTop:'0.75rem',fontSize:11,color:'var(--muted)',textAlign:'center'}}>
-                🔒 Pago seguro · 📄 Factura automática
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-
-  // CARRITO
-  return (
-    <div style={{background:'var(--bg)',minHeight:'100vh',paddingBottom:'4rem'}}>
-      <div className="container" style={{paddingTop:'2rem'}}>
-        <h1 style={{fontSize:28,fontWeight:900,textTransform:'uppercase',marginBottom:'1.5rem'}}>
-          Mi carrito {count>0&&<span style={{fontSize:16,color:'var(--muted)',fontWeight:400}}>({count} {count===1?'artículo':'artículos'})</span>}
-        </h1>
-
-        {items.length===0 ? (
-          <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'4rem 2rem',textAlign:'center'}}>
+        {items.length === 0 ? (
+          <div style={{background:'white',border:'1px solid #e8e8e8',padding:'4rem',textAlign:'center'}}>
             <div style={{fontSize:64,marginBottom:'1rem'}}>🛒</div>
-            <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:800,textTransform:'uppercase',marginBottom:'0.75rem'}}>Tu carrito está vacío</h2>
-            <p style={{color:'var(--muted)',marginBottom:'2rem'}}>Añade productos desde el catálogo</p>
-            <Link href="/tienda" className="btn-primary" style={{fontSize:14,padding:'12px 28px',justifyContent:'center'}}>Ver catálogo</Link>
+            <h2 style={{fontSize:18,fontWeight:800,textTransform:'uppercase',color:'#111',marginBottom:'0.5rem'}}>TU CARRITO ESTÁ VACÍO</h2>
+            <p style={{color:'#888',marginBottom:'1.5rem',fontSize:14}}>Añade productos desde el catálogo</p>
+            <Link href="/tienda" style={{background:'var(--red)',color:'white',padding:'12px 28px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.05em',display:'inline-block'}}>
+              VER CATÁLOGO
+            </Link>
           </div>
         ) : (
-          <div style={{display:'grid',gridTemplateColumns:'1fr 340px',gap:'1.5rem',alignItems:'start'}}>
-            <div style={{background:'var(--white)',border:'1px solid var(--border)'}}>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 100px 80px 80px 32px',gap:'1rem',padding:'0.75rem 1rem',borderBottom:'2px solid var(--border)',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em',color:'var(--muted)'}}>
-                <span>Producto</span><span style={{textAlign:'center'}}>Cantidad</span><span style={{textAlign:'right'}}>Precio</span><span style={{textAlign:'right'}}>Total</span><span/>
-              </div>
-              {items.map(item=>(
-                <div key={item.product.id} style={{display:'grid',gridTemplateColumns:'1fr 100px 80px 80px 32px',gap:'1rem',padding:'1rem',borderBottom:'1px solid var(--border)',alignItems:'center'}}>
-                  <div style={{display:'flex',gap:'1rem',alignItems:'center',minWidth:0}}>
-                    <img src={item.product.image_url||'https://placehold.co/64x64/f5f5f5/ccc?text=BM'} alt="" style={{width:64,height:64,objectFit:'contain',background:'var(--bg)',flexShrink:0,border:'1px solid var(--border)'}}/>
-                    <div style={{minWidth:0}}>
-                      <Link href={`/producto/${item.product.id}`} style={{fontSize:13,fontWeight:700,textTransform:'uppercase',display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{item.product.name}</Link>
-                      {item.discountPct>0&&<span className="badge badge-red" style={{marginTop:4}}>-{item.discountPct}%</span>}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:'1.5rem',alignItems:'start'}}>
+            {/* Columna izquierda */}
+            <div>
+              {/* PASO 1: Productos */}
+              {step===1 && (
+                <div style={{background:'white',border:'1px solid #e8e8e8'}}>
+                  <div style={{padding:'14px 16px',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <h2 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>{count} {count===1?'producto':'productos'}</h2>
+                    <Link href="/tienda" style={{fontSize:12,color:'var(--red)',textDecoration:'none',fontWeight:700}}>← Seguir comprando</Link>
+                  </div>
+                  {items.map((item,i) => (
+                    <div key={i} style={{display:'grid',gridTemplateColumns:'80px 1fr auto',gap:'1rem',padding:'1rem 1.25rem',borderBottom:'1px solid #f5f5f5',alignItems:'center'}}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.image_url||'https://placehold.co/80x80/f5f5f5/ccc?text=BM'} alt={item.name}
+                        style={{width:80,height:80,objectFit:'contain',border:'1px solid #f0f0f0',padding:4}}/>
+                      <div>
+                        <Link href={`/producto/${item.id}`} style={{fontSize:14,fontWeight:600,color:'#111',textDecoration:'none',display:'block',marginBottom:4,lineHeight:1.3}}>
+                          {item.name}
+                        </Link>
+                        {item.selectedVariant && <div style={{fontSize:12,color:'#888',marginBottom:6}}>Sabor: {item.selectedVariant}</div>}
+                        <div style={{fontSize:13,fontWeight:700,color:'var(--red)'}}>
+                          {item.discountPct>0 ? (item.price_incl_tax*(1-item.discountPct/100)).toFixed(2) : item.price_incl_tax.toFixed(2)} €
+                          {item.discountPct>0 && <s style={{marginLeft:6,fontWeight:400,color:'#aaa',fontSize:12}}>{item.price_incl_tax.toFixed(2)} €</s>}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column' as const,alignItems:'flex-end',gap:8}}>
+                        {/* Cantidad */}
+                        <div style={{display:'flex',border:'1px solid #ddd'}}>
+                          <button onClick={()=>updateQty(i,Math.max(1,item.quantity-1))}
+                            style={{width:28,height:28,background:'#f5f5f5',border:'none',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+                          <span style={{width:32,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600}}>{item.quantity}</span>
+                          <button onClick={()=>updateQty(i,item.quantity+1)}
+                            style={{width:28,height:28,background:'#f5f5f5',border:'none',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+                        </div>
+                        <div style={{fontSize:14,fontWeight:700,color:'#333'}}>
+                          {((item.discountPct>0?item.price_incl_tax*(1-item.discountPct/100):item.price_incl_tax)*item.quantity).toFixed(2)} €
+                        </div>
+                        <button onClick={()=>remove(i)} style={{background:'none',border:'none',cursor:'pointer',color:'#bbb',fontSize:11,padding:0,fontFamily:'var(--font-body)'}}>
+                          ✕ Eliminar
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'center'}}>
-                    <button onClick={()=>updateQty(item.product.id,item.qty-1)} className="qty-btn">−</button>
-                    <span style={{minWidth:28,textAlign:'center',fontWeight:700}}>{item.qty}</span>
-                    <button onClick={()=>updateQty(item.product.id,item.qty+1)} className="qty-btn">+</button>
-                  </div>
-                  <div style={{textAlign:'right',fontSize:14,fontWeight:700,color:'var(--red)'}}>{item.price.toFixed(2)} €</div>
-                  <div style={{textAlign:'right',fontSize:15,fontWeight:800,color:'var(--red)'}}>{(item.price*item.qty).toFixed(2)} €</div>
-                  <button onClick={()=>remove(item.product.id)} style={{width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',background:'none',border:'1px solid var(--border)',cursor:'pointer',color:'var(--muted)',fontSize:16}}>×</button>
+                  ))}
                 </div>
-              ))}
-              <div style={{padding:'0.75rem 1rem',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <button onClick={()=>clear()} style={{fontSize:13,color:'var(--muted)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Vaciar carrito</button>
-                <Link href="/tienda" style={{fontSize:13,color:'var(--red)',fontWeight:700}}>← Continuar comprando</Link>
-              </div>
+              )}
+
+              {/* PASO 2: Datos de envío */}
+              {step===2 && (
+                <div style={{background:'white',border:'1px solid #e8e8e8',padding:'1.5rem'}}>
+                  <h2 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:'1.25rem',paddingBottom:'0.75rem',borderBottom:'1px solid #eee'}}>Datos de envío</h2>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+                    {[['name','Nombre y apellidos','text'],['email','Email','email'],['phone','Teléfono','tel'],['address','Dirección completa','text'],['city','Ciudad','text'],['postal','Código postal','text']].map(([k,l,t])=>(
+                      <div key={k} style={{gridColumn: k==='address'?'1/-1':undefined}}>
+                        <label style={{display:'block',fontSize:12,fontWeight:700,color:'#555',marginBottom:4,textTransform:'uppercase' as const,letterSpacing:'0.04em'}}>{l}</label>
+                        <input type={t} value={(form as any)[k]}
+                          onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
+                          style={{width:'100%',padding:'10px 12px',fontSize:14,border:'1px solid #ddd',fontFamily:'var(--font-body)',margin:0,borderRadius:0,outline:'none'}}
+                          onFocus={e=>(e.target.style.borderColor='var(--red)')}
+                          onBlur={e=>(e.target.style.borderColor='#ddd')}/>
+                      </div>
+                    ))}
+                  </div>
+                  <h2 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',margin:'1.5rem 0 1rem',paddingBottom:'0.75rem',borderBottom:'1px solid #eee'}}>Método de pago</h2>
+                  <div style={{display:'flex',gap:'0.75rem',flexWrap:'wrap' as const}}>
+                    {[['card','💳 Tarjeta'],['bizum','📱 Bizum'],['transfer','🏦 Transferencia']].map(([v,l])=>(
+                      <label key={v} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 16px',border:payment===v?'2px solid var(--red)':'1px solid #ddd',cursor:'pointer',fontSize:13,fontWeight:600,background:payment===v?'rgba(255,30,65,0.03)':'white'}}>
+                        <input type="radio" name="payment" value={v} checked={payment===v} onChange={()=>setPayment(v as any)} style={{accentColor:'var(--red)'}}/>
+                        {l}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div style={{background:'var(--white)',border:'1px solid var(--border)',padding:'1.25rem',position:'sticky',top:'120px'}}>
-              <h3 style={{fontSize:14,fontWeight:800,textTransform:'uppercase',marginBottom:'1rem',paddingBottom:'0.75rem',borderBottom:'1px solid var(--border)'}}>Resumen del pedido</h3>
-              <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:'1.25rem'}}>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'var(--muted)'}}><span>Subtotal</span><span>{total.toFixed(2)} €</span></div>
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:shipping===0?'#28a745':'var(--muted)'}}><span>Envío</span><span style={{fontWeight:shipping===0?700:400}}>{shipping===0?'🎉 GRATIS':shipping.toFixed(2)+' €'}</span></div>
-                {shipping>0&&<div style={{background:'rgba(40,167,69,0.06)',border:'1px solid rgba(40,167,69,0.2)',padding:'6px 10px',fontSize:12,color:'#28a745'}}>Añade <strong>{(SHIPPING_FREE-total).toFixed(2)} € más</strong> y el envío es gratis</div>}
-                <div style={{display:'flex',justifyContent:'space-between',paddingTop:10,borderTop:'2px solid var(--text)',marginTop:4}}>
-                  <span style={{fontSize:18,fontWeight:800,textTransform:'uppercase'}}>TOTAL</span>
-                  <span style={{fontSize:26,fontWeight:900,color:'var(--red)'}}>{grandTotal.toFixed(2)} €</span>
+            {/* Resumen del pedido */}
+            <div>
+              <div style={{background:'white',border:'1px solid #e8e8e8'}}>
+                <div style={{padding:'14px 16px',borderBottom:'1px solid #eee'}}>
+                  <h3 style={{fontSize:13,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>Resumen del pedido</h3>
                 </div>
-              </div>
-              <button onClick={()=>setStep('checkout')} className="btn-primary" style={{width:'100%',padding:'14px',fontSize:15,justifyContent:'center'}}>Tramitar pedido →</button>
-              <div style={{marginTop:'0.75rem',fontSize:11,color:'var(--muted)',textAlign:'center'}}>
-                🔒 Pago seguro · 📦 Envío 24/48h · 📄 Factura automática en Holded
+                <div style={{padding:'1rem 1.25rem'}}>
+                  {items.map((item,i)=>(
+                    <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'6px 0',fontSize:13,color:'#555',borderBottom:'1px solid #f8f8f8'}}>
+                      <span style={{flex:1,paddingRight:8,lineHeight:1.3}}>{item.name.slice(0,35)}{item.name.length>35?'...':''} <span style={{color:'#999'}}>x{item.quantity}</span></span>
+                      <span style={{fontWeight:600,color:'#333',flexShrink:0}}>
+                        {((item.discountPct>0?item.price_incl_tax*(1-item.discountPct/100):item.price_incl_tax)*item.quantity).toFixed(2)} €
+                      </span>
+                    </div>
+                  ))}
+                  <div style={{marginTop:'0.75rem',paddingTop:'0.75rem',borderTop:'1px solid #eee'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#666',marginBottom:6}}>
+                      <span>Subtotal</span><span>{total.toFixed(2)} €</span>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#666',marginBottom:6}}>
+                      <span>Envío</span>
+                      <span style={{color:shipping===0?'#28a745':'#333'}}>{shipping===0?'GRATIS':shipping.toFixed(2)+' €'}</span>
+                    </div>
+                    {shipping>0&&(
+                      <div style={{fontSize:11,color:'var(--red)',marginBottom:6}}>
+                        Añade {(SHIPPING_FREE_FROM-total).toFixed(2)} € más para envío gratis
+                      </div>
+                    )}
+                    {discountPct>0&&(
+                      <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#28a745',marginBottom:6}}>
+                        <span>Descuento {levelName} -{discountPct}%</span>
+                      </div>
+                    )}
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:17,fontWeight:800,color:'var(--red)',marginTop:'0.75rem',paddingTop:'0.75rem',borderTop:'2px solid #eee'}}>
+                      <span>TOTAL</span><span>{grandTotal.toFixed(2)} €</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Botón acción */}
+                <div style={{padding:'0 1.25rem 1.25rem'}}>
+                  {step===1 && (
+                    <button onClick={()=>setStep(2)}
+                      style={{width:'100%',padding:'13px',background:'var(--red)',color:'white',border:'none',fontFamily:'var(--font-body)',fontSize:14,fontWeight:700,cursor:'pointer',textTransform:'uppercase' as const,letterSpacing:'0.05em'}}>
+                      CONTINUAR → DATOS DE ENVÍO
+                    </button>
+                  )}
+                  {step===2 && (
+                    <>
+                      <button onClick={handleOrder} disabled={placing||!form.name||!form.email||!form.address}
+                        style={{width:'100%',padding:'13px',background:placing?'#ccc':'var(--red)',color:'white',border:'none',fontFamily:'var(--font-body)',fontSize:14,fontWeight:700,cursor:placing?'not-allowed':'pointer',textTransform:'uppercase' as const,letterSpacing:'0.05em',marginBottom:8}}>
+                        {placing?'Procesando...':'✓ CONFIRMAR PEDIDO'}
+                      </button>
+                      <button onClick={()=>setStep(1)}
+                        style={{width:'100%',padding:'10px',background:'white',color:'#666',border:'1px solid #ddd',fontFamily:'var(--font-body)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                        ← Volver al carrito
+                      </button>
+                    </>
+                  )}
+                </div>
+                {/* Garantías */}
+                <div style={{padding:'0.75rem 1.25rem 1rem',borderTop:'1px solid #f5f5f5',display:'flex',gap:'0.5rem',flexWrap:'wrap' as const}}>
+                  {[['🔒','Pago seguro'],['🚚','Envío 24/48h'],['🔄','Devoluciones']].map(([ic,t])=>(
+                    <span key={t} style={{fontSize:11,color:'#999',display:'flex',alignItems:'center',gap:3}}>{ic} {t}</span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
