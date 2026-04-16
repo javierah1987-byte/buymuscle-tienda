@@ -1,3 +1,5 @@
+export const revalidate = 0
+
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
@@ -32,7 +34,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
     getRelated(product.category_id, product.id)
   ])
 
-  // Agrupar variantes por tipo de atributo
   const variantsByType: Record<string, {id:number; value:string; hex?:string; variantId:number; stock:number; priceModifier:number}[]> = {}
   for (const v of variants) {
     const av = v.attribute_values as any
@@ -57,12 +58,10 @@ export default async function ProductoPage({ params }: { params: { id: string } 
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
   })
   const hasVariants = sortedTypes.length > 0
-
   const catName = (product.categories as any)?.name || 'Suplemento'
 
   return (
     <div style={{background:'var(--bg)', minHeight:'100vh', paddingBottom:'4rem'}}>
-      {/* Breadcrumb */}
       <div style={{background:'var(--surface)', borderBottom:'1px solid var(--border)', padding:'10px 0'}}>
         <div className="container" style={{display:'flex', gap:6, alignItems:'center', fontSize:12, color:'var(--muted)'}}>
           <Link href="/" style={{color:'var(--muted)'}}>Inicio</Link>
@@ -79,8 +78,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
 
       <div className="container" style={{paddingTop:'2rem'}}>
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'3rem', alignItems:'start'}}>
-
-          {/* Imagen — sin onError (Server Component) */}
           <div style={{background:'var(--surface)', border:'1px solid var(--border)', padding:'2rem', display:'flex', alignItems:'center', justifyContent:'center', minHeight:400}}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -90,7 +87,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
             />
           </div>
 
-          {/* Info */}
           <div>
             <div style={{fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'var(--red)', marginBottom:8}}>
               {catName}
@@ -99,7 +95,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
               {product.name}
             </h1>
 
-            {/* Stock */}
             <div style={{marginBottom:'1.5rem', display:'flex', alignItems:'center', gap:8}}>
               {product.stock > 0 ? (
                 <>
@@ -114,7 +109,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
               )}
             </div>
 
-            {/* Selectores + precio + carrito (Client Component — incluye precio con descuento) */}
             <AddToCartSection
               product={product as any}
               variantsByType={variantsByType}
@@ -122,7 +116,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
               hasVariants={hasVariants}
             />
 
-            {/* Badges */}
             <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap', marginTop:'1.5rem'}}>
               {['🚚 Envío 24/48h', '🔒 Pago seguro', '🔄 Devoluciones'].map(b => (
                 <span key={b} style={{background:'var(--bg)', border:'1px solid var(--border)', padding:'5px 12px', fontSize:12, fontWeight:600, color:'var(--muted)'}}>{b}</span>
@@ -131,7 +124,6 @@ export default async function ProductoPage({ params }: { params: { id: string } 
           </div>
         </div>
 
-        {/* Relacionados */}
         {related.length > 0 && (
           <section style={{marginTop:'4rem'}}>
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
