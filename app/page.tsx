@@ -36,21 +36,19 @@ export default async function Home() {
   return (
     <div style={{ background:'#f5f5f5' }}>
 
-      {/* SLIDER — idéntico al original con imágenes reales */}
+      {/* SLIDER con imágenes reales de tienda.buymuscle.es */}
       <HeroSlider />
 
-      {/* Categorías rápidas — barra exacta al original */}
-      <section style={{ background:'white', borderBottom:'1px solid #ebebeb', boxShadow:'0 1px 3px rgba(0,0,0,0.04)' }}>
+      {/* Categorías rápidas */}
+      <section style={{ background:'white', borderBottom:'1px solid #ebebeb' }}>
         <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
-          <div style={{ display:'flex', overflowX:'auto', msOverflowStyle:'none', scrollbarWidth:'none' }}>
+          <div style={{ display:'flex', overflowX:'auto' }}>
             {QUICK_CATS.map(cat => (
               <Link key={cat.name} href={`/tienda?cat=${encodeURIComponent(cat.slug)}`}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5, padding:'14px 20px',
-                  fontSize:11, fontWeight:700, color:'#444', textTransform:'uppercase', letterSpacing:'0.05em',
-                  textDecoration:'none', borderRight:'1px solid #f0f0f0', whiteSpace:'nowrap', flexShrink:0,
-                  transition:'color 0.12s, background 0.12s' }}
-                onMouseEnter={e=>{ e.currentTarget.style.color='var(--red)'; e.currentTarget.style.background='#fafafa'; }}
-                onMouseLeave={e=>{ e.currentTarget.style.color='#444'; e.currentTarget.style.background='white'; }}>
+                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5,
+                  padding:'14px 20px', fontSize:11, fontWeight:700, color:'#444',
+                  textTransform:'uppercase', letterSpacing:'0.05em', textDecoration:'none',
+                  borderRight:'1px solid #f0f0f0', whiteSpace:'nowrap', flexShrink:0 }}>
                 <span style={{ fontSize:22 }}>{cat.icon}</span>
                 {cat.name}
               </Link>
@@ -59,36 +57,26 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* SECCIÓN PRINCIPAL — "BUYMUSCLE / Nutrición deportiva" + NOVEDADES */}
+      {/* BUYMUSCLE / Nutrición deportiva + Novedades */}
       <section style={{ background:'white', padding:'2rem 0 2.5rem', borderBottom:'1px solid #ebebeb' }}>
         <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'260px 1fr', gap:'2.5rem', alignItems:'start' }}>
-
-            {/* Bloque texto izquierdo — exacto al original */}
             <div style={{ paddingRight:'2rem', borderRight:'1px solid #ebebeb' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>
-                BUYMUSCLE
-              </div>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>BUYMUSCLE</div>
               <h2 style={{ fontSize:26, fontWeight:900, textTransform:'uppercase', color:'#111', lineHeight:1.1, marginBottom:'1rem' }}>
                 Nutrición<br/>deportiva
               </h2>
               <p style={{ fontSize:13, color:'#777', lineHeight:1.8, marginBottom:'1.5rem' }}>
-                Compra suplementos deportivos en Canarias con BuyMuscle. Proteínas, creatina, aminoácidos y pre-entrenos de marcas líderes como IO.Genix, GN Nutrition, Amix y más.
+                Compra suplementos deportivos en Canarias con BuyMuscle. Proteínas, creatina, aminoácidos y pre-entrenos de marcas líderes como IO.Genix, GN Nutrition y más.
               </p>
               <Link href="/tienda" style={{ fontSize:13, fontWeight:700, color:'var(--red)', textDecoration:'none' }}>
                 Ver todo el catálogo →
               </Link>
             </div>
-
-            {/* Novedades */}
             <div>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.25rem', borderBottom:'2px solid #f0f0f0', paddingBottom:'0.75rem' }}>
-                <div style={{ fontSize:17, fontWeight:800, textTransform:'uppercase', color:'#111', letterSpacing:'0.02em' }}>
-                  NOVEDADES
-                </div>
-                <Link href="/tienda" style={{ fontSize:12, color:'var(--red)', fontWeight:700, textDecoration:'none', border:'1px solid var(--red)', padding:'5px 14px' }}>
-                  Ver todo →
-                </Link>
+                <div style={{ fontSize:17, fontWeight:800, textTransform:'uppercase', color:'#111' }}>NOVEDADES</div>
+                <Link href="/tienda" style={{ fontSize:12, color:'var(--red)', fontWeight:700, textDecoration:'none', border:'1px solid var(--red)', padding:'5px 14px' }}>Ver todo →</Link>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1px', background:'#ebebeb' }}>
                 {novedades.slice(0,4).map((p:any) => <ProductCard key={p.id} product={p}/>)}
@@ -98,14 +86,12 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* BANNER DISTRIBUIDORES */}
+      {/* Distribuidores */}
       <section style={{ background:'#111', padding:'2.5rem 0', borderTop:'3px solid var(--red)' }}>
         <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:'3rem', alignItems:'center' }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.5rem' }}>
-                PROGRAMA EXCLUSIVO
-              </div>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.5rem' }}>PROGRAMA EXCLUSIVO</div>
               <h3 style={{ fontSize:'clamp(22px,3vw,36px)', fontWeight:900, textTransform:'uppercase', color:'white', lineHeight:1.1, marginBottom:'1rem' }}>
                 PORTAL DE <span style={{ color:'var(--red)' }}>DISTRIBUIDORES</span>
               </h3>
@@ -130,7 +116,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* PROTEÍNAS */}
       {proteinas.length > 0 && (
         <section style={{ padding:'2.5rem 0', background:'#f5f5f5' }}>
           <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
@@ -145,7 +130,6 @@ export default async function Home() {
         </section>
       )}
 
-      {/* PRE-ENTRENOS */}
       {preEntrenos.length > 0 && (
         <section style={{ padding:'2.5rem 0', background:'white', borderTop:'1px solid #ebebeb' }}>
           <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
