@@ -257,6 +257,13 @@ export default function Navbar() {
                 )}
               </div>
 
+              {/* Icono casa — igual que el original */}
+              <Link href="/" style={{height:42,padding:'0 10px',display:'flex',alignItems:'center',color:'rgba(255,255,255,0.85)',fontSize:19,flexShrink:0,textDecoration:'none'}}
+                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
+                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.85)')}>
+                🏠
+              </Link>
+
               {/* Links directos */}
               {NAV_DIRECT.map(link=>(
                 <Link key={link.l} href={link.h}
