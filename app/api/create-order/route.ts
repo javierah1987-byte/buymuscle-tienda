@@ -2,10 +2,10 @@
 import{NextResponse}from 'next/server'
 import{createClient}from '@supabase/supabase-js'
 
-// Usa SERVICE_ROLE_KEY para poder insertar pedidos sin restricciones RLS
+// RLS desactivado en orders/order_lines — la anon key puede insertar
 const admin=createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
 export async function POST(req){
@@ -27,7 +27,7 @@ export async function POST(req){
       shipping_cost:Number(shipping_cost),total,discount_pct,
       payment_method:'card',status:'pending',notes:customer.notes||null
     }).select().single()
-    if(e1)throw e1
+    if(e1){console.error('ORDER_ERR:',JSON.stringify(e1));throw e1}
     await admin.from('order_lines').insert(items.map(i=>({
       order_id:order.id,product_id:i.id,product_name:i.name,
       quantity:i.qty,unit_price:i.price,tax_rate:21,line_total:i.price*i.qty
@@ -38,7 +38,7 @@ export async function POST(req){
     }
     return NextResponse.json({success:true,order_id:order.id,order_number:num})
   }catch(err){
-    console.error('create-order error:',err.message)
-    return NextResponse.json({error:err.message||'Error creando pedido'},{status:500})
+    console.error('create-order error:',err.message,err.code)
+    return NextResponse.json({error:err.message||'Error'},{status:500})
   }
 }
