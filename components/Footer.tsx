@@ -1,164 +1,128 @@
 'use client'
 import Link from 'next/link'
 
-const INFO_LINKS = [
-  {l:'Sobre Nosotros',h:'/sobre-nosotros'},
-  {l:'Cambios y Devoluciones',h:'/devoluciones'},
-  {l:'Contacto',h:'/contacto'},
-  {l:'Gastos de envío',h:'/envio'},
-  {l:'Aviso legal',h:'/aviso-legal'},
-  {l:'Condiciones de uso',h:'/condiciones'},
-]
-const SEG_LINKS = [
-  {l:'Aviso legal',h:'/aviso-legal'},
-  {l:'Condiciones Generales',h:'/condiciones'},
-  {l:'Política de privacidad',h:'/privacidad'},
-  {l:'Política de cookies',h:'/cookies'},
-]
-const ENL_LINKS = [
-  {l:'Lo más vendido',h:'/tienda'},
-  {l:'Novedades',h:'/tienda'},
-  {l:'Ofertas',h:'/tienda?cat=Ofertas'},
-  {l:'Pre-Pedidos',h:'/tienda?cat=Pre-Pedidos'},
-  {l:'StreetFlavour',h:'/tienda?cat=StreetFlavour'},
-  {l:'Portal Distribuidores',h:'/distribuidores'},
-  {l:'Blog',h:'/blog'},
-]
-
-function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href}
-      style={{display:'block', fontSize:13, color:'rgba(255,255,255,0.45)', textDecoration:'none', padding:'4px 0', transition:'color 0.12s'}}
-      onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
-      onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.45)')}>
-      {children}
-    </Link>
-  )
-}
-
-function FooterTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h4 style={{fontSize:11, fontWeight:800, textTransform:'uppercase' as const, letterSpacing:'0.1em', color:'white', marginBottom:'0.875rem', paddingBottom:'0.5rem', borderBottom:'2px solid var(--red)'}}>
-      {children}
-    </h4>
-  )
-}
-
 export default function Footer() {
   return (
-    <footer style={{background:'#111', color:'rgba(255,255,255,0.6)', borderTop:'3px solid var(--red)'}}>
+    <footer style={{ background:'#111', color:'rgba(255,255,255,0.65)', borderTop:'3px solid var(--red)', marginTop:0 }}>
+      {/* Main footer */}
+      <div style={{ maxWidth:1280, margin:'0 auto', padding:'3rem 20px 2rem', display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'2.5rem' }}>
 
-      {/* Franja de garantías */}
-      <div style={{background:'#0a0a0a', borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
-        <div className="container">
-          <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1rem', padding:'1.25rem 0'}}>
+        {/* Col 1: Logo + descripcion */}
+        <div>
+          <Link href="/" style={{ display:'inline-block', marginBottom:'1rem', textDecoration:'none' }}>
+            <span style={{ fontFamily:'var(--font-body)', fontSize:28, fontWeight:900, color:'var(--red)', fontStyle:'italic', textTransform:'uppercase', letterSpacing:'0.01em' }}>BUYMUSCLE</span>
+          </Link>
+          <p style={{ fontSize:13, lineHeight:1.8, color:'rgba(255,255,255,0.5)', marginBottom:'1.25rem' }}>
+            Tu tienda online de suplementacion deportiva en Canarias. Proteinas, creatina, vitaminas y mucho mas.
+          </p>
+          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            <a href="tel:+34828048310" style={{ color:'rgba(255,255,255,0.6)', textDecoration:'none', fontSize:13, display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ color:'var(--red)' }}>📞</span> +34 828 048 310
+            </a>
+            <a href="mailto:tienda@buymuscle.es" style={{ color:'rgba(255,255,255,0.6)', textDecoration:'none', fontSize:13, display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ color:'var(--red)' }}>✉️</span> tienda@buymuscle.es
+            </a>
+            <div style={{ color:'rgba(255,255,255,0.5)', fontSize:13, display:'flex', alignItems:'flex-start', gap:8 }}>
+              <span style={{ color:'var(--red)', flexShrink:0 }}>📍</span>
+              <span>Alcalde Manuel Amador Rodriguez 23, 35200 Telde, Las Palmas</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Col 2: Informacion */}
+        <div>
+          <h4 style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.1em', color:'white', marginBottom:'1rem', paddingBottom:'0.5rem', borderBottom:'1px solid rgba(255,255,255,0.1)' }}>
+            INFORMACION
+          </h4>
+          <nav style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {[
-              {icon:'🚚', t:'Envío 24/48h', d:'Pedidos antes de las 14h'},
-              {icon:'🔒', t:'Pago 100% Seguro', d:'SSL · Tarjeta · Bizum'},
-              {icon:'🔄', t:'Devoluciones', d:'14 días garantizados'},
-              {icon:'✅', t:'Originales', d:'Productos 100% auténticos'},
-            ].map(g=>(
-              <div key={g.t} style={{display:'flex', alignItems:'center', gap:10}}>
-                <span style={{fontSize:20, flexShrink:0}}>{g.icon}</span>
-                <div>
-                  <div style={{fontSize:12, fontWeight:700, color:'white', textTransform:'uppercase' as const, letterSpacing:'0.03em'}}>{g.t}</div>
-                  <div style={{fontSize:11, color:'rgba(255,255,255,0.35)'}}>{g.d}</div>
-                </div>
-              </div>
+              ['Sobre Nosotros','/sobre-nosotros'],
+              ['Cambios y Devoluciones','/devoluciones'],
+              ['Contacto','/contacto'],
+              ['Gastos de envio','/envio'],
+              ['Aviso Legal','/aviso-legal'],
+              ['Politica de Privacidad','/privacidad'],
+              ['Blog','/blog'],
+            ].map(([label,href])=>(
+              <Link key={href} href={href} style={{ fontSize:13, color:'rgba(255,255,255,0.5)', textDecoration:'none', transition:'color 0.12s' }}
+                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
+                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {/* Col 3: Categorias */}
+        <div>
+          <h4 style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.1em', color:'white', marginBottom:'1rem', paddingBottom:'0.5rem', borderBottom:'1px solid rgba(255,255,255,0.1)' }}>
+            CATEGORIAS
+          </h4>
+          <nav style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {[
+              ['Proteinas','/tienda?cat=Proteinas'],
+              ['Creatinas','/tienda?cat=Creatinas Monohidratos'],
+              ['Pre-entrenos','/tienda?cat=Pre-entrenos'],
+              ['BCAA','/tienda?cat=BCAA'],
+              ['Vitaminas','/tienda?cat=Vitaminas'],
+              ['Quemadores','/tienda?cat=Quemadores'],
+              ['Sport Wear','/sport-wear'],
+              ['Veganos','/veganos'],
+              ['StreetFlavour','/streetflavour'],
+            ].map(([label,href])=>(
+              <Link key={href} href={href} style={{ fontSize:13, color:'rgba(255,255,255,0.5)', textDecoration:'none', transition:'color 0.12s' }}
+                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
+                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        {/* Col 4: Seguridad + RRSS */}
+        <div>
+          <h4 style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.1em', color:'white', marginBottom:'1rem', paddingBottom:'0.5rem', borderBottom:'1px solid rgba(255,255,255,0.1)' }}>
+            PAGO SEGURO
+          </h4>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:'1.5rem' }}>
+            {['💳 Tarjeta','🏦 Bizum','🔒 SSL'].map(m=>(
+              <span key={m} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', padding:'5px 10px', fontSize:12, color:'rgba(255,255,255,0.6)', borderRadius:2 }}>{m}</span>
+            ))}
+          </div>
+          <div style={{ background:'rgba(255,30,65,0.08)', border:'1px solid rgba(255,30,65,0.25)', padding:'12px 14px', marginBottom:'1.5rem' }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>Envio gratis</div>
+            <div style={{ fontSize:13, color:'rgba(255,255,255,0.6)' }}>En pedidos superiores a 50€</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:2 }}>Entrega en 24/48h laborables</div>
+          </div>
+          <h4 style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.1em', color:'white', marginBottom:'0.75rem' }}>SIGUENOS</h4>
+          <div style={{ display:'flex', gap:10 }}>
+            {[
+              ['IG','https://instagram.com/buymuscle.es','#E1306C'],
+              ['FB','https://facebook.com/buymuscle','#1877F2'],
+              ['YT','https://youtube.com/@buymuscle','#FF0000'],
+              ['WA','https://wa.me/34828048310','#25D366'],
+            ].map(([icon,href,color])=>(
+              <a key={icon} href={href} target="_blank" rel="noopener noreferrer"
+                style={{ width:36,height:36,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.7)',textDecoration:'none',transition:'all 0.15s',borderRadius:2 }}
+                onMouseEnter={e=>{ e.currentTarget.style.background=color+'22'; e.currentTarget.style.borderColor=color; e.currentTarget.style.color=color; }}
+                onMouseLeave={e=>{ e.currentTarget.style.background='rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.12)'; e.currentTarget.style.color='rgba(255,255,255,0.7)'; }}>
+                {icon}
+              </a>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Cuerpo */}
-      <div className="container">
-        <div style={{display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 1.4fr', gap:'2.5rem', padding:'2.5rem 0', borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
-
-          {/* Logo + descripción */}
-          <div>
-            <Link href="/" style={{fontFamily:'var(--font-body)', fontSize:22, fontWeight:900, color:'var(--red)', fontStyle:'italic', textTransform:'uppercase' as const, textDecoration:'none', display:'block', marginBottom:'0.75rem'}}>
-              BUYMUSCLE
-            </Link>
-            <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.7, marginBottom:'1.25rem', maxWidth:260}}>
-              Tienda online de suplementación deportiva en Canarias. Más de 300 productos de las mejores marcas.
-            </p>
-            <div style={{display:'flex', gap:8, marginBottom:'1.25rem'}}>
-              {[['📘','Facebook'],['📸','Instagram'],['🎵','TikTok'],['▶️','YouTube']].map(([ic,lb])=>(
-                <a key={lb} href="#" aria-label={lb}
-                  style={{width:34, height:34, background:'rgba(255,255,255,0.07)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, cursor:'pointer', transition:'background 0.15s', textDecoration:'none'}}
-                  onMouseEnter={e=>(e.currentTarget.style.background='var(--red)')}
-                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.07)')}>
-                  {ic}
-                </a>
-              ))}
-            </div>
-            <div style={{display:'flex', gap:6, flexWrap:'wrap' as const}}>
-              {['💳 Tarjeta','📱 Bizum','🏦 Transferencia'].map(m=>(
-                <span key={m} style={{background:'rgba(255,255,255,0.06)', padding:'4px 10px', fontSize:11, color:'rgba(255,255,255,0.45)', fontWeight:600}}>{m}</span>
-              ))}
-            </div>
+      {/* Bottom bar */}
+      <div style={{ borderTop:'1px solid rgba(255,255,255,0.08)', padding:'1rem 20px' }}>
+        <div style={{ maxWidth:1280, margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
+          <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)' }}>
+            © {new Date().getFullYear()} BuyMuscle. Todos los derechos reservados.
           </div>
-
-          {/* Información */}
-          <div>
-            <FooterTitle>Información</FooterTitle>
-            {INFO_LINKS.map(l=><FooterLink key={l.l} href={l.h}>{l.l}</FooterLink>)}
-          </div>
-
-          {/* Seguridad */}
-          <div>
-            <FooterTitle>Seguridad</FooterTitle>
-            {SEG_LINKS.map(l=><FooterLink key={l.l} href={l.h}>{l.l}</FooterLink>)}
-          </div>
-
-          {/* Enlaces */}
-          <div>
-            <FooterTitle>Enlaces</FooterTitle>
-            {ENL_LINKS.map(l=><FooterLink key={l.l} href={l.h}>{l.l}</FooterLink>)}
-          </div>
-
-          {/* Contacto */}
-          <div>
-            <FooterTitle>Contacto</FooterTitle>
-            <div style={{display:'flex', flexDirection:'column' as const, gap:'0.6rem'}}>
-              <div style={{display:'flex', gap:8, alignItems:'flex-start'}}>
-                <span style={{flexShrink:0, marginTop:1}}>📍</span>
-                <span style={{fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.6}}>
-                  Alcalde Manuel Amador Rodríguez, 23<br/>
-                  35200 Telde, Las Palmas
-                </span>
-              </div>
-              <a href="tel:+34828048310" style={{display:'flex', gap:8, alignItems:'center', fontSize:13, color:'rgba(255,255,255,0.45)', textDecoration:'none'}}
-                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
-                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.45)')}>
-                <span>📞</span> +34 828 048 310
-              </a>
-              <a href="mailto:tienda@buymuscle.es" style={{display:'flex', gap:8, alignItems:'center', fontSize:13, color:'rgba(255,255,255,0.45)', textDecoration:'none'}}
-                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
-                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.45)')}>
-                <span>✉️</span> tienda@buymuscle.es
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Copyright */}
-      <div style={{background:'#000'}}>
-        <div className="container">
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.75rem 0', flexWrap:'wrap' as const, gap:8}}>
-            <span style={{fontSize:12, color:'rgba(255,255,255,0.25)'}}>
-              Copyright © BuyMuscle — Tienda Online de Suplementación Deportiva
-            </span>
-            <div style={{display:'flex', gap:'1.25rem'}}>
-              {[['Privacidad','/privacidad'],['Cookies','/cookies'],['Aviso Legal','/aviso-legal']].map(([t,h])=>(
-                <Link key={t} href={h} style={{fontSize:11, color:'rgba(255,255,255,0.2)', textDecoration:'none'}}
-                  onMouseEnter={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')}
-                  onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.2)')}>
-                  {t}
-                </Link>
-              ))}
-            </div>
+          <div style={{ display:'flex', gap:16 }}>
+            {[['Privacidad','/privacidad'],['Cookies','/cookies'],['Aviso Legal','/aviso-legal']].map(([l,h])=>(
+              <Link key={h} href={h} style={{ fontSize:11, color:'rgba(255,255,255,0.3)', textDecoration:'none' }}>{l}</Link>
+            ))}
           </div>
         </div>
       </div>
