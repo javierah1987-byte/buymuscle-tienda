@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 
 const BASE_BLOG = 'https://tienda.buymuscle.es/blog/news/'
