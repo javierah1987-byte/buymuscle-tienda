@@ -195,6 +195,14 @@ export default function Navbar() {
           <div className="container">
             <div style={{display:'flex',alignItems:'stretch',position:'relative'}}>
 
+              {/* Icono casa — igual que el original, al inicio */}
+              <Link href="/"
+                style={{height:42,padding:'0 12px',display:'flex',alignItems:'center',color:'rgba(255,255,255,0.8)',fontSize:18,flexShrink:0,textDecoration:'none',transition:'color 0.1s'}}
+                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
+                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.8)')}>
+                🏠
+              </Link>
+
               {/* NUTRICIÓN DEPORTIVA — mega-menú */}
               <div style={{position:'static'}}
                 onMouseEnter={()=>setOpenMenu('nutricion')}
@@ -256,13 +264,6 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-
-              {/* Icono casa — igual que el original */}
-              <Link href="/" style={{height:42,padding:'0 10px',display:'flex',alignItems:'center',color:'rgba(255,255,255,0.85)',fontSize:19,flexShrink:0,textDecoration:'none'}}
-                onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
-                onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.85)')}>
-                🏠
-              </Link>
 
               {/* Links directos */}
               {NAV_DIRECT.map(link=>(
