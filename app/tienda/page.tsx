@@ -8,25 +8,24 @@ import Link from 'next/link'
 const PER_PAGE = 24
 
 const CAT_GROUPS = [
-  { label:'NutriciÃ³n Deportiva', cats:['ProteÃ­nas','ProteÃ­na Whey','ProteÃ­na Isolatada','ProteÃ­na Vegetal','CaseÃ­nas','Ganadores de Peso','Barritas ProtÃ©icas','Snacks ProtÃ©icos','Creatinas Monohidratos','Pre-entrenos','Recuperadores','BCAA','AminoÃ¡cidos','Glutaminas','L-Carnitina','TermogÃ©nicos'] },
-  { label:'Vitaminas y Salud', cats:['Vitaminas','Minerales','Omega 3','ColÃ¡geno','Sistema InmunolÃ³gico'] },
-  { label:'Objetivos', cats:['Ganar MÃºsculo','Control de Peso','Quemadores','Rendimiento Deportivo'] },
+  { label:'Nutricion Deportiva', cats:['Proteinas','Proteina Whey','Proteina Isolatada','Proteina Vegetal','Caseinas','Ganadores de Peso','Barritas Proteicas','Snacks Proteicos','Creatinas Monohidratos','Pre-entrenos','Recuperadores','BCAA','Aminoacidos','Glutaminas','L-Carnitina','Termogenicos'] },
+  { label:'Vitaminas y Salud', cats:['Vitaminas','Minerales','Omega 3','Colageno','Sistema Inmunologico'] },
+  { label:'Objetivos', cats:['Ganar Musculo','Control de Peso','Quemadores','Rendimiento Deportivo'] },
   { label:'Caprichos Fit', cats:['Alimentos y Snacks','Caprichos Fit','Salsas y Siropes'] },
   { label:'Sport Wear', cats:['Sport Wear','Camisetas','StreetFlavour'] },
   { label:'Otros', cats:['Veganos','Packs','Bebidas','Pre-Pedidos','Accesorios'] },
 ]
 
-const SABORES_COMUNES = ['Chocolate','Vainilla','Fresa','Cookies & Cream','Neutro','Caramelo Salado','Black Cookies','Pistacho','LimÃ³n','PlÃ¡tano']
+const SABORES_COMUNES = ['Chocolate','Vainilla','Fresa','Cookies & Cream','Neutro','Caramelo Salado','Black Cookies','Pistacho','Limon','Platano']
 
 function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true)
   return (
     <div style={{borderBottom:'1px solid #e8e8e8'}}>
-      <button onClick={() => setOpen(o => !o)} style={{width:'100%',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',fontFamily:'var(--font-body)',fontSize:12,fontWeight:700,textTransform:'uppercase' as const,letterSpacing:'0.06em',color:'#111',background:'none',border:'none',cursor:'pointer'}}>
-        {title}
-        <span style={{fontSize:9,color:'#999'}}>{open ? 'â¼' : 'â¶'}</span>
+      <button onClick={() => setOpen(o => !o)} style={{width:'100%',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'none',border:'none',cursor:'pointer',fontSize:11,fontWeight:800,color:'#222',textTransform:'uppercase',letterSpacing:'0.07em'}}>
+        {title}<span style={{fontSize:14,color:'#aaa'}}>{open?'▾':'▸'}</span>
       </button>
-      {open && <div style={{padding:'4px 14px 12px'}}>{children}</div>}
+      {open && <div style={{padding:'0 14px 12px'}}>{children}</div>}
     </div>
   )
 }
@@ -34,201 +33,217 @@ function SidebarSection({ title, children }: { title: string; children: React.Re
 function TiendaContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const catParam = searchParams.get('cat') || ''
+  const brandParam = searchParams.get('brand') || ''
+  const pageParam = parseInt(searchParams.get('page') || '1')
+  const q = searchParams.get('q') || ''
+
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [marcas, setMarcas] = useState<string[]>([])
-  // Usar array en lugar de Set para compatibilidad TS
-  const [openGroups, setOpenGroups] = useState<number[]>([0])
-  const [filtroMarcas, setFiltroMarcas] = useState<string[]>([])
+  const [brands, setBrands] = useState<string[]>([])
+  const [filtroMarcas, setFiltroMarcas] = useState<string[]>(brandParam ? [brandParam] : [])
   const [filtroSabores, setFiltroSabores] = useState<string[]>([])
-  const [filtroDisp, setFiltroDisp] = useState<string>('')
   const [maxPrice, setMaxPrice] = useState(200)
-
-  const cat = searchParams.get('cat') || ''
-  const q = searchParams.get('q') || ''
-  const page = parseInt(searchParams.get('page') || '1')
-
-  const isGroupOpen = (i: number) => openGroups.includes(i)
-  const toggleGroup = (i: number) => setOpenGroups(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])
+  const [search, setSearch] = useState(q)
+  const [sortBy, setSortBy] = useState('newest')
 
   useEffect(() => {
-    async function loadMarcas() {
-      let query = supabase.from('products').select('brand').eq('active', true).not('brand', 'is', null)
-      if (cat) {
-        const { data: catData } = await supabase.from('categories').select('id').eq('name', cat).single()
-        if (catData) query = (query as any).eq('category_id', catData.id)
-      }
-      const { data } = await query
-      const uniqueBrands = Array.from(new Set((data || []).map((p: any) => p.brand).filter(Boolean))).sort() as string[]
-      setMarcas(uniqueBrands)
-    }
-    loadMarcas()
-    setFiltroMarcas([])
-    setFiltroSabores([])
-    setFiltroDisp('')
-  }, [cat])
+    supabase.from('products').select('brand').eq('active', true).not('brand','is',null)
+      .then(({data}) => {
+        const unique = [...new Set((data||[]).map((p:any)=>p.brand).filter(Boolean))].sort()
+        setBrands(unique)
+      })
+  }, [])
 
-  const load = useCallback(async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true)
-    let query = supabase.from('products').select('*, categories(name)', { count: 'exact' }).eq('active', true)
-    if (cat) {
-      const { data: catData } = await supabase.from('categories').select('id').eq('name', cat).single()
-      if (catData) query = query.eq('category_id', catData.id)
+    let query = supabase.from('products').select('*, categories(name)', {count:'exact'}).eq('active',true).gt('stock',0)
+    if (catParam) {
+      const {data:cd} = await supabase.from('categories').select('id').eq('name', catParam).single()
+      if (cd) query = query.eq('category_id', cd.id)
     }
-    if (q) query = query.ilike('name', `%${q}%`)
     if (filtroMarcas.length > 0) query = query.in('brand', filtroMarcas)
-    if (filtroDisp === 'stock') query = query.gt('stock', 0)
-    if (filtroDisp === 'agotado') query = query.eq('stock', 0)
-    query = query.lte('price_incl_tax', maxPrice)
-    const { data, count } = await query.order('id', { ascending: false }).range((page - 1) * PER_PAGE, page * PER_PAGE - 1)
-    setProducts((data || []) as Product[])
+    if (maxPrice < 200) query = query.lte('price_incl_tax', maxPrice)
+    if (search) query = query.ilike('name', `%${search}%`)
+    if (sortBy === 'newest') query = query.order('id', {ascending:false})
+    else if (sortBy === 'price_asc') query = query.order('price_incl_tax', {ascending:true})
+    else if (sortBy === 'price_desc') query = query.order('price_incl_tax', {ascending:false})
+    else if (sortBy === 'name') query = query.order('name', {ascending:true})
+    const from = (pageParam - 1) * PER_PAGE
+    const {data, count} = await query.range(from, from + PER_PAGE - 1)
+    setProducts(data || [])
     setTotal(count || 0)
     setLoading(false)
-  }, [cat, q, page, filtroMarcas, filtroDisp, maxPrice])
+  }, [catParam, filtroMarcas, maxPrice, search, sortBy, pageParam])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { fetchProducts() }, [fetchProducts])
 
   const totalPages = Math.ceil(total / PER_PAGE)
-  const hasFilters = filtroMarcas.length > 0 || filtroSabores.length > 0 || filtroDisp !== '' || maxPrice < 200
+  const updateUrl = (params: Record<string,string>) => {
+    const p = new URLSearchParams(searchParams.toString())
+    Object.entries(params).forEach(([k,v]) => v ? p.set(k,v) : p.delete(k))
+    p.delete('page')
+    router.push('/tienda?' + p.toString())
+  }
 
   return (
-    <div style={{ background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{maxWidth:1280,margin:'0 auto',padding:'1.25rem 20px 3rem'}}>
       {/* Breadcrumb */}
-      <div style={{ background: 'white', borderBottom: '1px solid #e8e8e8', padding: '10px 0' }}>
-        <div className="container" style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12, color: '#999' }}>
-          <Link href="/" style={{ color: '#999', textDecoration: 'none' }}>Inicio</Link>
-          <span>âº</span>
-          <Link href="/tienda" style={{ color: '#999', textDecoration: 'none' }}>Tienda</Link>
-          {cat && <><span>âº</span><span style={{ color: '#333', fontWeight: 600 }}>{cat}</span></>}
-          {q && <><span>âº</span><span style={{ color: '#333', fontWeight: 600 }}>"{q}"</span></>}
-        </div>
+      <div style={{fontSize:12,color:'#999',marginBottom:'1rem',display:'flex',gap:6,alignItems:'center'}}>
+        <Link href="/" style={{color:'#999',textDecoration:'none'}}>Inicio</Link>
+        <span>›</span>
+        {catParam ? (
+          <>
+            <Link href="/tienda" style={{color:'#999',textDecoration:'none'}}>Tienda</Link>
+            <span>›</span>
+            <span style={{color:'#333',fontWeight:600}}>{catParam}</span>
+          </>
+        ) : <span style={{color:'#333',fontWeight:600}}>Tienda</span>}
       </div>
 
-      <div className="container" style={{ paddingTop: '1.25rem', paddingBottom: '3rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '1.25rem', alignItems: 'start' }}>
+      <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
+        {/* SIDEBAR */}
+        <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0}}>
+          {/* Categorias */}
+          {CAT_GROUPS.map(group => (
+            <SidebarSection key={group.label} title={group.label}>
+              {group.cats.map(cat => (
+                <Link key={cat} href={`/tienda?cat=${encodeURIComponent(cat)}`}
+                  style={{display:'block',padding:'5px 0',fontSize:13,color:catParam===cat?'var(--red)':'#555',fontWeight:catParam===cat?700:400,textDecoration:'none',transition:'color 0.12s'}}>
+                  {cat}
+                </Link>
+              ))}
+            </SidebarSection>
+          ))}
 
-          {/* SIDEBAR */}
-          <aside style={{ background: 'white', border: '1px solid #e8e8e8', position: 'sticky', top: 8 }}>
-            {CAT_GROUPS.map((group, gi) => (
-              <div key={gi} style={{ borderBottom: '1px solid #e8e8e8' }}>
-                <button onClick={() => toggleGroup(gi)} style={{ width: '100%', padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--font-body)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#111', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  {group.label}
-                  <span style={{ fontSize: 9, color: '#aaa' }}>{isGroupOpen(gi) ? 'â¼' : 'â¶'}</span>
-                </button>
-                {isGroupOpen(gi) && (
-                  <div style={{ paddingBottom: 6 }}>
-                    {group.cats.map(c => (
-                      <Link key={c} href={`/tienda?cat=${encodeURIComponent(c)}`}
-                        style={{ display: 'block', padding: '5px 14px 5px 20px', fontSize: 13, color: cat === c ? 'var(--red)' : '#555', fontWeight: cat === c ? 700 : 400, borderLeft: cat === c ? '3px solid var(--red)' : '3px solid transparent', background: cat === c ? 'rgba(255,30,65,0.03)' : 'transparent', textDecoration: 'none' }}>
-                        {c}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {marcas.length > 0 && (
-              <SidebarSection title="Marca">
-                {marcas.slice(0, 8).map(m => (
-                  <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '3px 0', fontSize: 13, color: '#444', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={filtroMarcas.includes(m)} onChange={() => setFiltroMarcas(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])} style={{ accentColor: 'var(--red)', cursor: 'pointer' }} />
+          {/* Marcas */}
+          {brands.length > 0 && (
+            <SidebarSection title="Marca">
+              <div style={{maxHeight:200,overflowY:'auto'}}>
+                {brands.map(m => (
+                  <label key={m} style={{display:'flex',alignItems:'center',gap:8,padding:'3px 0',cursor:'pointer',fontSize:13,color:'#555'}}>
+                    <input type="checkbox" checked={filtroMarcas.includes(m)} onChange={() => setFiltroMarcas(prev => prev.includes(m)?prev.filter(x=>x!==m):[...prev,m])} style={{width:'auto',accentColor:'var(--red)'}}/>
                     {m}
                   </label>
                 ))}
-              </SidebarSection>
-            )}
-
-            <SidebarSection title="Precio">
-              <input type="range" min={0} max={200} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--red)', marginTop: 4 }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#666', marginTop: 4 }}>
-                <span>1,00 â¬</span><span style={{ fontWeight: 600 }}>{maxPrice},00 â¬</span>
               </div>
             </SidebarSection>
+          )}
 
-            <SidebarSection title="Sabores">
+          {/* Precio */}
+          <SidebarSection title="Precio max.">
+            <input type="range" min={0} max={200} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{width:'100%',accentColor:'var(--red)',border:'none',padding:0}}/>
+            <div style={{fontSize:12,color:'#888',marginTop:4}}>Hasta {maxPrice} €</div>
+          </SidebarSection>
+
+          {/* Sabores */}
+          <SidebarSection title="Sabor">
+            <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
               {SABORES_COMUNES.map(s => (
-                <label key={s} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '3px 0', fontSize: 13, color: '#444', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={filtroSabores.includes(s)} onChange={() => setFiltroSabores(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])} style={{ accentColor: 'var(--red)', cursor: 'pointer' }} />
+                <button key={s} onClick={() => setFiltroSabores(prev => prev.includes(s)?prev.filter(x=>x!==s):[...prev,s])}
+                  style={{padding:'3px 8px',fontSize:11,border:'1px solid',borderColor:filtroSabores.includes(s)?'var(--red)':'#ddd',background:filtroSabores.includes(s)?'var(--red)':'white',color:filtroSabores.includes(s)?'white':'#666',cursor:'pointer',borderRadius:2,fontFamily:'var(--font-body)'}}>
                   {s}
-                </label>
-              ))}
-            </SidebarSection>
-
-            <SidebarSection title="Disponibilidad">
-              {([['', 'Todos'], ['stock', 'En stock'], ['agotado', 'Agotados']] as [string,string][]).map(([val, lbl]) => (
-                <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '3px 0', fontSize: 13, color: '#444', cursor: 'pointer' }}>
-                  <input type="radio" name="disp" checked={filtroDisp === val} onChange={() => setFiltroDisp(val)} style={{ accentColor: 'var(--red)', cursor: 'pointer' }} />
-                  {lbl}
-                </label>
-              ))}
-            </SidebarSection>
-
-            {hasFilters && (
-              <div style={{ padding: '10px 12px' }}>
-                <button onClick={() => { setFiltroMarcas([]); setFiltroSabores([]); setFiltroDisp(''); setMaxPrice(200) }}
-                  style={{ width: '100%', padding: '7px', background: 'none', border: '1px solid #ccc', color: '#666', fontSize: 12, fontFamily: 'var(--font-body)', cursor: 'pointer' }}>
-                  â Quitar filtros
                 </button>
-              </div>
-            )}
-          </aside>
-
-          {/* CONTENIDO */}
-          <div>
-            <div style={{ background: 'white', border: '1px solid #e8e8e8', padding: '14px 16px', marginBottom: '1px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 8 }}>
-              <div>
-                <h1 style={{ fontSize: 20, fontWeight: 800, textTransform: 'uppercase' as const, margin: 0, color: '#111' }}>
-                  {cat || (q ? `"${q}"` : 'Todo el catÃ¡logo')}
-                </h1>
-                <p style={{ fontSize: 12, color: '#999', margin: '2px 0 0' }}>{loading ? 'Cargando...' : `${total} producto${total !== 1 ? 's' : ''}`}</p>
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' as const }}>
-                {(cat || q) && <Link href="/tienda" style={{ fontSize: 12, color: '#999', textDecoration: 'none', border: '1px solid #e8e8e8', padding: '5px 10px' }}>â Quitar filtro</Link>}
-                <form onSubmit={e => { e.preventDefault(); const val = (e.currentTarget.querySelector('input') as HTMLInputElement).value; router.push(val ? `/tienda?q=${encodeURIComponent(val)}` : '/tienda') }} style={{ display: 'flex' }}>
-                  <input defaultValue={q} placeholder="Buscar..." name="q" style={{ padding: '6px 10px', fontSize: 12, border: '1px solid #ddd', borderRight: 'none', width: 160, margin: 0, outline: 'none' }} />
-                  <button type="submit" style={{ padding: '6px 12px', background: 'var(--red)', border: 'none', color: 'white', cursor: 'pointer', fontSize: 13 }}>ð</button>
-                </form>
-              </div>
+              ))}
             </div>
+          </SidebarSection>
 
-            {!cat && !q && (
-              <div style={{ background: 'white', border: '1px solid #e8e8e8', borderTop: 'none', padding: '10px 14px', marginBottom: '1px', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' as const }}>
-                {['ProteÃ­nas','Creatinas Monohidratos','Pre-entrenos','BCAA','Vitaminas','Quemadores','Snacks ProtÃ©icos','Veganos'].map(c => (
-                  <Link key={c} href={`/tienda?cat=${encodeURIComponent(c)}`} style={{ padding: '5px 14px', border: '1px solid #ddd', fontSize: 12, fontWeight: 600, color: '#444', textDecoration: 'none', background: 'white' }}>{c}</Link>
-                ))}
-              </div>
-            )}
+          {/* Reset */}
+          {(catParam||filtroMarcas.length>0||filtroSabores.length>0||maxPrice<200) && (
+            <div style={{padding:'12px 14px'}}>
+              <button onClick={()=>{setFiltroMarcas([]);setFiltroSabores([]);setMaxPrice(200);router.push('/tienda')}}
+                style={{width:'100%',padding:'8px',background:'#f5f5f5',border:'1px solid #ddd',fontSize:12,cursor:'pointer',fontFamily:'var(--font-body)',color:'#555'}}>
+                Limpiar filtros
+              </button>
+            </div>
+          )}
+        </aside>
 
-            {loading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: '#e8e8e8', marginTop: '1px' }}>
-                {Array.from({ length: 12 }).map((_, i) => <div key={i} style={{ background: 'white', height: 320 }} />)}
+        {/* GRID */}
+        <div>
+          {/* Header */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1rem',background:'white',padding:'12px 16px',border:'1px solid #e8e8e8'}}>
+            <div>
+              <h1 style={{fontSize:18,fontWeight:800,textTransform:'uppercase',color:'#111',margin:0}}>
+                {catParam || 'TODO EL CATALOGO'}
+              </h1>
+              <div style={{fontSize:12,color:'#999',marginTop:2}}>{loading?'Cargando...':total+' productos'}</div>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              {/* Busqueda */}
+              <div style={{display:'flex',gap:0}}>
+                <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')updateUrl({q:search})}} placeholder="Buscar..." style={{padding:'7px 10px',fontSize:13,border:'1px solid #ddd',borderRight:'none',width:160,fontFamily:'var(--font-body)'}}/>
+                <button onClick={()=>updateUrl({q:search})} style={{background:'var(--red)',color:'white',border:'none',padding:'7px 12px',cursor:'pointer',fontSize:13}}>🔍</button>
               </div>
-            ) : products.length === 0 ? (
-              <div style={{ background: 'white', textAlign: 'center', padding: '4rem 2rem', marginTop: '1px', border: '1px solid #e8e8e8' }}>
-                <div style={{ fontSize: 48, marginBottom: '1rem' }}>ð</div>
-                <p style={{ fontWeight: 700, fontSize: 18, color: '#111' }}>No se encontraron productos</p>
-                <p style={{ marginTop: 8, color: '#999' }}>Prueba otros filtros o <Link href="/tienda" style={{ color: 'var(--red)' }}>ver todo</Link></p>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: '#e8e8e8', marginTop: '1px' }}>
-                {products.map(p => <ProductCard key={p.id} product={p} />)}
-              </div>
-            )}
-
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.25rem', marginTop: '1.5rem', flexWrap: 'wrap' as const }}>
-                {page > 1 && <Link href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${page - 1}`} style={{ padding: '8px 14px', fontSize: 13, border: '1px solid #ddd', background: 'white', color: '#333', textDecoration: 'none' }}>â Anterior</Link>}
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                  const p2 = page <= 4 ? i + 1 : page > totalPages - 3 ? totalPages - 6 + i : page - 3 + i
-                  if (p2 < 1 || p2 > totalPages) return null
-                  return <Link key={p2} href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${p2}`} style={{ padding: '8px 14px', fontSize: 13, border: '1px solid #ddd', background: p2 === page ? 'var(--red)' : 'white', color: p2 === page ? 'white' : '#333', fontWeight: p2 === page ? 700 : 400, textDecoration: 'none' }}>{p2}</Link>
-                })}
-                {page < totalPages && <Link href={`/tienda?cat=${encodeURIComponent(cat)}&q=${encodeURIComponent(q)}&page=${page + 1}`} style={{ padding: '8px 14px', fontSize: 13, border: '1px solid #ddd', background: 'white', color: '#333', textDecoration: 'none' }}>Siguiente â</Link>}
-              </div>
-            )}
+              {/* Ordenar */}
+              <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{padding:'7px 10px',fontSize:12,border:'1px solid #ddd',background:'white',fontFamily:'var(--font-body)',cursor:'pointer'}}>
+                <option value="newest">Mas recientes</option>
+                <option value="price_asc">Precio: menor a mayor</option>
+                <option value="price_desc">Precio: mayor a menor</option>
+                <option value="name">Nombre A-Z</option>
+              </select>
+            </div>
           </div>
+
+          {/* Quick cats */}
+          <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:'1rem'}}>
+            {['Proteinas','Creatinas Monohidratos','Pre-entrenos','BCAA','Vitaminas','Quemadores','Snacks Proteicos','Veganos'].map(cat=>(
+              <Link key={cat} href={`/tienda?cat=${encodeURIComponent(cat)}`}
+                style={{padding:'5px 12px',fontSize:12,border:'1px solid',borderColor:catParam===cat?'var(--red)':'#ddd',background:catParam===cat?'var(--red)':'white',color:catParam===cat?'white':'#555',textDecoration:'none',fontWeight:catParam===cat?700:400,transition:'all 0.12s'}}>
+                {cat}
+              </Link>
+            ))}
+          </div>
+
+          {/* Productos */}
+          {loading ? (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#e8e8e8'}}>
+              {Array.from({length:8}).map((_,i)=>(
+                <div key={i} style={{background:'white',height:320,animation:'pulse 1.5s infinite'}}/>
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <div style={{background:'white',padding:'3rem',textAlign:'center',border:'1px solid #e8e8e8'}}>
+              <div style={{fontSize:40,marginBottom:'1rem'}}>🔍</div>
+              <h3 style={{fontWeight:700,marginBottom:'0.5rem'}}>Sin resultados</h3>
+              <p style={{color:'#999',marginBottom:'1rem'}}>No encontramos productos con estos filtros</p>
+              <button onClick={()=>{setFiltroMarcas([]);setFiltroSabores([]);setMaxPrice(200);router.push('/tienda')}} style={{background:'var(--red)',color:'white',border:'none',padding:'10px 24px',cursor:'pointer',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textTransform:'uppercase'}}>
+                Ver todos los productos
+              </button>
+            </div>
+          ) : (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#e8e8e8',marginTop:'1px'}}>
+              {products.map(p => <ProductCard key={p.id} product={p}/>)}
+            </div>
+          )}
+
+          {/* Paginacion */}
+          {totalPages > 1 && (
+            <div style={{display:'flex',justifyContent:'center',gap:4,marginTop:'1.5rem',flexWrap:'wrap'}}>
+              {pageParam > 1 && (
+                <Link href={`/tienda?${new URLSearchParams({...Object.fromEntries(searchParams),page:String(pageParam-1)})}`}
+                  style={{padding:'8px 14px',border:'1px solid #ddd',background:'white',color:'#333',textDecoration:'none',fontSize:13}}>
+                  ← Anterior
+                </Link>
+              )}
+              {Array.from({length:Math.min(totalPages,7)},(_,i)=>{
+                const p = i+1
+                return (
+                  <Link key={p} href={`/tienda?${new URLSearchParams({...Object.fromEntries(searchParams),page:String(p)})}`}
+                    style={{padding:'8px 14px',border:'1px solid',borderColor:p===pageParam?'var(--red)':'#ddd',background:p===pageParam?'var(--red)':'white',color:p===pageParam?'white':'#333',textDecoration:'none',fontSize:13,fontWeight:p===pageParam?700:400}}>
+                    {p}
+                  </Link>
+                )
+              })}
+              {pageParam < totalPages && (
+                <Link href={`/tienda?${new URLSearchParams({...Object.fromEntries(searchParams),page:String(pageParam+1)})}`}
+                  style={{padding:'8px 14px',border:'1px solid #ddd',background:'white',color:'#333',textDecoration:'none',fontSize:13}}>
+                  Siguiente →
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -237,7 +252,7 @@ function TiendaContent() {
 
 export default function TiendaPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontSize: 14, color: '#999' }}>Cargando tienda...</div></div>}>
+    <Suspense fallback={<div style={{padding:'2rem',textAlign:'center'}}>Cargando...</div>}>
       <TiendaContent />
     </Suspense>
   )
