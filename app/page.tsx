@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import HeroSlider from '@/components/HeroSlider'
 
+const BG_VIDEO_3 = 'https://tienda.buymuscle.es/img/cms/bg-video-BM-3.mp4'
+
 async function getProducts(cat?: string, limit = 8) {
   let q = supabase.from('products').select('*, categories(name)').eq('active', true).gt('stock', 0)
   if (cat) {
@@ -14,16 +16,16 @@ async function getProducts(cat?: string, limit = 8) {
 }
 
 const QUICK_CATS = [
-  { name:'Proteínas',     icon:'🥛', slug:'Proteínas' },
-  { name:'Creatinas',    icon:'⚡', slug:'Creatinas Monohidratos' },
-  { name:'Pre-entrenos', icon:'🔥', slug:'Pre-entrenos' },
-  { name:'BCAA',         icon:'💪', slug:'BCAA' },
-  { name:'Vitaminas',    icon:'💊', slug:'Vitaminas' },
-  { name:'Quemadores',   icon:'🎯', slug:'Quemadores' },
-  { name:'Sport Wear',   icon:'👕', slug:'Sport Wear' },
-  { name:'Veganos',      icon:'🌱', slug:'Veganos' },
-  { name:'Snacks',       icon:'🍫', slug:'Snacks Protéicos' },
-  { name:'Gainers',      icon:'💥', slug:'Ganadores de Peso' },
+  { name:'Proteínas',    icon:'🥛', slug:'Proteínas' },
+  { name:'Creatinas',   icon:'⚡', slug:'Creatinas Monohidratos' },
+  { name:'Pre-entrenos',icon:'🔥', slug:'Pre-entrenos' },
+  { name:'BCAA',        icon:'💪', slug:'BCAA' },
+  { name:'Vitaminas',   icon:'💊', slug:'Vitaminas' },
+  { name:'Quemadores',  icon:'🎯', slug:'Quemadores' },
+  { name:'Sport Wear',  icon:'👕', slug:'Sport Wear' },
+  { name:'Veganos',     icon:'🌱', slug:'Veganos' },
+  { name:'Snacks',      icon:'🍫', slug:'Snacks Protéicos' },
+  { name:'Gainers',     icon:'💥', slug:'Ganadores de Peso' },
 ]
 
 export default async function Home() {
@@ -36,19 +38,16 @@ export default async function Home() {
   return (
     <div style={{ background:'#f5f5f5' }}>
 
-      {/* SLIDER con imágenes reales de tienda.buymuscle.es */}
+      {/* HERO SLIDER con vídeo de fondo bg-video-BM-2.mp4 */}
       <HeroSlider />
 
-      {/* Categorías rápidas */}
-      <section style={{ background:'white', borderBottom:'1px solid #ebebeb' }}>
+      {/* BARRA DE CATEGORÍAS */}
+      <section style={{ background:'white', borderBottom:'1px solid #ebebeb', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
         <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
           <div style={{ display:'flex', overflowX:'auto' }}>
             {QUICK_CATS.map(cat => (
               <Link key={cat.name} href={`/tienda?cat=${encodeURIComponent(cat.slug)}`}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5,
-                  padding:'14px 20px', fontSize:11, fontWeight:700, color:'#444',
-                  textTransform:'uppercase', letterSpacing:'0.05em', textDecoration:'none',
-                  borderRight:'1px solid #f0f0f0', whiteSpace:'nowrap', flexShrink:0 }}>
+                className="cat-bar-link">
                 <span style={{ fontSize:22 }}>{cat.icon}</span>
                 {cat.name}
               </Link>
@@ -58,7 +57,7 @@ export default async function Home() {
       </section>
 
       {/* BUYMUSCLE / Nutrición deportiva + Novedades */}
-      <section style={{ background:'white', padding:'2rem 0 2.5rem', borderBottom:'1px solid #ebebeb' }}>
+      <section style={{ background:'white', padding:'2.5rem 0 3rem', borderBottom:'1px solid #ebebeb' }}>
         <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'260px 1fr', gap:'2.5rem', alignItems:'start' }}>
             <div style={{ paddingRight:'2rem', borderRight:'1px solid #ebebeb' }}>
@@ -69,13 +68,13 @@ export default async function Home() {
               <p style={{ fontSize:13, color:'#777', lineHeight:1.8, marginBottom:'1.5rem' }}>
                 Compra suplementos deportivos en Canarias con BuyMuscle. Proteínas, creatina, aminoácidos y pre-entrenos de marcas líderes como IO.Genix, GN Nutrition y más.
               </p>
-              <Link href="/tienda" style={{ fontSize:13, fontWeight:700, color:'var(--red)', textDecoration:'none' }}>
+              <Link href="/tienda" style={{ fontSize:13, fontWeight:700, color:'var(--red)', textDecoration:'none', display:'flex', alignItems:'center', gap:4 }}>
                 Ver todo el catálogo →
               </Link>
             </div>
             <div>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.25rem', borderBottom:'2px solid #f0f0f0', paddingBottom:'0.75rem' }}>
-                <div style={{ fontSize:17, fontWeight:800, textTransform:'uppercase', color:'#111' }}>NOVEDADES</div>
+                <div style={{ fontSize:17, fontWeight:800, textTransform:'uppercase', color:'#111', letterSpacing:'0.02em' }}>NOVEDADES</div>
                 <Link href="/tienda" style={{ fontSize:12, color:'var(--red)', fontWeight:700, textDecoration:'none', border:'1px solid var(--red)', padding:'5px 14px' }}>Ver todo →</Link>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1px', background:'#ebebeb' }}>
@@ -86,29 +85,50 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Distribuidores */}
-      <section style={{ background:'#111', padding:'2.5rem 0', borderTop:'3px solid var(--red)' }}>
-        <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
+      {/* DISTRIBUIDORES — con vídeo bg-video-BM-3.mp4 de fondo, igual que el original */}
+      <section style={{ position:'relative', padding:'3.5rem 0', overflow:'hidden', borderTop:'3px solid var(--red)' }}>
+        {/* Vídeo de fondo */}
+        <video autoPlay muted loop playsInline
+          style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)',
+            minWidth:'100%', minHeight:'100%', width:'auto', height:'auto',
+            objectFit:'cover', zIndex:0, opacity:0.5, filter:'brightness(0.5) saturate(1.1)' }}>
+          <source src={BG_VIDEO_3} type="video/mp4"/>
+        </video>
+        {/* Overlay oscuro */}
+        <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.6)', zIndex:1 }}/>
+        {/* Contenido */}
+        <div style={{ position:'relative', zIndex:2, maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:'3rem', alignItems:'center' }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.5rem' }}>PROGRAMA EXCLUSIVO</div>
-              <h3 style={{ fontSize:'clamp(22px,3vw,36px)', fontWeight:900, textTransform:'uppercase', color:'white', lineHeight:1.1, marginBottom:'1rem' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:'0.6rem' }}>PROGRAMA EXCLUSIVO</div>
+              <h3 style={{ fontSize:'clamp(24px,3.5vw,42px)', fontWeight:900, textTransform:'uppercase', color:'white', lineHeight:1.05, marginBottom:'1.25rem' }}>
                 PORTAL DE <span style={{ color:'var(--red)' }}>DISTRIBUIDORES</span>
               </h3>
+              <p style={{ color:'rgba(255,255,255,0.55)', fontSize:14, lineHeight:1.7, maxWidth:480, marginBottom:'1.5rem' }}>
+                Accede a descuentos exclusivos de hasta un 20% en todos nuestros productos. Elige tu nivel y empieza a ahorrar.
+              </p>
               <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
                 {[['🥉 Bronze','-10%','#cd7f32'],['🥈 Silver','-15%','#a8a9ad'],['🥇 Gold','-20%','#ffd700']].map(([n,d,c])=>(
-                  <div key={n} style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${c}35`, padding:'8px 18px', textAlign:'center' }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:c as string }}>{n}</div>
-                    <div style={{ fontSize:18, fontWeight:900, color:'white' }}>{d}</div>
+                  <div key={n} style={{ background:'rgba(255,255,255,0.06)', border:`1px solid ${c}50`, padding:'10px 20px', textAlign:'center', backdropFilter:'blur(4px)' }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:c as string, textTransform:'uppercase', letterSpacing:'0.06em' }}>{n}</div>
+                    <div style={{ fontSize:22, fontWeight:900, color:'white', lineHeight:1 }}>{d}</div>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginTop:2 }}>descuento</div>
                   </div>
                 ))}
               </div>
             </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem', minWidth:190 }}>
-              <Link href="/distribuidores/login" style={{ background:'var(--red)', color:'white', padding:'13px 24px', fontFamily:'var(--font-body)', fontSize:13, fontWeight:700, textDecoration:'none', textTransform:'uppercase', textAlign:'center', letterSpacing:'0.04em' }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem', minWidth:200 }}>
+              <Link href="/distribuidores/login"
+                style={{ background:'var(--red)', color:'white', padding:'14px 28px',
+                  fontFamily:'var(--font-body)', fontSize:14, fontWeight:700, textDecoration:'none',
+                  textTransform:'uppercase', textAlign:'center', letterSpacing:'0.04em',
+                  transition:'background 0.15s, transform 0.1s', display:'block' }}>
                 Acceder al portal
               </Link>
-              <Link href="/distribuidores" style={{ background:'transparent', color:'rgba(255,255,255,0.5)', padding:'11px 20px', fontFamily:'var(--font-body)', fontSize:12, fontWeight:700, textDecoration:'none', border:'1px solid rgba(255,255,255,0.15)', textTransform:'uppercase', textAlign:'center' }}>
+              <Link href="/distribuidores"
+                style={{ background:'transparent', color:'rgba(255,255,255,0.6)', padding:'12px 24px',
+                  fontFamily:'var(--font-body)', fontSize:12, fontWeight:700, textDecoration:'none',
+                  border:'1px solid rgba(255,255,255,0.2)', textTransform:'uppercase', textAlign:'center', display:'block' }}>
                 Más información
               </Link>
             </div>
@@ -116,6 +136,7 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* PROTEÍNAS */}
       {proteinas.length > 0 && (
         <section style={{ padding:'2.5rem 0', background:'#f5f5f5' }}>
           <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
@@ -130,6 +151,7 @@ export default async function Home() {
         </section>
       )}
 
+      {/* PRE-ENTRENOS */}
       {preEntrenos.length > 0 && (
         <section style={{ padding:'2.5rem 0', background:'white', borderTop:'1px solid #ebebeb' }}>
           <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
