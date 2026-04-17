@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { Product } from '@/lib/supabase'
 import ProductCard from './ProductCard'
 import Link from 'next/link'
@@ -10,15 +10,22 @@ interface Props {
   titleIcon?: string
   href?: string
   hrefLabel?: string
+  autoplayMs?: number
 }
 
-export default function ProductCarousel({ products, title, titleIcon, href = '/tienda', hrefLabel = 'Ver todos →' }: Props) {
+export default function ProductCarousel({
+  products, title, titleIcon,
+  href = '/tienda', hrefLabel = 'Ver todos →',
+  autoplayMs = 3500
+}: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
+  const pausedRef = useRef(false)
 
-  const STEP = 620
+  const STEP = 310 // ancho de una tarjeta aprox
 
+  // Actualizar estado flechas
   const onScroll = useCallback(() => {
     const el = trackRef.current
     if (!el) return
@@ -29,16 +36,42 @@ export default function ProductCarousel({ products, title, titleIcon, href = '/t
   const goLeft = () => {
     const el = trackRef.current
     if (!el) return
-    const newLeft = Math.max(0, el.scrollLeft - STEP)
-    el.scrollTo({ left: newLeft, behavior: 'instant' })
+    pausedRef.current = true
+    setTimeout(() => { pausedRef.current = false }, 5000) // pausa 5s al clicar
+    el.scrollTo({ left: Math.max(0, el.scrollLeft - STEP), behavior: 'instant' })
   }
 
   const goRight = () => {
     const el = trackRef.current
     if (!el) return
-    const newLeft = el.scrollLeft + STEP
-    el.scrollTo({ left: newLeft, behavior: 'instant' })
+    pausedRef.current = true
+    setTimeout(() => { pausedRef.current = false }, 5000)
+    el.scrollTo({ left: el.scrollLeft + STEP, behavior: 'instant' })
   }
+
+  // Autoplay — avanza de uno en uno, vuelve al inicio al llegar al final
+  useEffect(() => {
+    const el = trackRef.current
+    if (!el || products.length <= 4) return
+
+    const interval = setInterval(() => {
+      if (pausedRef.current) return
+      const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 5
+      if (isAtEnd) {
+        // Volver al inicio suavemente
+        el.scrollTo({ left: 0, behavior: 'instant' })
+      } else {
+        el.scrollTo({ left: el.scrollLeft + STEP, behavior: 'instant' })
+      }
+      // Actualizar estado flechas
+      setTimeout(() => {
+        setAtStart(el.scrollLeft <= 5)
+        setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 5)
+      }, 50)
+    }, autoplayMs)
+
+    return () => clearInterval(interval)
+  }, [products.length, autoplayMs])
 
   if (!products.length) return null
 
@@ -48,18 +81,22 @@ export default function ProductCarousel({ products, title, titleIcon, href = '/t
     background: disabled ? '#fafafa' : 'white',
     cursor: disabled ? 'default' : 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 20, lineHeight: 1,
+    fontSize: 20, lineHeight: '1',
     color: disabled ? '#ccc' : '#444',
     fontFamily: 'var(--font-body)',
     flexShrink: 0,
     userSelect: 'none' as const,
+    transition: 'all 0.15s',
   })
 
   return (
-    <section style={{ padding:'2rem 0', background:'white', borderTop:'1px solid #ebebeb' }}>
+    <section
+      style={{ padding:'2rem 0', background:'white', borderTop:'1px solid #ebebeb' }}
+      onMouseEnter={() => { pausedRef.current = true }}
+      onMouseLeave={() => { pausedRef.current = false }}>
       <div style={{ maxWidth:1280, margin:'0 auto', padding:'0 20px' }}>
 
-        {/* Cabecera con flechas */}
+        {/* Cabecera */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem', borderBottom:'2px solid #e0e0e0', paddingBottom:'0.75rem' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
             {titleIcon && <span style={{ fontSize:18 }}>{titleIcon}</span>}
@@ -82,7 +119,7 @@ export default function ProductCarousel({ products, title, titleIcon, href = '/t
           </div>
         </div>
 
-        {/* Track — scroll instant, CSS transition en tarjetas */}
+        {/* Track scrollable */}
         <div
           ref={trackRef}
           onScroll={onScroll}
@@ -100,6 +137,7 @@ export default function ProductCarousel({ products, title, titleIcon, href = '/t
             </div>
           ))}
         </div>
+
       </div>
     </section>
   )
