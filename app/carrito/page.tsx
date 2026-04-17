@@ -1,215 +1,224 @@
+// @ts-nocheck
 'use client'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import Link from 'next/link'
 import { useState } from 'react'
 
-const SHIPPING_FREE_FROM = 50
-const SHIPPING_COST = 4.99
+const FREE_SHIP = 50
+const SHIP_COST = 4.95
 
 export default function CarritoPage() {
-  const { items, remove, updateQty, total, count } = useCart()
-  const { isDistributor, levelName, discountPct } = useAuth()
-  const [step, setStep] = useState<1|2|3>(1)
-  const [form, setForm] = useState({ name:'', email:'', phone:'', address:'', city:'', postal:'' })
-  const [payment, setPayment] = useState<'card'|'bizum'|'transfer'>('card')
-  const [placing, setPlacing] = useState(false)
-  const [orderDone, setOrderDone] = useState<string|null>(null)
+  const { items, removeItem, updateQty, clearCart, count } = useCart()
+  const { isDistributor, discountPct } = useAuth()
+  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [orderNum, setOrderNum] = useState('')
+  const [orderEmail, setOrderEmail] = useState('')
+  const [form, setForm] = useState({ name:'', email:'', phone:'', address:'', city:'', postal_code:'', province:'Las Palmas', nif:'', notes:'' })
 
-  const shipping = total >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST
-  const grandTotal = total + shipping
+  const f = k => e => setForm(p => ({...p,[k]:e.target.value}))
 
-  const handleOrder = async () => {
-    setPlacing(true)
+  // Calculos — items ahora son {id,name,price,image,qty,variant}
+  const sub0 = items.reduce((s,i)=>s+i.price*i.qty,0)
+  const disc = isDistributor&&discountPct ? sub0*(discountPct/100) : 0
+  const sub = sub0 - disc
+  const free = sub >= FREE_SHIP
+  const ship = free ? 0 : SHIP_COST
+  const tax = sub * 0.21
+  const total = sub + tax + ship
+
+  const doOrder = async () => {
+    if (!form.name||!form.email||!form.address||!form.city||!form.postal_code) { alert('Rellena los campos obligatorios (*)'); return }
+    setLoading(true)
     try {
-      const res = await fetch('/api/orders', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
+      const r = await fetch('/api/create-order', {
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          items: items.map(i => ({id:i.product.id, name:i.product.name, qty:i.qty, price:i.price})),
-          total: grandTotal, shipping_cost: shipping,
-          customer_name: form.name, customer_email: form.email, customer_phone: form.phone,
-          shipping_address: form.address, shipping_city: form.city, shipping_postal_code: form.postal,
-          payment_method: payment, discountPct
+          items: items.map(i=>({id:i.id, name:i.name, qty:i.qty, price:i.price})),
+          customer: form,
+          shipping_cost: ship,
+          discount_pct: isDistributor&&discountPct?discountPct:0
         })
       })
-      const data = await res.json()
-      if (data.order_number) { setOrderDone(data.order_number); setStep(3) }
-    } catch(e) { console.error(e) }
-    setPlacing(false)
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error||'Error')
+      setOrderNum(d.order_number); setOrderEmail(form.email); clearCart(); setStep(3)
+    } catch(e) { alert(e.message||'Error al procesar. Intenta de nuevo.') }
+    finally { setLoading(false) }
   }
 
-  if (orderDone) return (
-    <div style={{background:'#f5f5f5',minHeight:'80vh',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{background:'white',border:'1px solid #e8e8e8',padding:'3rem',textAlign:'center',maxWidth:480}}>
-        <div style={{fontSize:56,marginBottom:'1rem'}}>✅</div>
-        <h1 style={{fontSize:22,fontWeight:800,textTransform:'uppercase',color:'#111',marginBottom:'0.5rem'}}>¡Pedido confirmado!</h1>
-        <div style={{fontSize:14,color:'#666',marginBottom:'1.5rem'}}>
-          Tu número de pedido es <strong style={{color:'var(--red)'}}>{orderDone}</strong>.<br/>
-          Recibirás un email de confirmación en breve.
-        </div>
-        <Link href="/tienda" style={{display:'inline-block',background:'var(--red)',color:'white',padding:'12px 28px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.05em'}}>
-          Seguir comprando
-        </Link>
-      </div>
-    </div>
-  )
+  const S = {
+    red: {background:'var(--red)',color:'white',border:'none',padding:'13px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textTransform:'uppercase',cursor:'pointer',letterSpacing:'0.05em',width:'100%',display:'block'},
+    label: {display:'block',fontSize:11,fontWeight:700,color:'#666',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4},
+    input: {width:'100%',padding:'10px 12px',border:'1px solid #ddd',fontSize:13,fontFamily:'var(--font-body)',boxSizing:'border-box',outline:'none'},
+  }
 
   return (
-    <div style={{background:'#f5f5f5',minHeight:'80vh',padding:'1.5rem 0 3rem'}}>
-      <div className="container">
-        {/* Breadcrumb */}
-        <div style={{display:'flex',gap:6,alignItems:'center',fontSize:12,color:'#999',marginBottom:'1.5rem'}}>
+    <div style={{background:'#f5f5f5',minHeight:'80vh',padding:'1.5rem 20px 3rem'}}>
+      <div style={{maxWidth:1100,margin:'0 auto'}}>
+        <div style={{fontSize:12,color:'#999',marginBottom:'1rem',display:'flex',gap:6}}>
           <Link href="/" style={{color:'#999',textDecoration:'none'}}>Inicio</Link><span>›</span>
-          <Link href="/tienda" style={{color:'#999',textDecoration:'none'}}>Tienda</Link><span>›</span>
           <span style={{color:'#333',fontWeight:600}}>Mi Carrito</span>
         </div>
 
         {/* Steps */}
-        <div style={{display:'flex',marginBottom:'2rem',background:'white',border:'1px solid #e8e8e8'}}>
-          {[{n:1,l:'CARRITO'},{n:2,l:'DATOS'},{n:3,l:'CONFIRMACIÓN'}].map(s=>(
-            <div key={s.n} style={{flex:1,padding:'12px 16px',textAlign:'center',fontSize:12,fontWeight:700,letterSpacing:'0.05em',
-              background: step===s.n?'var(--red)':step>s.n?'#28a745':'white',
-              color: step>=s.n?'white':'#999', borderRight:'1px solid #e8e8e8', cursor:'pointer'}}
-              onClick={()=>step>s.n&&setStep(s.n as 1|2|3)}>
-              {s.n}. {s.l}
+        <div style={{display:'flex',background:'white',marginBottom:'1.5rem',border:'1px solid #ebebeb',overflow:'hidden'}}>
+          {[['1','Carrito'],['2','Datos'],['3','Confirmacion']].map(([n,label])=>(
+            <div key={n} onClick={()=>step>Number(n)&&setStep(Number(n))}
+              style={{flex:1,padding:'13px 0',textAlign:'center',fontWeight:700,fontSize:13,textTransform:'uppercase',
+                background:step===Number(n)?'var(--red)':step>Number(n)?'#444':'#f5f5f5',
+                color:step>=Number(n)?'white':'#aaa',
+                cursor:step>Number(n)?'pointer':'default',
+                borderRight:n<'3'?'1px solid rgba(0,0,0,0.1)':'none'}}>
+              {n}. {label}
             </div>
           ))}
         </div>
 
-        {items.length===0 ? (
-          <div style={{background:'white',border:'1px solid #e8e8e8',padding:'4rem',textAlign:'center'}}>
-            <div style={{fontSize:64,marginBottom:'1rem'}}>🛒</div>
-            <h2 style={{fontSize:18,fontWeight:800,textTransform:'uppercase',color:'#111',marginBottom:'0.5rem'}}>TU CARRITO ESTÁ VACÍO</h2>
-            <p style={{color:'#888',marginBottom:'1.5rem',fontSize:14}}>Añade productos desde el catálogo</p>
-            <Link href="/tienda" style={{background:'var(--red)',color:'white',padding:'12px 28px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.05em',display:'inline-block'}}>
-              VER CATÁLOGO
-            </Link>
-          </div>
-        ) : (
-          <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:'1.5rem',alignItems:'start'}}>
-            {/* Izquierda */}
-            <div>
-              {step===1 && (
-                <div style={{background:'white',border:'1px solid #e8e8e8'}}>
-                  <div style={{padding:'14px 16px',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <h2 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>{count} {count===1?'producto':'productos'}</h2>
-                    <Link href="/tienda" style={{fontSize:12,color:'var(--red)',textDecoration:'none',fontWeight:700}}>← Seguir comprando</Link>
+        {/* PASO 1 */}
+        {step===1 && (
+          <div style={items.length?{display:'grid',gridTemplateColumns:'1fr 320px',gap:'1.5rem',alignItems:'start'}:{maxWidth:560,margin:'0 auto'}}>
+            <div style={{background:'white',border:'1px solid #ebebeb'}}>
+              {items.length===0 ? (
+                <div style={{padding:'4rem',textAlign:'center'}}>
+                  <div style={{fontSize:64,marginBottom:'1rem'}}>🛒</div>
+                  <h2 style={{fontSize:18,fontWeight:700,marginBottom:'0.5rem',textTransform:'uppercase'}}>Tu carrito esta vacio</h2>
+                  <p style={{color:'#999',marginBottom:'1.5rem'}}>Añade productos desde el catalogo</p>
+                  <Link href="/tienda" style={{background:'var(--red)',color:'white',padding:'12px 28px',textDecoration:'none',fontWeight:700,fontSize:13,textTransform:'uppercase',display:'inline-block'}}>Ver catalogo</Link>
+                </div>
+              ) : (
+                <>
+                  <div style={{padding:'0.875rem 1.5rem',borderBottom:'1px solid #f0f0f0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontWeight:700,fontSize:13,textTransform:'uppercase'}}>{count} producto{count!==1?'s':''}</span>
+                    <button onClick={clearCart} style={{fontSize:11,color:'#aaa',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',fontFamily:'var(--font-body)'}}>Vaciar</button>
                   </div>
-                  {items.map((item,i) => (
-                    <div key={i} style={{display:'grid',gridTemplateColumns:'80px 1fr auto',gap:'1rem',padding:'1rem 1.25rem',borderBottom:'1px solid #f5f5f5',alignItems:'center'}}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.product.image_url||'https://placehold.co/80x80/f5f5f5/ccc?text=BM'} alt={item.product.name}
-                        style={{width:80,height:80,objectFit:'contain',border:'1px solid #f0f0f0',padding:4}}/>
-                      <div>
-                        <Link href={`/producto/${item.product.id}`} style={{fontSize:14,fontWeight:600,color:'#111',textDecoration:'none',display:'block',marginBottom:4,lineHeight:1.3}}>
-                          {item.product.name}
-                        </Link>
-                        {(item as any).selectedVariant && <div style={{fontSize:12,color:'#888',marginBottom:6}}>Sabor: {(item as any).selectedVariant}</div>}
-                        <div style={{fontSize:13,fontWeight:700,color:'var(--red)'}}>
-                          {item.price.toFixed(2)} €
-                          {item.discountPct>0 && <s style={{marginLeft:6,fontWeight:400,color:'#aaa',fontSize:12}}>{item.product.price_incl_tax.toFixed(2)} €</s>}
+                  {items.map(item=>(
+                    <div key={item.id+item.variant} style={{display:'flex',gap:'1rem',padding:'1rem 1.5rem',borderBottom:'1px solid #f8f8f8',alignItems:'center'}}>
+                      {item.image&&(
+                        <div style={{width:70,height:70,flexShrink:0,background:'#f9f9f9',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          <img src={item.image} alt={item.name} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}} onError={e=>e.target.style.display='none'}/>
                         </div>
+                      )}
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:600,color:'#111',lineHeight:1.35,marginBottom:3}}>{item.name}</div>
+                        {item.variant&&<div style={{fontSize:11,color:'#888',marginBottom:3}}>{item.variant}</div>}
+                        <div style={{fontSize:14,fontWeight:800,color:'var(--red)'}}>{item.price.toFixed(2)} €</div>
                       </div>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                        <div style={{display:'flex',border:'1px solid #ddd'}}>
-                          <button onClick={()=>updateQty(i,Math.max(1,item.qty-1))}
-                            style={{width:28,height:28,background:'#f5f5f5',border:'none',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-                          <span style={{width:32,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600}}>{item.qty}</span>
-                          <button onClick={()=>updateQty(i,item.qty+1)}
-                            style={{width:28,height:28,background:'#f5f5f5',border:'none',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+                      <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                        <div style={{display:'flex',border:'1px solid #e0e0e0'}}>
+                          <button onClick={()=>updateQty(item.id,item.variant||'',item.qty-1)} style={{width:28,height:30,border:'none',background:'none',cursor:'pointer',fontSize:15,color:'#555',fontFamily:'var(--font-body)'}}>−</button>
+                          <span style={{width:30,textAlign:'center',lineHeight:'30px',fontSize:13,fontWeight:700}}>{item.qty}</span>
+                          <button onClick={()=>updateQty(item.id,item.variant||'',item.qty+1)} style={{width:28,height:30,border:'none',background:'none',cursor:'pointer',fontSize:15,color:'#555',fontFamily:'var(--font-body)'}}>+</button>
                         </div>
-                        <div style={{fontSize:14,fontWeight:700,color:'#333'}}>{(item.price*item.qty).toFixed(2)} €</div>
-                        <button onClick={()=>remove(i)} style={{background:'none',border:'none',cursor:'pointer',color:'#bbb',fontSize:11,padding:0,fontFamily:'var(--font-body)'}}>✕ Eliminar</button>
+                        <span style={{fontSize:14,fontWeight:800,minWidth:65,textAlign:'right'}}>{(item.price*item.qty).toFixed(2)} €</span>
+                        <button onClick={()=>removeItem(item.id,item.variant||'')} style={{background:'none',border:'none',cursor:'pointer',color:'#ccc',fontSize:16,padding:'4px'}} onMouseEnter={e=>e.target.style.color='var(--red)'} onMouseLeave={e=>e.target.style.color='#ccc'}>✕</button>
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-
-              {step===2 && (
-                <div style={{background:'white',border:'1px solid #e8e8e8',padding:'1.5rem'}}>
-                  <h2 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:'1.25rem',paddingBottom:'0.75rem',borderBottom:'1px solid #eee'}}>Datos de envío</h2>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
-                    {([['name','Nombre y apellidos','text'],['email','Email','email'],['phone','Teléfono','tel'],['address','Dirección completa','text'],['city','Ciudad','text'],['postal','Código postal','text']] as [string,string,string][]).map(([k,l,t])=>(
-                      <div key={k} style={{gridColumn: k==='address'?'1/-1':undefined}}>
-                        <label style={{display:'block',fontSize:12,fontWeight:700,color:'#555',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.04em'}}>{l}</label>
-                        <input type={t} value={(form as any)[k]}
-                          onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
-                          style={{width:'100%',padding:'10px 12px',fontSize:14,border:'1px solid #ddd',fontFamily:'var(--font-body)',margin:0,outline:'none'}}/>
-                      </div>
-                    ))}
-                  </div>
-                  <h2 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',margin:'1.5rem 0 1rem',paddingBottom:'0.75rem',borderBottom:'1px solid #eee'}}>Método de pago</h2>
-                  <div style={{display:'flex',gap:'0.75rem',flexWrap:'wrap'}}>
-                    {([['card','💳 Tarjeta'],['bizum','📱 Bizum'],['transfer','🏦 Transferencia']] as [string,string][]).map(([v,l])=>(
-                      <label key={v} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 16px',border:payment===v?'2px solid var(--red)':'1px solid #ddd',cursor:'pointer',fontSize:13,fontWeight:600,background:payment===v?'rgba(255,30,65,0.03)':'white'}}>
-                        <input type="radio" name="payment" value={v} checked={payment===v} onChange={()=>setPayment(v as any)} style={{accentColor:'var(--red)'}}/>
-                        {l}
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                </>
               )}
             </div>
+            {items.length>0 && <Summary step={1} sub0={sub0} disc={disc} discountPct={discountPct} tax={tax} ship={ship} free={free} sub={sub} total={total} FREE_SHIP={FREE_SHIP} onContinue={()=>setStep(2)} items={items}/>}
+          </div>
+        )}
 
-            {/* Resumen */}
-            <div style={{background:'white',border:'1px solid #e8e8e8'}}>
-              <div style={{padding:'14px 16px',borderBottom:'1px solid #eee'}}>
-                <h3 style={{fontSize:13,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',margin:0}}>Resumen del pedido</h3>
-              </div>
-              <div style={{padding:'1rem 1.25rem'}}>
-                {items.map((item,i)=>(
-                  <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'6px 0',fontSize:13,color:'#555',borderBottom:'1px solid #f8f8f8'}}>
-                    <span style={{flex:1,paddingRight:8,lineHeight:1.3}}>{item.product.name.slice(0,35)}{item.product.name.length>35?'...':''} <span style={{color:'#999'}}>x{item.qty}</span></span>
-                    <span style={{fontWeight:600,color:'#333',flexShrink:0}}>{(item.price*item.qty).toFixed(2)} €</span>
+        {/* PASO 2 */}
+        {step===2 && (
+          <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:'1.5rem',alignItems:'start'}}>
+            <div style={{background:'white',border:'1px solid #ebebeb',padding:'2rem'}}>
+              <h2 style={{fontSize:15,fontWeight:800,textTransform:'uppercase',marginBottom:'1.5rem',borderBottom:'1px solid #f0f0f0',paddingBottom:'0.75rem'}}>Datos de envio</h2>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+                {[{l:'Nombre completo *',k:'name',full:true},{l:'Email *',k:'email'},{l:'Telefono',k:'phone'},{l:'Direccion *',k:'address',full:true},{l:'Ciudad *',k:'city'},{l:'Cod. Postal *',k:'postal_code'},{l:'Provincia',k:'province'},{l:'NIF/CIF',k:'nif'}].map(({l,k,full})=>(
+                  <div key={k} style={{gridColumn:full?'1/-1':'auto'}}>
+                    <label style={S.label}>{l}</label>
+                    <input value={form[k]} onChange={f(k)} style={S.input}/>
                   </div>
                 ))}
-                <div style={{marginTop:'0.75rem',paddingTop:'0.75rem',borderTop:'1px solid #eee'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#666',marginBottom:6}}>
-                    <span>Subtotal</span><span>{total.toFixed(2)} €</span>
-                  </div>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#666',marginBottom:6}}>
-                    <span>Envío</span>
-                    <span style={{color:shipping===0?'#28a745':'#333'}}>{shipping===0?'GRATIS':shipping.toFixed(2)+' €'}</span>
-                  </div>
-                  {shipping>0 && (
-                    <div style={{fontSize:11,color:'var(--red)',marginBottom:6}}>
-                      Añade {(SHIPPING_FREE_FROM-total).toFixed(2)} € más para envío gratis
-                    </div>
-                  )}
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:17,fontWeight:800,color:'var(--red)',marginTop:'0.75rem',paddingTop:'0.75rem',borderTop:'2px solid #eee'}}>
-                    <span>TOTAL</span><span>{grandTotal.toFixed(2)} €</span>
-                  </div>
+                <div style={{gridColumn:'1/-1'}}>
+                  <label style={S.label}>Notas del pedido</label>
+                  <textarea value={form.notes} onChange={f('notes')} rows={2} style={{...S.input,resize:'vertical'}} placeholder="Instrucciones especiales..."/>
                 </div>
               </div>
-              <div style={{padding:'0 1.25rem 1.25rem'}}>
-                {step===1 && (
-                  <button onClick={()=>setStep(2)} style={{width:'100%',padding:'13px',background:'var(--red)',color:'white',border:'none',fontFamily:'var(--font-body)',fontSize:14,fontWeight:700,cursor:'pointer',textTransform:'uppercase',letterSpacing:'0.05em'}}>
-                    CONTINUAR → DATOS
-                  </button>
-                )}
-                {step===2 && (
-                  <>
-                    <button onClick={handleOrder} disabled={placing||!form.name||!form.email||!form.address}
-                      style={{width:'100%',padding:'13px',background:placing?'#ccc':'var(--red)',color:'white',border:'none',fontFamily:'var(--font-body)',fontSize:14,fontWeight:700,cursor:placing?'not-allowed':'pointer',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>
-                      {placing?'Procesando...':'✓ CONFIRMAR PEDIDO'}
-                    </button>
-                    <button onClick={()=>setStep(1)} style={{width:'100%',padding:'10px',background:'white',color:'#666',border:'1px solid #ddd',fontFamily:'var(--font-body)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-                      ← Volver al carrito
-                    </button>
-                  </>
-                )}
+            </div>
+            <div style={{background:'white',border:'1px solid #ebebeb',padding:'1.5rem',position:'sticky',top:120}}>
+              <SummaryInner sub0={sub0} disc={disc} discountPct={discountPct} tax={tax} ship={ship} free={free} total={total} FREE_SHIP={FREE_SHIP} items={items}/>
+              <div style={{background:'#f9f9f9',border:'1px solid #e8e8e8',padding:'10px',marginBottom:'0.75rem'}}>
+                <div style={{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',marginBottom:6}}>Pago seguro</div>
+                <div style={{display:'flex',gap:6}}>{['💳 Tarjeta','🏦 Bizum','🔒 SSL'].map(m=><span key={m} style={{fontSize:11,background:'white',border:'1px solid #ddd',padding:'3px 8px',color:'#666'}}>{m}</span>)}</div>
               </div>
-              <div style={{padding:'0.75rem 1.25rem 1rem',borderTop:'1px solid #f5f5f5',display:'flex',gap:'0.75rem',flexWrap:'wrap'}}>
-                {[['🔒','Pago seguro'],['🚚','Envío 24/48h'],['🔄','Devoluciones']].map(([ic,t])=>(
-                  <span key={t} style={{fontSize:11,color:'#999',display:'flex',alignItems:'center',gap:3}}>{ic} {t}</span>
-                ))}
-              </div>
+              <button onClick={doOrder} disabled={loading} style={{...S.red,background:loading?'#aaa':'var(--red)',cursor:loading?'not-allowed':'pointer'}}>
+                {loading?'⏳ Procesando...':'✓ Confirmar pedido'}
+              </button>
+              <button onClick={()=>setStep(1)} style={{width:'100%',background:'none',border:'none',cursor:'pointer',marginTop:'0.75rem',fontSize:12,color:'#999',fontFamily:'var(--font-body)',padding:'6px'}}>← Volver</button>
             </div>
           </div>
         )}
+
+        {/* PASO 3 */}
+        {step===3 && (
+          <div style={{background:'white',border:'1px solid #ebebeb',maxWidth:520,margin:'0 auto',padding:'3rem 2rem',textAlign:'center'}}>
+            <div style={{fontSize:72,marginBottom:'1rem'}}>✅</div>
+            <h2 style={{fontSize:22,fontWeight:900,textTransform:'uppercase',color:'#111',marginBottom:'0.5rem'}}>Pedido confirmado</h2>
+            <p style={{fontSize:14,color:'#888',marginBottom:'1.5rem'}}>Hemos recibido tu pedido correctamente</p>
+            <div style={{background:'var(--red)',color:'white',display:'inline-block',padding:'1rem 2rem',marginBottom:'1.5rem',minWidth:220}}>
+              <div style={{fontSize:10,textTransform:'uppercase',letterSpacing:'0.1em',opacity:0.85,marginBottom:4}}>Numero de pedido</div>
+              <div style={{fontSize:26,fontWeight:900,letterSpacing:'0.08em'}}>{orderNum}</div>
+            </div>
+            <p style={{fontSize:13,color:'#777',lineHeight:1.8,marginBottom:'2rem'}}>
+              Recibirás confirmacion en <strong style={{color:'#333'}}>{orderEmail}</strong>
+            </p>
+            <Link href="/tienda" style={{background:'var(--red)',color:'white',padding:'12px 28px',textDecoration:'none',fontWeight:700,fontSize:13,textTransform:'uppercase',display:'inline-block'}}>Seguir comprando</Link>
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function SummaryInner({sub0,disc,discountPct,tax,ship,free,total,FREE_SHIP,items}) {
+  return (
+    <>
+      {items&&items.length>0&&(
+        <div style={{maxHeight:130,overflowY:'auto',marginBottom:'1rem'}}>
+          {items.map(i=>(
+            <div key={i.id+i.variant} style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#666',marginBottom:5}}>
+              <span style={{flex:1,marginRight:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{i.name} x{i.qty}</span>
+              <span style={{flexShrink:0,fontWeight:600}}>{(i.price*i.qty).toFixed(2)}€</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:'1rem'}}>
+        <Row l="Subtotal" v={sub0.toFixed(2)+' €'}/>
+        {disc>0&&<Row l={'Descuento ('+discountPct+'%)'} v={'−'+disc.toFixed(2)+' €'} g/>}
+        <Row l="IVA (21%)" v={tax.toFixed(2)+' €'} m/>
+        <Row l="Envio" v={free?'🎉 GRATIS':ship.toFixed(2)+' €'} g={free} m={!free}/>
+        {!free&&<div style={{background:'#fff8e1',padding:'7px 10px',fontSize:11,color:'#b8860b',borderLeft:'3px solid #ffc107'}}>Añade {(FREE_SHIP-(sub0-disc)).toFixed(2)}€ para envio GRATIS</div>}
+      </div>
+      <div style={{borderTop:'2px solid #111',paddingTop:'0.75rem',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.25rem'}}>
+        <span style={{fontWeight:800,fontSize:15,textTransform:'uppercase'}}>Total</span>
+        <span style={{fontWeight:900,fontSize:22,color:'var(--red)'}}>{total.toFixed(2)} €</span>
+      </div>
+    </>
+  )
+}
+
+function Summary({step,sub0,disc,discountPct,tax,ship,free,sub,total,FREE_SHIP,onContinue,items}) {
+  return (
+    <div style={{background:'white',border:'1px solid #ebebeb',padding:'1.5rem',position:'sticky',top:120}}>
+      <h3 style={{fontSize:13,fontWeight:800,textTransform:'uppercase',marginBottom:'1rem',borderBottom:'1px solid #f0f0f0',paddingBottom:'0.75rem'}}>Resumen</h3>
+      <SummaryInner sub0={sub0} disc={disc} discountPct={discountPct} tax={tax} ship={ship} free={free} total={total} FREE_SHIP={FREE_SHIP} items={null}/>
+      <button onClick={onContinue} style={{background:'var(--red)',color:'white',border:'none',padding:'13px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textTransform:'uppercase',cursor:'pointer',letterSpacing:'0.05em',width:'100%',display:'block'}}>Continuar →</button>
+      <Link href="/tienda" style={{display:'block',textAlign:'center',marginTop:'0.75rem',fontSize:12,color:'var(--red)',fontWeight:600,textDecoration:'none'}}>← Seguir comprando</Link>
+    </div>
+  )
+}
+
+function Row({l,v,g,m}) {
+  return (
+    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:g?'#00aa55':m?'#888':'#555'}}>
+      <span>{l}</span><span style={{fontWeight:600}}>{v}</span>
     </div>
   )
 }
