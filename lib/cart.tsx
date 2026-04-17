@@ -1,65 +1,89 @@
 'use client'
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
-import { Product } from './supabase'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+
+const STORAGE_KEY = 'bm-cart-v2'
 
 export type CartItem = {
-  product: Product
-  qty: number          // cantidad
-  price: number        // precio unitario con descuento
-  discountPct: number  // % descuento aplicado
-  // aliases para compatibilidad
-  quantity: number
-  unitPrice: number
+  id: number
+  name: string
+  price: number
+  image: string | null
+  qty: number
+  variant: string
 }
 
 type CartCtx = {
   items: CartItem[]
-  add: (product: Product, qty?: number, discountPct?: number) => void
-  remove: (productId: number) => void
-  updateQty: (productId: number, qty: number) => void
-  update: (productId: number, qty: number) => void  // alias
+  add: (item: Omit<CartItem,'qty'> & { qty?: number }) => void
+  removeItem: (id: number, variant?: string) => void
+  remove: (id: number, variant?: string) => void
+  updateQty: (id: number, variant: string, qty: number) => void
+  clearCart: () => void
   clear: () => void
-  total: number
   count: number
+  total: number
 }
 
 const CartContext = createContext<CartCtx | null>(null)
 
-function makeItem(product: Product, qty: number, discountPct: number): CartItem {
-  const price = product.price_incl_tax * (1 - discountPct / 100)
-  return { product, qty, price, discountPct, quantity: qty, unitPrice: price }
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [loaded, setLoaded] = useState(false)
 
-  const add = useCallback((product: Product, qty = 1, discountPct = 0) => {
+  // Cargar desde localStorage al montar
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) setItems(JSON.parse(saved))
+    } catch {}
+    setLoaded(true)
+  }, [])
+
+  // Guardar en localStorage cuando cambian los items
+  useEffect(() => {
+    if (!loaded) return
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    } catch {}
+  }, [items, loaded])
+
+  const add = useCallback((item: Omit<CartItem,'qty'> & { qty?: number }) => {
     setItems(prev => {
-      const existing = prev.find(i => i.product.id === product.id)
+      const key = String(item.id) + (item.variant || '')
+      const existing = prev.find(i => String(i.id) + (i.variant || '') === key)
       if (existing) {
-        return prev.map(i => i.product.id === product.id
-          ? { ...i, qty: i.qty + qty, quantity: i.qty + qty }
-          : i)
+        return prev.map(i => String(i.id) + (i.variant || '') === key
+          ? { ...i, qty: i.qty + (item.qty || 1) } : i)
       }
-      return [...prev, makeItem(product, qty, discountPct)]
+      return [...prev, { ...item, qty: item.qty || 1 }]
     })
   }, [])
 
-  const remove = useCallback((id: number) =>
-    setItems(p => p.filter(i => i.product.id !== id)), [])
+  const removeItem = useCallback((id: number, variant = '') => {
+    setItems(prev => prev.filter(i => !(i.id === id && (i.variant || '') === variant)))
+  }, [])
 
-  const updateQty = useCallback((id: number, qty: number) =>
-    setItems(p => p.map(i => i.product.id === id
-      ? { ...i, qty, quantity: qty }
-      : i).filter(i => i.qty > 0)), [])
+  const updateQty = useCallback((id: number, variant = '', qty: number) => {
+    setItems(prev =>
+      qty <= 0
+        ? prev.filter(i => !(i.id === id && (i.variant || '') === variant))
+        : prev.map(i => i.id === id && (i.variant || '') === variant ? { ...i, qty } : i)
+    )
+  }, [])
 
-  const clear = useCallback(() => setItems([]), [])
+  const clearCart = useCallback(() => setItems([]), [])
 
-  const total = items.reduce((s, i) => s + i.price * i.qty, 0)
   const count = items.reduce((s, i) => s + i.qty, 0)
+  const total = items.reduce((s, i) => s + i.price * i.qty, 0)
 
   return (
-    <CartContext.Provider value={{ items, add, remove, updateQty, update: updateQty, clear, total, count }}>
+    <CartContext.Provider value={{
+      items, add,
+      removeItem, remove: removeItem,
+      updateQty,
+      clearCart, clear: clearCart,
+      count, total
+    }}>
       {children}
     </CartContext.Provider>
   )
