@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
 import AddToCartSection from '@/components/AddToCartSection'
 import Link from 'next/link'
-import ProductGallery from '@/components/ProductGallery'
 
 async function getProduct(id: string) {
   const { data } = await supabase
@@ -12,7 +11,6 @@ async function getProduct(id: string) {
     .eq('id', parseInt(id)).single()
   return data
 }
-
 async function getVariants(productId: number) {
   const { data } = await supabase
     .from('product_variants')
@@ -20,7 +18,6 @@ async function getVariants(productId: number) {
     .eq('product_id', productId).eq('active', true).gt('stock', 0)
   return data || []
 }
-
 async function getRelated(categoryId: number, excludeId: number) {
   const { data } = await supabase
     .from('products').select('*, categories(name)')
@@ -50,6 +47,8 @@ export default async function ProductoPage({ params }: { params: { id: string } 
   const hasVariants = sortedTypes.length > 0
   const catName = (product.categories as any)?.name || ''
 
+  const imgSrc = product.image_url || 'https://placehold.co/500x500/f5f5f5/ccc?text=BM'
+
   return (
     <div style={{ background:'#f5f5f5', minHeight:'80vh' }}>
       {/* Breadcrumb */}
@@ -72,10 +71,22 @@ export default async function ProductoPage({ params }: { params: { id: string } 
       <div style={{ maxWidth:1280, margin:'0 auto', padding:'1.5rem 20px 2.5rem' }}>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 480px', gap:'2rem', alignItems:'start', background:'white', border:'1px solid #ebebeb', padding:'2rem' }}>
 
-          {/* Galería — componente client */}
-          <ProductGallery imageUrl={product.image_url} name={product.name} />
+          {/* Imagen principal — sin event handlers */}
+          <div>
+            <div style={{ border:'1px solid #f0f0f0', background:'#f8f8f8', display:'flex', alignItems:'center', justifyContent:'center', height:460, marginBottom:'0.75rem', overflow:'hidden' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imgSrc} alt={product.name}
+                style={{ maxWidth:'85%', maxHeight:'85%', objectFit:'contain', display:'block' }}/>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <div style={{ width:72, height:72, border:'2px solid var(--red)', display:'flex', alignItems:'center', justifyContent:'center', background:'#f8f8f8', overflow:'hidden' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imgSrc} alt="" style={{ maxWidth:'90%', maxHeight:'90%', objectFit:'contain' }}/>
+              </div>
+            </div>
+          </div>
 
-          {/* Info */}
+          {/* Info derecha */}
           <div>
             {catName && (
               <Link href={`/tienda?cat=${encodeURIComponent(catName)}`}
@@ -90,7 +101,7 @@ export default async function ProductoPage({ params }: { params: { id: string } 
 
             <AddToCartSection
               product={product} variantsByType={variantsByType}
-              sortedTypes={sortedTypes} hasVariants={hasVariants} />
+              sortedTypes={sortedTypes} hasVariants={hasVariants}/>
 
             {product.description && (
               <div style={{ marginTop:'1.5rem', paddingTop:'1.5rem', borderTop:'1px solid #f0f0f0' }}>
@@ -100,14 +111,15 @@ export default async function ProductoPage({ params }: { params: { id: string } 
               </div>
             )}
 
+            {/* Garantías */}
             <div style={{ marginTop:'1.5rem', background:'#f9f9f9', border:'1px solid #ebebeb', padding:'1rem 1.25rem' }}>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-                {[['🚚','Entrega 24/48h','En pedidos antes de las 14h'],
+                {[['🚚','Entrega 24/48h','Pedidos antes de las 14h'],
                   ['🔒','Pago seguro','SSL · Tarjeta · Bizum'],
-                  ['🔄','Devoluciones','14 días sin preguntas'],
+                  ['🔄','Devoluciones','14 días garantizados'],
                   ['✅','100% Original','Producto garantizado']
                 ].map(([icon,title,desc]) => (
-                  <div key={title} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+                  <div key={title as string} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
                     <span style={{ fontSize:18, flexShrink:0 }}>{icon}</span>
                     <div>
                       <div style={{ fontSize:12, fontWeight:700, color:'#333' }}>{title}</div>
@@ -120,6 +132,7 @@ export default async function ProductoPage({ params }: { params: { id: string } 
           </div>
         </div>
 
+        {/* Productos relacionados */}
         {related.length > 0 && (
           <div style={{ marginTop:'2.5rem' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem', borderBottom:'2px solid #e0e0e0', paddingBottom:'0.75rem' }}>
