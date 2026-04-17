@@ -12,13 +12,15 @@ const BLOG_POSTS = [
   { titulo:'Que tomar antes de entrenar? Opciones naturales y suplementos para energia', href:'/blog/news/que-tomar-antes-de-entrenar-opciones-naturales-y-suplementos-antes-de-entrenar-para-energia', img:'/modules/ph_simpleblog/covers/113-thumb.jpg', fecha:'Febrero 2, 2026', cat:'Pre-entreno' },
 ]
 
-async function getProducts(cat?: string, limit = 4) {
+async function getProducts(cat?: string, limit = 4, orderBy = 'id') {
   let q = supabase.from('products').select('*, categories(name)').eq('active',true).gt('stock',0)
   if(cat){
     const {data:cd} = await supabase.from('categories').select('id').eq('name',cat).single()
     if(cd) q = q.eq('category_id', cd.id)
   }
-  const {data} = await q.order('id',{ascending:false}).limit(limit)
+  if(orderBy === 'stock') q = q.order('stock',{ascending:false})
+  else q = q.order('id',{ascending:false})
+  const {data} = await q.limit(limit)
   return data || []
 }
 
@@ -36,10 +38,11 @@ const QUICK_CATS = [
 ]
 
 export default async function Home() {
-  const [novedades, proteinas, preEntrenos] = await Promise.all([
-    getProducts(undefined, 4),
-    getProducts('Proteinas', 4),
-    getProducts('Pre-entrenos', 4),
+  const [novedades, masVendidos, proteinas, preEntrenos] = await Promise.all([
+    getProducts(undefined, 4, 'id'),
+    getProducts(undefined, 4, 'stock'),
+    getProducts('Proteinas', 4, 'id'),
+    getProducts('Pre-entrenos', 4, 'id'),
   ])
 
   return (
@@ -72,13 +75,12 @@ export default async function Home() {
               <p style={{fontSize:13,color:'#777',lineHeight:1.8,marginBottom:'1.5rem'}}>
                 Compra suplementos deportivos en Canarias. Proteinas, creatina, aminoacidos y pre-entrenos de marcas lideres.
               </p>
-              <Link href="/tienda" style={{fontSize:13,fontWeight:700,color:'var(--red)',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:4}}>
-                Ver todo el catalogo →
-              </Link>
+              <Link href="/tienda" style={{fontSize:13,fontWeight:700,color:'var(--red)',textDecoration:'none'}}>Ver todo el catalogo →</Link>
               <div style={{marginTop:'1.75rem',display:'flex',flexDirection:'column',gap:6}}>
                 <Link href="/sport-wear" style={{display:'block',background:'#111',color:'white',padding:'9px 14px',textDecoration:'none',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em'}}>👕 Sport Wear</Link>
                 <Link href="/veganos" style={{display:'block',background:'#1a3a1a',color:'#7ed957',padding:'9px 14px',textDecoration:'none',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em'}}>🌱 Veganos</Link>
                 <Link href="/streetflavour" style={{display:'block',background:'#0a1a2a',color:'#47daff',padding:'9px 14px',textDecoration:'none',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em'}}>🎽 StreetFlavour</Link>
+                <Link href="/bm-team" style={{display:'block',background:'#001a0d',color:'#00F399',padding:'9px 14px',textDecoration:'none',fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em'}}>💪 BM Team</Link>
               </div>
             </div>
             <div style={{paddingLeft:'2rem'}}>
@@ -93,6 +95,22 @@ export default async function Home() {
                 <Link href="/tienda" style={{fontSize:12,color:'var(--red)',fontWeight:700,textDecoration:'none',border:'1px solid var(--red)',padding:'5px 14px',display:'inline-block'}}>Ver todo →</Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LOS MAS VENDIDOS */}
+      <section style={{background:'#f5f5f5',padding:'2.5rem 0',borderBottom:'1px solid #e0e0e0'}}>
+        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1rem',borderBottom:'2px solid #e0e0e0',paddingBottom:'0.75rem'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <span style={{fontSize:20}}>🏆</span>
+              <h2 style={{fontSize:17,fontWeight:800,textTransform:'uppercase',color:'#111',margin:0}}>LOS MAS VENDIDOS</h2>
+            </div>
+            <Link href="/tienda" style={{fontSize:12,color:'var(--red)',fontWeight:700,textDecoration:'none',border:'1px solid var(--red)',padding:'5px 14px'}}>Ver todos →</Link>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#e0e0e0'}}>
+            {masVendidos.map((p:any)=><ProductCard key={p.id} product={p}/>)}
           </div>
         </div>
       </section>
@@ -137,7 +155,7 @@ export default async function Home() {
         <section style={{padding:'2.5rem 0',background:'#f5f5f5'}}>
           <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1rem',borderBottom:'2px solid #e0e0e0',paddingBottom:'0.75rem'}}>
-              <h2 style={{fontSize:17,fontWeight:800,textTransform:'uppercase',color:'#111',margin:0}}>PROTEINAS</h2>
+              <h2 style={{fontSize:17,fontWeight:800,textTransform:'uppercase',color:'#111',margin:0}}>LAS MEJORES PROTEINAS</h2>
               <Link href="/tienda?cat=Proteinas" style={{fontSize:12,color:'var(--red)',fontWeight:700,textDecoration:'none',border:'1px solid var(--red)',padding:'5px 14px'}}>Ver todas →</Link>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#e0e0e0'}}>
@@ -146,6 +164,29 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* BM SPORT WEAR BANNER */}
+      <section style={{position:'relative',overflow:'hidden',height:280}}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="BM Sportswear"
+          style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
+        <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, rgba(0,0,0,0.65) 0%, transparent 55%)'}}/>
+        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 60px'}}>
+          <div style={{fontSize:11,fontWeight:700,color:'#47daff',textTransform:'uppercase',letterSpacing:'0.2em',marginBottom:8}}>BUYMUSCLE</div>
+          <h2 style={{fontSize:'clamp(28px,4vw,52px)',fontWeight:900,color:'white',textTransform:'uppercase',lineHeight:1,marginBottom:12}}>
+            BM <span style={{color:'#47daff'}}>SPORTSWEAR</span>
+          </h2>
+          <p style={{color:'rgba(255,255,255,0.65)',fontSize:14,maxWidth:380,marginBottom:20}}>Camisetas, hoodies y accesorios BuyMuscle para entrenar con estilo.</p>
+          <div style={{display:'flex',gap:10}}>
+            <Link href="/sport-wear" style={{background:'white',color:'#111',padding:'11px 24px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textDecoration:'none',textTransform:'uppercase',display:'inline-block'}}>
+              Ver Sport Wear
+            </Link>
+            <Link href="/streetflavour" style={{background:'#47daff',color:'#111',padding:'11px 24px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textDecoration:'none',textTransform:'uppercase',display:'inline-block'}}>
+              StreetFlavour
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* PRE-ENTRENOS */}
       {preEntrenos.length>0 && (
@@ -162,7 +203,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* BLOG — ultimas 3 entradas con imagenes reales */}
+      {/* BLOG — ultimas 3 entradas */}
       <section style={{padding:'2.5rem 0',background:'#f5f5f5',borderTop:'1px solid #ebebeb'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.25rem',borderBottom:'2px solid #e0e0e0',paddingBottom:'0.75rem'}}>
