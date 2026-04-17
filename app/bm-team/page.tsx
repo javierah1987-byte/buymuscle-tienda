@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 
 const BASE = 'https://tienda.buymuscle.es/img/cms/'
