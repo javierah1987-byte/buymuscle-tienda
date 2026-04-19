@@ -43,7 +43,7 @@ export default function CarritoPage() {
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error||'Error')
-      setOrderNum(d.order_number); setOrderEmail(form.email); clearCart(); setStep(3)
+      clearCart(); window.location.href = '/pedido-confirmado?n=' + d.order_number
     } catch(e) { alert(e.message||'Error al procesar. Intenta de nuevo.') }
     finally { setLoading(false) }
   }
