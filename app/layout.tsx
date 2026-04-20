@@ -4,39 +4,67 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import WhatsAppButton from '@/components/WhatsAppButton'
+import EmailPopup from '@/components/EmailPopup'
 import { CartProvider } from '@/lib/cart'
 import { AuthProvider } from '@/lib/auth'
+import Script from 'next/script'
 
 const heebo = Heebo({ subsets: ['latin'], variable: '--font-heebo' })
 
 export const metadata: Metadata = {
-  title: { default: 'BUYMUSCLE | Tienda Online de Suplementacion Deportiva', template: '%s | BUYMUSCLE' },
-  description: 'Compra suplementos deportivos en Canarias. Proteinas, creatina, pre-entrenos, vitaminas y mas. Envio 24/48h. Productos 100% originales.',
-  keywords: ['suplementos deportivos', 'proteinas', 'creatina', 'pre-entrenos', 'Canarias', 'BuyMuscle'],
-  authors: [{ name: 'BuyMuscle' }],
+  title: 'BUYMUSCLE | Tienda Online de Suplementacion Deportiva',
+  description: 'Suplementación deportiva de calidad en Canarias. Proteínas, creatinas, BCAA y más. Envío 24-48h.',
+  keywords: ['suplementación', 'proteínas', 'creatina', 'musculación', 'Canarias', 'Gran Canaria'],
   openGraph: {
-    type: 'website',
+    title: 'BUYMUSCLE | Suplementación Deportiva',
+    description: 'Tu tienda de suplementación en Canarias',
     locale: 'es_ES',
-    url: 'https://buymuscle-tienda.vercel.app',
-    siteName: 'BUYMUSCLE',
-    title: 'BUYMUSCLE | Tienda Online de Suplementacion Deportiva',
-    description: 'Compra suplementos deportivos en Canarias. Proteinas, creatina, pre-entrenos y vitaminas.',
-    images: [{ url: 'https://tienda.buymuscle.es/img/buymuscle-logo-17621637791.jpg', width: 400, height: 400 }],
+    type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'BUYMUSCLE', description: 'Suplementos deportivos en Canarias' },
-  robots: { index: true, follow: true },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || ''
+  const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || ''
+  const TAWK_ID = process.env.NEXT_PUBLIC_TAWK_ID || ''
+
   return (
-    <html lang="es">
-      <body className={heebo.variable}>
+    <html lang="es" className={heebo.variable}>
+      {META_PIXEL_ID && (
+        <Script id="meta-pixel" strategy="afterInteractive">{`
+          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+          n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+          document,'script','https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init','${META_PIXEL_ID}');fbq('track','PageView');
+        `}</Script>
+      )}
+      {GA4_ID && <>
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`} strategy="afterInteractive"/>
+        <Script id="ga4" strategy="afterInteractive">{`
+          window.dataLayer=window.dataLayer||[];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js',new Date());gtag('config','${GA4_ID}');
+        `}</Script>
+      </>}
+      {TAWK_ID && (
+        <Script id="tawk" strategy="afterInteractive">{`
+          var Tawk_API=Tawk_API||{},Tawk_LoadStart=new Date();
+          (function(){var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+          s1.async=true;s1.src='https://embed.tawk.to/${TAWK_ID}';
+          s1.charset='UTF-8';s1.setAttribute('crossorigin','*');
+          s0.parentNode.insertBefore(s1,s0);})();
+        `}</Script>
+      )}
+      <body className={heebo.className}>
         <AuthProvider>
           <CartProvider>
-            <Navbar />
+            <Navbar/>
             <main>{children}</main>
-            <Footer />
-            <WhatsAppButton />
+            <Footer/>
+            <WhatsAppButton/>
+            <EmailPopup/>
           </CartProvider>
         </AuthProvider>
       </body>
