@@ -27,6 +27,16 @@ export default function AdminDashboard() {
         lowStock: p.filter(x=>x.active&&x.stock<=5).length,
         tpv: o.filter(x=>x.channel?.startsWith('tpv')).length
       })
+    // Ventas por día (últimos 7 días)
+    const hoy=new Date();
+    const hace7=new Date(hoy);hace7.setDate(hoy.getDate()-6);
+    const r7=await fetch(S+'/rest/v1/orders?select=total,created_at&created_at=gte.'+hace7.toISOString()+'&status=neq.cancelled',{headers:{apikey:K,'Authorization':'Bearer '+K}});
+    const d7=await r7.json();
+    const porDia={};
+    for(let i=0;i<7;i++){const d=new Date(hoy);d.setDate(hoy.getDate()-6+i);porDia[d.toISOString().split('T')[0]]=0;}
+    (d7||[]).forEach(o=>{const dia=o.created_at?.split('T')[0];if(dia in porDia) porDia[dia]+=Number(o.total||0);});
+    setVentasPorDia(Object.entries(porDia).map(([dia,total])=>({dia:dia.slice(5),total})));
+    
       setRecent(o.slice(0,6))
       setLoading(false)
     })
@@ -41,7 +51,7 @@ export default function AdminDashboard() {
     { icon:'🏪', label:'TPV — Tienda física', desc:'Punto de venta para ventas presenciales', href:'/tpv', color:'#8b5cf6' },
     { icon:'📊', label:'Gestión de Stock', desc:'Actualizar precios, stock y activar productos', href:'/admin/stock', color:'#3b82f6', badge:stats.lowStock>0?stats.lowStock+' stock bajo':null },
     { icon:'📋', label:'Distribuidores', desc:'Panel de pedidos de distribuidores', href:'/admin/pedidos', color:'#22c55e' },
-    { icon:'✉️', label:'Email (Resend)', desc:'Configurar plantillas de email', href:'https://resend.com', color:'#f59e0b', external:true },
+    { icon:'✉️', label:'Blog', desc:'Configurar plantillas de email', href:'https://resend.com', color:'#f59e0b', external:true },
     { icon:'💼', label:'Holded — Facturas', desc:'Ver y gestionar facturas en Holded', href:'https://app.holded.com', color:'#6366f1', external:true },
     { icon:'🗄️', label:'Base de datos', desc:'Supabase — Tablas y datos en bruto', href:'https://supabase.com/dashboard/project/awwlbepjxuoxaigztugh', color:'#06b6d4', external:true },
     { icon:'🚀', label:'Vercel — Deploys', desc:'Gestión de deploys y variables de entorno', href:'https://vercel.com/javierah1987-3310s-projects/buymuscle-tienda', color:'#111', external:true },
@@ -136,7 +146,25 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
-        </div>
+        
+              {/* Nuevos módulos */}
+              {[
+                {icon:'✍️',title:'Blog',desc:'Gestionar artículos del blog',href:'/admin/blog',color:'#8b5cf6'},
+                {icon:'📱',title:'RRSS',desc:'Programar publicaciones sociales',href:'/admin/rrss',color:'#E1306C'},
+                {icon:'🏷️',title:'Descuentos',desc:'Códigos de descuento y cupones',href:'/admin/descuentos',color:'#f59e0b'},
+                {icon:'📦',title:'Productos',desc:'Editar precios, stock y visibilidad',href:'/admin/productos',color:'#22c55e'},
+                {icon:'📊',title:'Suscriptores',desc:'Lista de emails captados',href:'/admin/suscriptores',color:'#3b82f6'},
+                {icon:'🛒',title:'Carritos abandonados',desc:'Recuperar ventas perdidas',href:'/admin/abandoned',color:'#ff1e41'},
+              ].map(m=>(
+                <a key={m.href} href={m.href}
+                  style={{display:'block',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',padding:20,textDecoration:'none',transition:'border-color 0.2s'}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=m.color}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'}>
+                  <div style={{fontSize:28,marginBottom:10}}>{m.icon}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:'white',marginBottom:4}}>{m.title}</div>
+                  <div style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>{m.desc}</div>
+                </a>
+              ))}</div>
       </div>
     </div>
   )
