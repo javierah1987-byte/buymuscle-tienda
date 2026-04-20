@@ -1,6 +1,7 @@
 // @ts-nocheck
 import WishlistBtn from '@/components/WishlistBtn'
 import ProductReviews from '@/components/ProductReviews'
+import ImageGallery from '@/components/ImageGallery'
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
@@ -62,7 +63,7 @@ export default async function ProductoPage({ params }) {
           <div style={{position:'relative'}}>
             {discount&&<div style={{position:'absolute',top:12,left:12,background:'#ff1e41',color:'white',padding:'4px 10px',fontSize:13,fontWeight:900,zIndex:1}}>-{discount}%</div>}
             {product.image_url
-              ? <img src={product.image_url} alt={product.name} style={{width:'100%',aspectRatio:'1',objectFit:'contain',background:'#f9f9f9'}}/>
+              ? <ImageGallery images={[product.image_url,...(product.extra_images||[])].filter(Boolean)} name={product.name}/>
               : <div style={{width:'100%',aspectRatio:'1',background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:64}}>📦</div>}
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
