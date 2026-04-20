@@ -4,6 +4,7 @@ import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import Link from 'next/link'
 import { useState } from 'react'
+import CartUpsell from '@/components/CartUpsell'
 
 const FREE_SHIP = 50
 const SHIP_COST = 4.95
@@ -143,6 +144,7 @@ export default function CarritoPage() {
                 </>
               )}
             </div>
+            {items.length>0 && <CartUpsell/>}
             {items.length>0 && <Summary step={1} sub0={sub0} disc={disc} discountPct={discountPct} tax={tax} ship={ship} free={free} sub={sub} total={total} FREE_SHIP={FREE_SHIP} onContinue={()=>setStep(2)} items={items}/>}
           </div>
         )}
