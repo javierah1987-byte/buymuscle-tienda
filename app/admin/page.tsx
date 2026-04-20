@@ -19,7 +19,15 @@ export default function AdminDashboard() {
       db.from('products').select('id,active,stock')
     ]).then(([{data:orders},{data:products}])=>{
       const o = orders||[], p = products||[]
-      setStats({
+      
+const hoy7=new Date();const hace7=new Date(hoy7);hace7.setDate(hoy7.getDate()-6);
+const r7=await fetch(S+'/rest/v1/orders?select=total,created_at&created_at=gte.'+hace7.toISOString()+'&status=neq.cancelled',{headers:{apikey:K,'Authorization':'Bearer '+K}});
+const d7=await r7.json();
+const porDia={};
+for(let i=0;i<7;i++){const dd=new Date(hoy7);dd.setDate(hoy7.getDate()-6+i);porDia[dd.toISOString().split('T')[0]]=0;}
+(d7||[]).forEach(o=>{const dia=o.created_at?.split('T')[0];if(dia in porDia) porDia[dia]+=Number(o.total||0);});
+setVentasPorDia(Object.entries(porDia).map(([dia,total])=>({dia:dia.slice(5),total})));
+setStats({
         orders: o.length,
         revenue: o.filter(x=>x.status!=='cancelled').reduce((s,x)=>s+Number(x.total),0),
         pending: o.filter(x=>['pending','processing'].includes(x.status)).length,
@@ -27,15 +35,7 @@ export default function AdminDashboard() {
         lowStock: p.filter(x=>x.active&&x.stock<=5).length,
         tpv: o.filter(x=>x.channel?.startsWith('tpv')).length
       })
-    // Ventas por día (últimos 7 días)
-    const hoy=new Date();
-    const hace7=new Date(hoy);hace7.setDate(hoy.getDate()-6);
-    const r7=await fetch(S+'/rest/v1/orders?select=total,created_at&created_at=gte.'+hace7.toISOString()+'&status=neq.cancelled',{headers:{apikey:K,'Authorization':'Bearer '+K}});
-    const d7=await r7.json();
-    const porDia={};
-    for(let i=0;i<7;i++){const d=new Date(hoy);d.setDate(hoy.getDate()-6+i);porDia[d.toISOString().split('T')[0]]=0;}
-    (d7||[]).forEach(o=>{const dia=o.created_at?.split('T')[0];if(dia in porDia) porDia[dia]+=Number(o.total||0);});
-    setVentasPorDia(Object.entries(porDia).map(([dia,total])=>({dia:dia.slice(5),total})));
+    
     
       setRecent(o.slice(0,6))
       setLoading(false)
