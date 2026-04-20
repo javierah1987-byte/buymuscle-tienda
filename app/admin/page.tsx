@@ -16,6 +16,8 @@ const MODULOS=[
   {icon:'📦',t:'Productos',d:'Editar precio y stock inline',href:'/admin/productos',c:'#22c55e'},
   {icon:'📊',t:'Suscriptores',d:'Emails captados',href:'/admin/suscriptores',c:'#3b82f6'},
   {icon:'🛒',t:'Carritos Abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
+  {icon:'📧',t:'Newsletter',d:'Enviar emails a suscriptores',href:'/admin/newsletter',c:'#3b82f6'},
+  {icon:'🛒',t:'Carritos abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
   {icon:'📧',t:'Email (Resend)',d:'Plantillas de email',href:'https://resend.com',c:'#555',ext:true},
   {icon:'🏷️',t:'Holded Facturas',d:'Ver facturas en Holded',href:'https://app.holded.com',c:'#555',ext:true},
 ]
