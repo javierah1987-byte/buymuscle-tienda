@@ -1,4 +1,5 @@
 // @ts-nocheck
+'use client'
 import Link from 'next/link'
 const OBJETIVOS=[
   {slug:'volumen',icon:'💪',title:'Ganar masa muscular',color:'#ff1e41',bg:'#fff0f0',cats:['Proteinas','Gainers','Creatina','Pre-Entreno'],
