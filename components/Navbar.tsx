@@ -4,6 +4,7 @@ import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import SideCart from '@/components/SideCart'
 import ShippingBar from '@/components/ShippingBar'
 
 const LEVEL_COLORS: Record<string,string> = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
@@ -53,6 +54,7 @@ export default function Navbar(){
   const path=usePathname()
   const router=useRouter()
   const [openMenu,setOpenMenu]=useState<string|null>(null)
+  const[cartOpen,setCartOpen]=useState(false)
   const isTPV=path.startsWith('/tpv')
   const handleSignOut=async()=>{await signOut();router.push('/')}
 
@@ -110,7 +112,7 @@ export default function Navbar(){
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                   TPV
                 </Link>
-                <Link href="/carrito" style={{color:'white',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',position:'relative',fontSize:11,fontWeight:600}}>
+                <Link href="#" onClick={e=>{e.preventDefault();setCartOpen(true)}} style={{color:'white',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',position:'relative',fontSize:11,fontWeight:600}}>
                   <div style={{position:'relative'}}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     {count>0&&<span style={{position:'absolute',top:-6,right:-8,background:'var(--red)',color:'white',width:15,height:15,borderRadius:'50%',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>{count}</span>}
@@ -213,6 +215,7 @@ export default function Navbar(){
           </div>
         </div>
       </header>
+    <SideCart open={cartOpen} onClose={()=>setCartOpen(false)}/>
     </>
   )
 }
