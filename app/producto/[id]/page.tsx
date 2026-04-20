@@ -1,3 +1,5 @@
+import WishlistBtn from '@/components/WishlistBtn'
+import ProductReviews from '@/components/ProductReviews'
 // @ts-nocheck
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
@@ -65,7 +67,8 @@ export default async function ProductoPage({ params }) {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
             {catName&&<div style={{fontSize:11,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.1em'}}>{catName}</div>}
-            <h1 style={{fontSize:24,fontWeight:900,color:'#111',margin:0,lineHeight:1.2,textTransform:'uppercase'}}>{product.name}</h1>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}}>
+        <h1 style={{fontSize:24,fontWeight:900,color:'#111',margin:0,lineHeight:1.2,textTransform:'uppercase'}}>{product.name}</h1><WishlistBtn productId={product.id} size={28}/></div>
             {product.brand&&<div style={{fontSize:13,color:'#888'}}>Marca: <strong style={{color:'#555'}}>{product.brand}</strong></div>}
             <div style={{borderTop:'1px solid #f0f0f0',borderBottom:'1px solid #f0f0f0',padding:'16px 0'}}>
               <div style={{display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
@@ -74,7 +77,10 @@ export default async function ProductoPage({ params }) {
               </div>
               <div style={{fontSize:12,color:'#aaa',marginTop:4}}>IVA incluido · Envío 24-48h</div>
             </div>
-            <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}/>
+            {product.stock>0&&product.stock<=10&&<div style={{background:'#fff3cd',border:'1px solid #ffc107',padding:'8px 14px',marginBottom:12,fontSize:13,fontWeight:700,color:'#856404'}}>
+        ⚠️ ¡Solo quedan {product.stock} unidades! Corre antes de que se agote.
+      </div>}
+      <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}/>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               {[['🚚','Envío 24-48h','Peninsular y Canarias'],['✅','Original','Marca oficial'],['🔒','Seguro','100% protegido'],['📞','¿Dudas?','828 048 310']].map(([i,t,s])=>(
                 <div key={t} style={{display:'flex',gap:8,alignItems:'center',padding:'8px 10px',background:'#f9f9f9',border:'1px solid #f0f0f0'}}>
