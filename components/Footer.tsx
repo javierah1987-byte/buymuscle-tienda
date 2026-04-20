@@ -1,70 +1,96 @@
 // @ts-nocheck
-'use client'
+import Link from 'next/link'
+
+const LINKS = {
+  'Tienda': [
+    {l:'Todos los productos',h:'/tienda'},
+    {l:'Novedades',h:'/tienda?order=new'},
+    {l:'Ofertas',h:'/tienda?cat=Ofertas'},
+    {l:'Veganos',h:'/tienda?cat=Veganos'},
+    {l:'Lo más vendido',h:'/tienda?order=popular'},
+  ],
+  'Por objetivo': [
+    {l:'Ganar masa muscular',h:'/objetivos#volumen'},
+    {l:'Perder grasa',h:'/objetivos#definicion'},
+    {l:'Resistencia y cardio',h:'/objetivos#resistencia'},
+    {l:'Nutrición vegana',h:'/objetivos#veganos'},
+    {l:'Ver todos los objetivos',h:'/objetivos'},
+  ],
+  'Herramientas': [
+    {l:'Comparar productos',h:'/comparar'},
+    {l:'Mis pedidos',h:'/mis-pedidos'},
+    {l:'Blog y consejos',h:'/blog'},
+    {l:'Preguntas frecuentes',h:'/faq'},
+    {l:'Sobre nosotros',h:'/sobre-nosotros'},
+  ],
+  'Ayuda': [
+    {l:'Política de envíos',h:'/envios'},
+    {l:'Devoluciones',h:'/devoluciones'},
+    {l:'Privacidad',h:'/privacidad'},
+    {l:'Aviso legal',h:'/aviso-legal'},
+    {l:'Cookies',h:'/cookies'},
+  ],
+}
 
 export default function Footer() {
-  const year = new Date().getFullYear()
-  const links = {
-    tienda:[['Proteínas','/tienda'],['Pre-entrenos','/tienda'],['Vitaminas','/tienda'],['Veganos','/veganos'],['Ofertas','/tienda'],['Lo más vendido','/tienda']],
-    info:[['Política de envíos','/envios'],['Devoluciones','/devoluciones'],['Aviso legal','/aviso-legal'],['Privacidad','/privacidad'],['Cookies','/cookies'],['Blog','/blog']],
-  }
-  const ls = {color:'#666',textDecoration:'none',display:'block',fontSize:12,marginBottom:8,transition:'color 0.15s'}
   return (
-    <footer style={{background:'#111',borderTop:'1px solid #1a1a1a',color:'#888',fontFamily:'var(--font-body,Arial)'}}>
-      {/* Badges */}
-      <div style={{background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',padding:'20px',display:'flex',justifyContent:'center',gap:40,flexWrap:'wrap'}}>
-        {[['🚚','Envío 24-48h','Peninsular y Canarias'],['🔒','Pago seguro','100% protegido'],['✅','Originales','Marcas oficiales'],['📞','Atención','Lun–Sáb 9-20h']].map(([icon,t,s])=>(
-          <div key={t} style={{display:'flex',alignItems:'center',gap:10}}>
-            <span style={{fontSize:22}}>{icon}</span>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:'#ccc',textTransform:'uppercase',letterSpacing:'0.05em'}}>{t}</div>
-              <div style={{fontSize:11,color:'#555'}}>{s}</div>
+    <footer style={{background:'#0a0a0a',color:'rgba(255,255,255,0.65)',fontFamily:'var(--font-body,Arial,sans-serif)',marginTop:0}}>
+      {/* Top */}
+      <div style={{borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'48px 20px 40px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto',display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',gap:32}}>
+          {/* Brand */}
+          <div>
+            <Link href="/" style={{textDecoration:'none'}}>
+              <div style={{fontFamily:'var(--font-body,Arial)',fontWeight:900,fontSize:24,color:'#ff1e41',letterSpacing:'-0.5px',marginBottom:12}}>BUYMUSCLE</div>
+            </Link>
+            <p style={{fontSize:13,lineHeight:1.7,color:'rgba(255,255,255,0.5)',margin:'0 0 20px',maxWidth:240}}>
+              Tu tienda de suplementación deportiva en Las Palmas de Gran Canaria. Calidad, rapidez y asesoramiento real.
+            </p>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              {[
+                {l:'📸 Instagram',h:'https://instagram.com/buymuscle'},
+                {l:'👥 Facebook',h:'https://facebook.com/buymuscle'},
+                {l:'🎵 TikTok',h:'https://tiktok.com/@buymuscle'},
+              ].map(s=>(
+                <a key={s.l} href={s.h} target="_blank" rel="noopener noreferrer"
+                  style={{fontSize:11,color:'rgba(255,255,255,0.5)',textDecoration:'none',padding:'4px 10px',border:'1px solid rgba(255,255,255,0.1)',display:'inline-block',transition:'color 0.2s'}}
+                  onMouseEnter={e=>e.currentTarget.style.color='white'} onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.5)'}>
+                  {s.l}
+                </a>
+              ))}
+            </div>
+            <div style={{marginTop:16,padding:'12px',background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>📞 Atención al cliente</div>
+              <a href="https://wa.me/34828048310" style={{color:'#25D366',textDecoration:'none',fontSize:13,fontWeight:700}}>WhatsApp 828 048 310</a>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Main */}
-      <div style={{maxWidth:1200,margin:'0 auto',padding:'40px 20px',display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:40}}>
-        <div>
-          <div style={{color:'#ff1e41',fontWeight:900,fontSize:26,letterSpacing:2,marginBottom:12}}>BUYMUSCLE</div>
-          <p style={{fontSize:12,color:'#555',lineHeight:1.8,margin:'0 0 16px',maxWidth:260}}>Tu tienda de suplementación deportiva en Las Palmas de Gran Canaria. Productos originales al mejor precio.</p>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <a href="https://wa.me/34828048310" target="_blank" style={{background:'#25d366',color:'white',padding:'7px 12px',fontSize:11,fontWeight:700,textDecoration:'none'}}>💬 WhatsApp</a>
-            <a href="https://instagram.com/buymuscle.es" target="_blank" style={{background:'#e1306c',color:'white',padding:'7px 12px',fontSize:11,fontWeight:700,textDecoration:'none'}}>📸 Instagram</a>
-          </div>
-        </div>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:14,paddingBottom:8,borderBottom:'1px solid #1a1a1a'}}>Tienda</div>
-          {links.tienda.map(([l,h])=><a key={l} href={h} style={ls}>{l}</a>)}
-        </div>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:14,paddingBottom:8,borderBottom:'1px solid #1a1a1a'}}>Información</div>
-          {links.info.map(([l,h])=><a key={l} href={h} style={ls}>{l}</a>)}
-        </div>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:14,paddingBottom:8,borderBottom:'1px solid #1a1a1a'}}>Contacto</div>
-          <div style={{fontSize:12,color:'#555',lineHeight:2}}>
-            <div>📍 Las Palmas de Gran Canaria</div>
-            <div>📞 <a href="tel:+34828048310" style={{color:'#666',textDecoration:'none'}}>828 048 310</a></div>
-            <div>✉️ <a href="mailto:info@buymuscle.es" style={{color:'#666',textDecoration:'none'}}>info@buymuscle.es</a></div>
-            <div style={{marginTop:10,fontSize:11,color:'#444'}}>Lunes–Sábado 9:00–20:00h</div>
-          </div>
-          <div style={{marginTop:14}}>
-            <div style={{fontSize:11,color:'#444',marginBottom:6}}>Métodos de pago</div>
-            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-              {['💳 Tarjeta','🏦 Transferencia','📱 Bizum'].map(m=><span key={m} style={{fontSize:10,background:'#1a1a1a',padding:'3px 8px',color:'#555'}}>{m}</span>)}
+          {/* Columns */}
+          {Object.entries(LINKS).map(([title, links])=>(
+            <div key={title}>
+              <h4 style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.9)',margin:'0 0 14px'}}>
+                {title}
+              </h4>
+              <ul style={{listStyle:'none',padding:0,margin:0,display:'flex',flexDirection:'column',gap:8}}>
+                {links.map(l=>(
+                  <li key={l.l}>
+                    <Link href={l.h} style={{fontSize:13,color:'rgba(255,255,255,0.5)',textDecoration:'none',transition:'color 0.2s'}}
+                      onMouseEnter={e=>e.currentTarget.style.color='white'} onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.5)'}>
+                      {l.l}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          ))}
         </div>
       </div>
-
       {/* Bottom */}
-      <div style={{borderTop:'1px solid #1a1a1a',padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-        <div style={{fontSize:11,color:'#333'}}>© {year} BuyMuscle · Todos los derechos reservados</div>
-        <div style={{display:'flex',gap:16}}>
-          <a href="/admin" style={{fontSize:10,color:'#2a2a2a',textDecoration:'none'}}>⚙ Admin</a>
-          <a href="/privacidad" style={{fontSize:11,color:'#333',textDecoration:'none'}}>Privacidad</a>
-          <a href="/cookies" style={{fontSize:11,color:'#333',textDecoration:'none'}}>Cookies</a>
+      <div style={{padding:'16px 20px',maxWidth:1200,margin:'0 auto',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+        <div style={{fontSize:12,color:'rgba(255,255,255,0.3)'}}>
+          © {new Date().getFullYear()} BuyMuscle · Las Palmas de Gran Canaria · Todos los derechos reservados
+        </div>
+        <div style={{display:'flex',gap:16,alignItems:'center'}}>
+          <span style={{fontSize:11,color:'rgba(255,255,255,0.2)'}}>💳 Visa · Mastercard · Bizum · Transferencia</span>
         </div>
       </div>
     </footer>
