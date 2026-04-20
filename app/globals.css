@@ -148,3 +148,25 @@ table { width: 100%; overflow-x: auto; display: block; }
   table { font-size: 12px; }
   th, td { padding: 6px 8px !important; white-space: nowrap; }
 }
+
+/* ===== RESPONSIVE MOVIL ===== */
+@media (max-width:1024px){
+  .products-grid{grid-template-columns:repeat(3,1fr)!important}
+}
+@media (max-width:768px){
+  .products-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  .section-title{font-size:24px!important}
+  .qty-control{gap:8px!important}
+}
+@media (max-width:480px){
+  .products-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .product-card .info .name{font-size:11px!important}
+  .product-card .info .price{font-size:13px!important}
+  .product-card .btn-cart{font-size:10px!important;padding:6px 4px!important}
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#f1f1f1}
+::-webkit-scrollbar-thumb{background:#ff1e41;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#cc1733}
+*:focus-visible{outline:2px solid #ff1e41;outline-offset:2px}
+::selection{background:#ff1e41;color:white}
