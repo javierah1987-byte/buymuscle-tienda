@@ -76,6 +76,7 @@ export default function Navbar(){
         </div>
       )}
 
+      <ShippingBar/>
       <header style={{background:'#000',position:'sticky',top:0,zIndex:999,boxShadow:'0 1px 0 rgba(255,255,255,0.06)'}}>
         {/* Fila 1: Logo + buscador + iconos */}
         <div style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
