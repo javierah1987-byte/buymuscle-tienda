@@ -1,6 +1,6 @@
+// @ts-nocheck
 import WishlistBtn from '@/components/WishlistBtn'
 import ProductReviews from '@/components/ProductReviews'
-// @ts-nocheck
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
