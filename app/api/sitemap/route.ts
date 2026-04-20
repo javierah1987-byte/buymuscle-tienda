@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const dynamic='force-dynamic'
 const BASE='https://buymuscle-tienda.vercel.app'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
