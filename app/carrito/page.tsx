@@ -16,17 +16,41 @@ export default function CarritoPage() {
   const [orderNum, setOrderNum] = useState('')
   const [orderEmail, setOrderEmail] = useState('')
   const [form, setForm] = useState({ name:'', email:'', phone:'', address:'', city:'', postal_code:'', province:'Las Palmas', nif:'', notes:'' })
+  const [couponCode, setCouponCode] = useState('')
+  const [coupon, setCoupon] = useState(null)
+  const [couponMsg, setCouponMsg] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
 
   const f = k => e => setForm(p => ({...p,[k]:e.target.value}))
 
   // Calculos — items ahora son {id,name,price,image,qty,variant}
   const sub0 = items.reduce((s,i)=>s+i.price*i.qty,0)
   const disc = isDistributor&&discountPct ? sub0*(discountPct/100) : 0
-  const sub = sub0 - disc
+  const couponDisc = coupon ? (coupon.type==='percent' ? (sub0-disc)*(coupon.value/100) : Math.min(coupon.value, sub0-disc)) : 0
+  const sub = sub0 - disc - couponDisc
   const free = sub >= FREE_SHIP
   const ship = free ? 0 : SHIP_COST
   const tax = sub * 0.21
   const total = sub + tax + ship
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) return
+    setCouponLoading(true); setCouponMsg('')
+    const SUPA='https://awwlbepjxuoxaigztugh.supabase.co'
+    const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+    try {
+      const r=await fetch(SUPA+'/rest/v1/discount_codes?code=eq.'+encodeURIComponent(couponCode.toUpperCase().trim())+'&active=eq.true&select=*',{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}})
+      const data=await r.json()
+      const code=data?.[0]
+      if(!code){setCouponMsg('Codigo no valido');setCouponLoading(false);return}
+      if(code.expires_at&&new Date(code.expires_at)<new Date()){setCouponMsg('Codigo expirado');setCouponLoading(false);return}
+      if(code.max_uses&&code.uses>=code.max_uses){setCouponMsg('Codigo agotado');setCouponLoading(false);return}
+      if(code.min_order&&sub0<code.min_order){setCouponMsg('Pedido minimo '+code.min_order.toFixed(2)+' EUR');setCouponLoading(false);return}
+      setCoupon({id:code.id,value:code.value,type:code.type})
+      setCouponMsg(code.type==='percent'?'-'+code.value+'% aplicado':'-'+code.value.toFixed(2)+' EUR aplicado')
+    } catch(e){setCouponMsg('Error al validar')}
+    setCouponLoading(false)
+  }
 
   const doOrder = async () => {
     if (!form.name||!form.email||!form.address||!form.city||!form.postal_code) { alert('Rellena los campos obligatorios (*)'); return }
@@ -209,6 +233,21 @@ function Summary({step,sub0,disc,discountPct,tax,ship,free,sub,total,FREE_SHIP,o
     <div style={{background:'white',border:'1px solid #ebebeb',padding:'1.5rem',position:'sticky',top:120}}>
       <h3 style={{fontSize:13,fontWeight:800,textTransform:'uppercase',marginBottom:'1rem',borderBottom:'1px solid #f0f0f0',paddingBottom:'0.75rem'}}>Resumen</h3>
       <SummaryInner sub0={sub0} disc={disc} discountPct={discountPct} tax={tax} ship={ship} free={free} total={total} FREE_SHIP={FREE_SHIP} items={null}/>
+      {step===2&&(<div style={{marginBottom:'0.75rem'}}>
+        <div style={{fontSize:12,color:'#666',marginBottom:4,fontWeight:600}}>Codigo de descuento</div>
+        <div style={{display:'flex',gap:6}}>
+          <input value={couponCode||''} onChange={e=>setCouponCode(e.target.value.toUpperCase())}
+            placeholder="CODIGO" disabled={!!coupon}
+            onKeyDown={e=>e.key==='Enter'&&validateCoupon()}
+            style={{flex:1,padding:'8px 10px',border:'1px solid '+(coupon?'#22c55e':'#ddd'),fontSize:13,fontFamily:'inherit',letterSpacing:1,fontWeight:coupon?700:400,color:coupon?'#22c55e':'#333'}}/>
+          {!coupon
+            ?<button type="button" onClick={validateCoupon} disabled={couponLoading}
+               style={{padding:'8px 14px',background:'#111',color:'white',border:'none',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>{couponLoading?'...':'Aplicar'}</button>
+            :<button type="button" onClick={()=>{setCoupon(null);setCouponCode('');setCouponMsg('')}}
+               style={{padding:'8px 12px',background:'none',border:'1px solid #ddd',fontSize:12,cursor:'pointer',fontFamily:'inherit',color:'#888'}}>x</button>}
+        </div>
+        {couponMsg&&<div style={{fontSize:11,marginTop:4,color:coupon?'#22c55e':'#ef4444'}}>{couponMsg}</div>}
+      </div>)}
       <button onClick={onContinue} style={{background:'var(--red)',color:'white',border:'none',padding:'13px',fontFamily:'var(--font-body)',fontSize:13,fontWeight:700,textTransform:'uppercase',cursor:'pointer',letterSpacing:'0.05em',width:'100%',display:'block'}}>Continuar →</button>
       <Link href="/tienda" style={{display:'block',textAlign:'center',marginTop:'0.75rem',fontSize:12,color:'var(--red)',fontWeight:600,textDecoration:'none'}}>← Seguir comprando</Link>
     </div>
