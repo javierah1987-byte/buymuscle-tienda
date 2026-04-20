@@ -4,6 +4,7 @@ import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import ShippingBar from '@/components/ShippingBar'
 
 const LEVEL_COLORS: Record<string,string> = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
 
