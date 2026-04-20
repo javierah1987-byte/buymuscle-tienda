@@ -211,6 +211,8 @@ export default function Navbar(){
               <Link href="/bm-team" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#00F399',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM TEAM</Link>
               <Link href="/tienda?cat=Ofertas" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#FF2958',color:'white',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>OFERTAS</Link>
               <Link href="/streetflavour" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#47DAFF',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>STREETFLAVOUR</Link>
+              <Link href="/objetivos" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#ff8800',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>🎯 OBJETIVOS</Link>
+              <Link href="/comparar" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#888',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>⚖️ COMPARAR</Link>
             </div>
           </div>
         </div>
