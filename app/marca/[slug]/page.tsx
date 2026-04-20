@@ -11,11 +11,11 @@ export default function MarcaPage({params}){
   const[products,setProducts]=useState([])
   const[loading,setLoading]=useState(true)
   useEffect(()=>{
-    fetch(S+'/rest/v1/brands?slug=eq.'+slug,{headers:h}).then(r=>r.json()).then(d=>{
+    fetch(S+'/rest/v1/brands?slug=eq.'+slug,{headers:h}).then(r=>r.json()).then(d=>{if(!Array.isArray(d)){setLoading(false);return;}
       setBrand(d?.[0]||null)
       const name=(d?.[0]?.name||slug).toUpperCase()
       fetch(S+'/rest/v1/products?active=eq.true&brand=ilike.*'+encodeURIComponent(d?.[0]?.name||slug)+'*&select=id,name,price_incl_tax,sale_price,image_url,stock,category&order=name.asc&limit=60',{headers:h})
-        .then(r=>r.json()).then(ps=>{setProducts(ps||[]);setLoading(false)})
+        .then(r=>r.json()).then(ps=>{setProducts(Array.isArray(ps)?ps:[]);setLoading(false)})
     })
   },[slug])
   if(!brand&&!loading) return(
