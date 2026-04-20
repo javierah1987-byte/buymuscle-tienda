@@ -17,8 +17,7 @@ export default function AdminSuscriptores(){
 
   function exportCSV(){
     const rows=[['Email','Descuento','Fecha'],...subs.map(s=>[s.email,s.discount_code||'BIENVENIDO10',s.created_at?.split('T')[0]])];
-    const csv=rows.map(r=>r.join(',')).join('
-');
+    const csv=rows.map(r=>r.join(',')).join(String.fromCharCode(10));
     const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
     a.download='suscriptores.csv';a.click();
   }
