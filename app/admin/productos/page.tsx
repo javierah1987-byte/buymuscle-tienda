@@ -18,10 +18,10 @@ export default function AdminProductos(){
   async function load(){
     const q=search?'&name=ilike.*'+encodeURIComponent(search)+'*':''
     const[r1,r2]=await Promise.all([
-      fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,stock,active,category,image_url,brand&order=name.asc'+q+'&limit='+PER+'&offset='+(page*PER),{headers:h}),
+      fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,stock,active,brand,image_url,category_id&order=name.asc'+q+'&limit='+PER+'&offset='+(page*PER),{headers:h}),
       fetch(S+'/rest/v1/products?select=count'+q,{headers:{...h,'Prefer':'count=exact','Range':'0-0'}})
     ])
-    const d=await r1.json();setProds(d||[])
+    const d=await r1.json();setProds(Array.isArray(d)?d:[])
     const ct=r2.headers.get('content-range');if(ct) setTotal(parseInt(ct.split('/')[1]||'0'))
   }
   async function save(id,fields){
@@ -61,7 +61,7 @@ export default function AdminProductos(){
               </tr>
             </thead>
             <tbody>
-              {prods.map(p=>(
+              {(prods||[]).map(p=>(
                 <tr key={p.id} style={{borderBottom:'1px solid rgba(255,255,255,0.04)'}}
                   onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.02)'}
                   onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
@@ -73,7 +73,7 @@ export default function AdminProductos(){
                     {editing===p.id?<input id={'n_'+p.id} defaultValue={p.name} style={{background:'#1a1a1a',border:'1px solid #ff1e41',color:'white',padding:'3px 6px',fontSize:12,width:'100%',fontFamily:'inherit'}}/>
                     :<span style={{fontSize:12,color:'rgba(255,255,255,0.85)',fontWeight:600,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>}
                   </td>
-                  <td style={{padding:'8px 10px',fontSize:11,color:'rgba(255,255,255,0.4)'}}>{(p.category||'').slice(0,18)}</td>
+                  <td style={{padding:'8px 10px',fontSize:11,color:'rgba(255,255,255,0.4)'}}>{(p.category_id?'Cat#'+p.category_id:'—'}</td>
                   <td style={{padding:'8px 10px'}}>
                     {editing===p.id?<input id={'p_'+p.id} defaultValue={p.price_incl_tax} type="number" step="0.01"
                       style={{background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.1)',color:'white',padding:'3px 6px',fontSize:12,width:75,fontFamily:'inherit'}}/>
