@@ -1,11 +1,7 @@
 import type { Metadata } from 'next'
 import { Heebo } from 'next/font/google'
 import './globals.css'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import ExitIntent from '@/components/ExitIntent'
-import WhatsAppButton from '@/components/WhatsAppButton'
-import EmailPopup from '@/components/EmailPopup'
+import StoreWrapper from '@/components/StoreWrapper'
 import { CartProvider } from '@/lib/cart'
 import { AuthProvider } from '@/lib/auth'
 import Script from 'next/script'
@@ -61,13 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={heebo.className}>
         <AuthProvider>
           <CartProvider>
-            <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
-        <Navbar/>
-            <main><div id="main-content">{children}</div>
-        <ExitIntent/></main>
-            <Footer/>
-            <WhatsAppButton/>
-            <EmailPopup/>
+            <StoreWrapper>{children}</StoreWrapper>
           </CartProvider>
         </AuthProvider>
       </body>
