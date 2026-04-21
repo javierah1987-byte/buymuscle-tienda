@@ -63,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartProvider>
             <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
         <Navbar/>
-            <main><main id="main-content">{children}</main>
+            <main><div id="main-content">{children}</div>
         <ExitIntent/></main>
             <Footer/>
             <WhatsAppButton/>
