@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /tpv
+Disallow: /tpv/
+Disallow: /distribuidores/login
+Disallow: /api/
+Disallow: /pedido-confirmado
+
+Sitemap: https://buymuscle-tienda.vercel.app/api/sitemap
