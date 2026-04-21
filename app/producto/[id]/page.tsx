@@ -49,6 +49,23 @@ export default async function ProductoPage({ params }) {
   const desc = product.description || ''
 
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({
+        '@context':'https://schema.org','@type':'Product',
+        name:p.name,image:p.image_url,description:(p.description||p.name).slice(0,500),
+        brand:{'@type':'Brand',name:p.brand||'BuyMuscle'},
+        offers:{'@type':'Offer',price:p.sale_price&&Number(p.sale_price)<Number(p.price_incl_tax)?p.sale_price:p.price_incl_tax,priceCurrency:'EUR',
+          availability:p.stock>0?'https://schema.org/InStock':'https://schema.org/OutOfStock',
+          url:'https://buymuscle-tienda.vercel.app/producto/'+p.id}
+      })}}/>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({
+        '@context':'https://schema.org','@type':'BreadcrumbList',
+        itemListElement:[
+          {'@type':'ListItem',position:1,name:'Inicio',item:'https://buymuscle-tienda.vercel.app'},
+          {'@type':'ListItem',position:2,name:'Tienda',item:'https://buymuscle-tienda.vercel.app/tienda'},
+          {'@type':'ListItem',position:3,name:p.name,item:'https://buymuscle-tienda.vercel.app/producto/'+p.id}
+        ]
+      })}}/>
     <div style={{background:'#f8f8f8',minHeight:'60vh'}}>
       <div style={{background:'white',borderBottom:'1px solid #e8e8e8',padding:'10px 20px'}}>
         <div style={{maxWidth:1200,margin:'0 auto',fontSize:12,color:'#999',display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
