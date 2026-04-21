@@ -3,6 +3,7 @@ import { Heebo } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import ExitIntent from '@/components/ExitIntent'
 import WhatsAppButton from '@/components/WhatsAppButton'
 import EmailPopup from '@/components/EmailPopup'
 import { CartProvider } from '@/lib/cart'
@@ -61,7 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <CartProvider>
             <Navbar/>
-            <main>{children}</main>
+            <main>{children}
+        <ExitIntent/></main>
             <Footer/>
             <WhatsAppButton/>
             <EmailPopup/>
