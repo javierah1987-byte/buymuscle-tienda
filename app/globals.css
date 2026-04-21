@@ -170,3 +170,14 @@ table { width: 100%; overflow-x: auto; display: block; }
 ::-webkit-scrollbar-thumb:hover{background:#cc1733}
 *:focus-visible{outline:2px solid #ff1e41;outline-offset:2px}
 ::selection{background:#ff1e41;color:white}
+
+/* Skip to content — accesibilidad */
+.skip-link{position:absolute;left:-9999px;top:8px;z-index:10000;background:#ff1e41;color:white;padding:8px 16px;font-size:14px;font-weight:700;text-decoration:none;font-family:Arial,sans-serif}
+.skip-link:focus{left:8px}
+/* Focus visible mejorado */
+:focus-visible{outline:3px solid #ff1e41;outline-offset:2px}
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;color:#888;padding:10px 0;flex-wrap:wrap}
+.breadcrumb a{color:#888;text-decoration:none}
+.breadcrumb a:hover{color:#ff1e41}
+.breadcrumb span{color:#ff1e41;font-weight:600}
