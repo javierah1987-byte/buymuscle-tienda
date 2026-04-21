@@ -169,6 +169,19 @@ export default function TPVPage() {
       }).catch(() => {})
 
       setTicket({ num, lines: [...lines], total, payMethod, clientType, customerName, tax, subtotal })
+
+      // Puntos de fidelizacion (1 punto por euro — solo particulares con nombre)
+      if(clientType==='particular' && customerName && customerName.trim().length>2){
+        try{
+          // Buscar cliente por nombre para obtener customer_id
+          const cr=await db.from('customers').select('id').ilike('name','%'+customerName.trim()+'%').limit(1)
+          const custId=cr.data&&cr.data.length>0?cr.data[0].id:null
+          if(custId){
+            const pts=Math.floor(subtotal)
+            await db.from('loyalty_points').insert({customer_id:custId,order_id:num,points:pts,reason:'Compra TPV '+num})
+          }
+        }catch(e){/* silencioso */}
+      }
       setLines([])
       setCustomerName('')
       setCustomerNif('')
