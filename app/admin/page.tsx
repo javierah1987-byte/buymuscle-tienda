@@ -6,6 +6,7 @@ const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 const h={apikey:K,'Authorization':'Bearer '+K}
 const MODULOS=[
+  {icon:'➕',t:'Nuevo Producto',d:'Añadir producto al catalogo',href:'/admin/nuevo-producto',c:'#ff6b35'},
   {icon:'📦',t:'Pedidos Online',d:'Ver y gestionar pedidos',href:'/admin/pedidos',c:'#ff1e41'},
   {icon:'🖥️',t:'TPV Tienda fisica',d:'Punto de venta presencial',href:'/tpv',c:'#f59e0b'},
   {icon:'📊',t:'Gestion de Stock',d:'Actualizar precios y stock',href:'/admin/stock',c:'#22c55e'},
