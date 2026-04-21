@@ -61,11 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={heebo.className}>
         <AuthProvider>
           <CartProvider>
-            <a href="#main-content" style={{position:'absolute',left:'-9999px',top:'auto',width:1,height:1,overflow:'hidden',zIndex:9999}}
-          onFocus={e=>{e.currentTarget.style.left='0';e.currentTarget.style.width='auto';e.currentTarget.style.height='auto'}}
-          onBlur={e=>{e.currentTarget.style.left='-9999px';e.currentTarget.style.width='1px';e.currentTarget.style.height='1px'}}>
-          Saltar al contenido principal
-        </a>
+            <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
         <Navbar/>
             <main><main id="main-content">{children}</main>
         <ExitIntent/></main>
