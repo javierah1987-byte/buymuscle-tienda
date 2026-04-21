@@ -47,7 +47,6 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
 
   return (
     <div>
-      {/* Precio */}
       <div style={{ marginBottom:'1rem' }}>
         {isDistributor && discountPct && (
           <div style={{ fontSize:12, fontWeight:700, color:LEVEL_COLORS[levelName]||'#ffd700', marginBottom:4 }}>
@@ -66,22 +65,22 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         <div style={{ fontSize:11, color:'#aaa', marginTop:2 }}>IVA incluido · Compralo ahora y te lo entregamos en 24-48 horas.</div>
       </div>
 
-      {/* Selectores de variante */}
       {sortedTypes.map(typeName => (
         <div key={typeName} style={{ marginBottom:'1rem' }}>
           <label style={{ display:'block', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>
             {typeName}
           </label>
           <select
-            value={selected[typeName]?.id || ''}
+            value={selected[typeName] ? String(selected[typeName].variantId) : ''}
             onChange={e => {
-              const v = variantsByType[typeName].find(v => String(v.id) === e.target.value)
-              setSelected(prev => v ? { ...prev, [typeName]: v } : Object.fromEntries(Object.entries(prev).filter(([k]) => k !== typeName)))
+              const val = e.target.value
+              const v = variantsByType[typeName].find(v => String(v.variantId) === val)
+              setSelected(prev => v ? { ...prev, [typeName]: v } : (({ [typeName]:_, ...rest }) => rest)(prev))
             }}
             style={{ width:'100%', padding:'10px 12px', border:'1px solid #ddd', fontSize:13, background:'white', cursor:'pointer', fontFamily:'var(--font-body)', outline:'none' }}>
             <option value=''>-- Selecciona {typeName} --</option>
             {variantsByType[typeName].map(v => (
-              <option key={v.id} value={v.id} disabled={v.stock <= 0}>
+              <option key={v.variantId} value={String(v.variantId)} disabled={v.stock <= 0}>
                 {v.value}{v.stock <= 0 ? ' (sin stock)' : ''}
               </option>
             ))}
@@ -94,7 +93,6 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         </div>
       ))}
 
-      {/* Cantidad */}
       <div style={{ display:'flex', gap:'1rem', marginBottom:'1rem', alignItems:'center' }}>
         <div style={{ display:'flex', border:'1px solid #e0e0e0', alignItems:'center' }}>
           <button onClick={() => setQty(q => Math.max(1,q-1))}
@@ -110,7 +108,6 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         </div>
       </div>
 
-      {/* Botón */}
       <button
         onClick={handleAdd}
         disabled={!inStock || (hasVariants && !allTypesSelected)}
