@@ -19,6 +19,12 @@ const MODULOS=[
   {icon:'📧',t:'Newsletter',d:'Enviar emails a suscriptores',href:'/admin/newsletter',c:'#3b82f6'},
   {icon:'🛒',t:'Carritos abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
   {icon:'📧',t:'Email (Resend)',d:'Plantillas de email',href:'https://resend.com',c:'#555',ext:true},
+  {icon:'👥',t:'Clientes',d:'Historial y CRM',href:'/admin/clientes',c:'#8b5cf6'},
+  {icon:'⭐',t:'Reseñas',d:'Aprobar / rechazar',href:'/admin/resenas',c:'#f59e0b'},
+  {icon:'📊',t:'Métricas',d:'KPIs avanzados',href:'/admin/metricas',c:'#22c55e'},
+  {icon:'🎯',t:'Precios masivos',d:'Subir/bajar por marca',href:'/admin/precios',c:'#ef4444'},
+  {icon:'💰',t:'Caja',d:'Apertura y cierre Z',href:'/admin/caja',c:'#059669'},
+  {icon:'🔄',t:'Devoluciones',d:'Gestionar devoluciones',href:'/admin/devoluciones',c:'#dc2626'},
   {icon:'🏷️',t:'Holded Facturas',d:'Ver facturas en Holded',href:'https://app.holded.com',c:'#555',ext:true},
 ]
 export default function AdminDashboard(){
