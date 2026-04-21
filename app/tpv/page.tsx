@@ -17,11 +17,9 @@ export default function TPVPage() {
   const [categories, setCategories] = useState([])
   const [filtered, setFiltered] = useState([])
   const [search, setSearch] = useState('')
-  const [discPct, setDiscPct] = useState(0)
-  const [cajaAbierta, setCajaAbierta] = useState(false)
-  const [efectivoInicial, setEfectivoInicial] = useState(0)
   const [catFilter, setCatFilter] = useState('Todos')
   const [lines, setLines] = useState([])
+  const [discPct, setDiscPct] = useState(0)
   const [clientType, setClientType] = useState('particular')
   const [payMethod, setPayMethod] = useState('tarjeta')
   const [loading, setLoading] = useState(true)
@@ -33,17 +31,6 @@ export default function TPVPage() {
   const searchRef = useRef(null)
 
   // Cargar productos y categorías
-  
-  useEffect(() => {
-    let buf = '', timer
-    const onKey = (e) => {
-      if (e.key === 'Enter' && buf.length > 2) { setSearch(buf); buf = ''; return }
-      if (e.key.length === 1) { buf += e.key; clearTimeout(timer); timer = setTimeout(() => { buf = '' }, 200) }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [])
-
   useEffect(() => {
     db.from('products').select('*, categories(name)').eq('active', true).gt('stock', 0).order('name').limit(500)
       .then(({ data }) => {
@@ -68,6 +55,17 @@ export default function TPVPage() {
     setFiltered(f)
   }, [search, catFilter, products])
 
+
+  useEffect(() => {
+    let buf = '', t
+    const sk = (e) => {
+      if (e.target.tagName === 'INPUT') return
+      if (e.key === 'Enter' && buf.length > 2) { setSearch(buf.trim()); buf = ''; return }
+      if (/^[\w\d\-]$/.test(e.key)) { buf += e.key; clearTimeout(t); t = setTimeout(() => { buf = '' }, 200) }
+    }
+    document.addEventListener('keydown', sk)
+    return () => { document.removeEventListener('keydown', sk); clearTimeout(t) }
+  }, [])
   // Tecla Escape → limpiar
   useEffect(() => {
     const handler = (e) => {
@@ -203,11 +201,11 @@ export default function TPVPage() {
   }
 
   const imprimirTicket = () => {
-    const desc = 1 - discPct/100
-    const rows = lines.map(l => '<tr><td style="padding:3px 0">'+l.name+'</td><td style="text-align:right;padding:3px 0">'+l.qty+'x '+Number(l.price*l.qty*desc).toFixed(2)+' \u20ac</td></tr>').join('')
-    const total = lines.reduce((s,l) => s+l.price*l.qty,0)*desc
-    const w = window.open('','_print','width=380,height=600')
-    w.document.write('<html><head><style>*{margin:0;padding:0}body{font-family:monospace;width:320px;font-size:12px;padding:8px}h2{text-align:center;font-size:16px;margin-bottom:4px}p{text-align:center;font-size:11px;margin-bottom:2px}hr{border:none;border-top:1px dashed #000;margin:6px 0}table{width:100%}.total{font-size:16px;font-weight:bold;text-align:right;margin-top:6px}.gracias{text-align:center;font-size:10px;margin-top:12px}</style></head><body><h2>BUYMUSCLE</h2><p>Alcalde M. Amador Rodriguez 23, Telde</p><p>Tel: 828 048 310 | buymuscle.es</p><hr><table>'+rows+'</table><hr><div class="total">TOTAL: '+total.toFixed(2)+' \u20ac</div>'+(discPct>0?'<p style="font-size:11px;margin-top:4px">Descuento aplicado: '+discPct+'%</p>':'')+'<div class="gracias">Gracias por tu compra. IVA incluido.<br>'+ new Date().toLocaleDateString('es-ES')+'</div></body></html>')
+    const factor = 1 - discPct / 100
+    const rows = lines.map(l => '<tr><td>' + l.name + '</td><td style="text-align:right">' + l.qty + 'x ' + (l.price*l.qty*factor).toFixed(2) + ' €</td></tr>').join('')
+    const tot = lines.reduce((s,l)=>s+l.price*l.qty,0)*factor
+    const w = window.open('','','width=380,height=600')
+    w.document.write('<html><head><style>body{font-family:monospace;font-size:12px;width:300px;padding:8px}h2,p{text-align:center}hr{border:none;border-top:1px dashed #000;margin:5px 0}table{width:100%}</style></head><body><h2>BUYMUSCLE</h2><p>Telde, Las Palmas</p><hr><table>'+rows+'</table><hr><p style="font-weight:bold;text-align:right">TOTAL: '+tot.toFixed(2)+' €</p>'+(discPct>0?'<p>Dto: '+discPct+'%</p>':'')+'<p style="font-size:10px">Gracias por tu compra</p></body></html>')
     w.print()
   }
 
@@ -314,7 +312,10 @@ export default function TPVPage() {
           {lines.length > 0 && (
             <div style={{ marginBottom:10, padding:'8px 0', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
               {discount > 0 && <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#f59e0b', marginBottom:3 }}><span>Descuento {clientType} ({discount}%)</span><span>−{(lines.reduce((s,l)=>s+Number(l.product.on_sale&&l.product.sale_price?l.product.sale_price:l.product.price_incl_tax)*l.qty,0)*discount/100).toFixed(2)} €</span></div>}
-              <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#888', marginBottom:3 }}><span>Subtotal</span><span>{subtotal.toFixed(2)} €</span></div>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#888', marginBottom:3 }}>
+              <div style={{marginBottom:8}}><div style={{fontSize:10,color:'#888',textTransform:'uppercase',marginBottom:4}}>Descuento directo</div><div style={{display:'flex',gap:4}}>{[0,5,10,15,20].map(p=>(<button key={p} onClick={()=>setDiscPct(p)} style={{flex:1,padding:'4px 0',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',background:discPct===p?'rgba(255,30,65,0.25)':'rgba(255,255,255,0.05)',border:'1px solid',borderColor:discPct===p?'#ff1e41':'rgba(255,255,255,0.1)',color:discPct===p?'#ff1e41':'rgba(255,255,255,0.5)'}}>{p===0?'0%':'-'+p+'%'}</button>))}</div></div>
+              <button onClick={imprimirTicket} style={{width:'100%',padding:'7px',marginBottom:8,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.6)',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Imprimir ticket</button>
+              <span>Subtotal</span><span>{subtotal.toFixed(2)} €</span></div>
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#888', marginBottom:6 }}><span>IGIC 7%</span><span>{tax.toFixed(2)} €</span></div>
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:20, fontWeight:900, color:'white' }}><span>TOTAL</span><span style={{ color:'#ff1e41' }}>{total.toFixed(2)} €</span></div>
             </div>
@@ -404,21 +405,3 @@ export default function TPVPage() {
     </div>
   )
 }
-              {/* Descuento directo */}
-              <div style={{marginBottom:8}}>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>Descuento</div>
-                <div style={{display:'flex',gap:4}}>
-                  {[0,5,10,15,20].map(p=>(
-                    <button key={p} onClick={()=>setDiscPct(p)} style={{flex:1,padding:'5px 0',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'Arial',
-                      background:discPct===p?'rgba(255,30,65,0.25)':'rgba(255,255,255,0.04)',
-                      border:'1px solid',borderColor:discPct===p?'#ff1e41':'rgba(255,255,255,0.1)',
-                      color:discPct===p?'#ff1e41':'rgba(255,255,255,0.5)'}}>
-                      {p===0?'0%':'-'+p+'%'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={imprimirTicket} style={{width:'100%',padding:'8px',marginBottom:8,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',color:'rgba(255,255,255,0.6)',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'Arial'}}>
-                Imprimir ticket
-              </button>
-              
