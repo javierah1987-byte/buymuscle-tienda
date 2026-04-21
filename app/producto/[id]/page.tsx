@@ -49,15 +49,6 @@ export default async function ProductoPage({ params }) {
   const discount = salePrice ? Math.round((1 - salePrice/price)*100) : null
   const desc = product.description || ''
 
-  useEffect(() => {
-    if (!p?.id) return
-    try {
-      const KEY = 'bm_recent'
-      const prev = JSON.parse(localStorage.getItem(KEY) || '[]')
-      const next = [{ id: p.id, name: p.name, price: p.price_incl_tax, image: p.image_url }, ...prev.filter(x => x.id !== p.id)].slice(0, 5)
-      localStorage.setItem(KEY, JSON.stringify(next))
-    } catch(e) {}
-  }, [p?.id])
   return (
     <div style={{background:'#f8f8f8',minHeight:'60vh'}}>
       <div style={{background:'white',borderBottom:'1px solid #e8e8e8',padding:'10px 20px'}}>
