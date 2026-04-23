@@ -8,13 +8,16 @@
   "theme_color": "#ff1e41",
   "orientation": "portrait-primary",
   "lang": "es",
+  "categories": ["shopping", "health", "fitness"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icon", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "/icon", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
   ],
   "shortcuts": [
-    { "name": "Tienda", "url": "/tienda", "description": "Ver catalogo" },
-    { "name": "Carrito", "url": "/carrito", "description": "Mi carrito" },
-    { "name": "Pedidos", "url": "/mis-pedidos", "description": "Mis pedidos" }
+    { "name": "Ver productos", "url": "/tienda", "description": "Catalogo completo" },
+    { "name": "Mi carrito", "url": "/carrito", "description": "Ver carrito de compra" }
   ]
 }
