@@ -176,7 +176,11 @@ export default function CarritoPage() {
               <button onClick={doOrder} disabled={loading} style={{...S.red,background:loading?'#aaa':'var(--red)',cursor:loading?'not-allowed':'pointer'}}>
                 {loading?'⏳ Procesando...':'✓ Confirmar pedido'}
               </button>
-              <button onClick={()=>setStep(1)} style={{width:'100%',background:'none',border:'none',cursor:'pointer',marginTop:'0.75rem',fontSize:12,color:'#999',fontFamily:'var(--font-body)',padding:'6px'}}>← Volver</button>
+              <div style={{textAlign:'center',margin:'12px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
+              <button onClick={()=>doPayPal()} style={{width:'100%',background:'#ffc439',border:'none',borderRadius:4,cursor:'pointer',padding:'11px',fontWeight:800,fontSize:14,color:'#111',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:8}}>
+                <span style={{fontSize:18}}>🅿️</span> Pagar con PayPal
+              </button>
+              <button onClick={()=>setStep(1)} style={{width:'100%',background:'none',border:'none',cursor:'pointer',marginTop:'0.5rem',fontSize:12,color:'#999',fontFamily:'var(--font-body)',padding:'6px'}}>← Volver</button>
             </div>
           </div>
         )}
@@ -263,3 +267,23 @@ function Row({l,v,g,m}) {
     </div>
   )
 }
+  async function doPayPal(){
+    // Valida datos primero
+    if(!form.name||!form.email||!form.address||!form.city||!form.postal_code){
+      alert('Por favor completa todos los campos obligatorios antes de continuar con PayPal');
+      return;
+    }
+    // Guarda el pedido como pendiente y redirige a PayPal
+    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+    if(!clientId){
+      // Sin CLIENT_ID: abrir PayPal.me como fallback
+      const amount = total.toFixed(2);
+      window.open('https://www.paypal.com/paypalme/buymuscle/'+amount+'EUR','_blank');
+      // Crear igualmente el pedido en BD con estado pending
+      await doOrder('paypal');
+      return;
+    }
+    // Con CLIENT_ID: usar PayPal SDK (requiere NEXT_PUBLIC_PAYPAL_CLIENT_ID en Vercel)
+    await doOrder('paypal');
+  }
+
