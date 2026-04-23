@@ -1,127 +1,85 @@
+// @ts-nocheck
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
-const SLIDES = [
-  { img:'https://tienda.buymuscle.es/img/cms/iogenix-isolate-nuevos-sabores_1.jpg', href:'/tienda?cat=Proteína Isolatada', alt:'Isolate Professional nuevos sabores' },
-  { img:'https://tienda.buymuscle.es/img/cms/iogenix-protein-rings.jpg', href:'/tienda?cat=Snacks Protéicos', alt:'Protein Rings' },
-  { img:'https://tienda.buymuscle.es/img/cms/Banner-Canal-Whatsapp-BM-1600x630.jpg', href:'/tienda', alt:'Canal WhatsApp BuyMuscle' },
-  { img:'https://tienda.buymuscle.es/img/cms/pink-bun-lactomin.jpg', href:'/tienda?cat=Proteínas', alt:'Pink Bun nuevo sabor' },
-  { img:'https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg', href:'/tienda?cat=StreetFlavour', alt:'StreetFlavour' },
+const S='https://awwlbepjxuoxaigztugh.supabase.co'
+const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+
+const FALLBACK=[
+  {id:1,image_url:'https://tienda.buymuscle.es/img/cms/iogenix-isolate-nuevos-sabores_1.jpg',url:'/tienda',title:'Isolate Professional',subtitle:'Nuevos sabores disponibles'},
+  {id:2,image_url:'https://tienda.buymuscle.es/img/cms/iogenix-protein-rings.jpg',url:'/tienda',title:'Protein Rings',subtitle:'El snack proteico definitivo'},
+  {id:3,image_url:'https://tienda.buymuscle.es/img/cms/Banner-Canal-Whatsapp-BM-1600x630.jpg',url:'/tienda',title:'BuyMuscle',subtitle:'Tu suplementacion en Canarias'},
 ]
-const VIP = 'https://tienda.buymuscle.es/img/cms/BANNER-BM-VIP-1200x1200.jpg'
-const BG_VIDEO = 'https://tienda.buymuscle.es/img/cms/bg-video-BM-2.mp4'
 
-export default function HeroSlider() {
-  const [cur, setCur] = useState(0)
-  const [fade, setFade] = useState(true)
+export default function HeroSlider(){
+  const[slides,setSlides]=useState(FALLBACK)
+  const[idx,setIdx]=useState(0)
+  const[loaded,setLoaded]=useState(false)
 
-  const goTo = useCallback((i: number) => {
-    setFade(false)
-    setTimeout(() => { setCur(i); setFade(true) }, 280)
-  }, [])
-  const next = useCallback(() => goTo((cur + 1) % SLIDES.length), [cur, goTo])
-  const prev = () => goTo((cur - 1 + SLIDES.length) % SLIDES.length)
-  useEffect(() => { const t = setInterval(next, 5000); return () => clearInterval(t) }, [next])
+  useEffect(()=>{
+    fetch(S+'/rest/v1/banners?active=eq.true&order=order_pos.asc',{
+      headers:{apikey:K,'Authorization':'Bearer '+K}
+    }).then(r=>r.json()).then(d=>{
+      if(Array.isArray(d)&&d.length>0){
+        setSlides(d)
+      }
+      setLoaded(true)
+    }).catch(()=>setLoaded(true))
+  },[])
 
-  return (
-    <>
-    {/* HERO: slider + VIP en una fila full-width */}
-    <div style={{ background:'#0a0a0a', position:'relative', overflow:'hidden' }}>
+  const prev=useCallback(()=>setIdx(i=>(i-1+slides.length)%slides.length),[slides.length])
+  const next=useCallback(()=>setIdx(i=>(i+1)%slides.length),[slides.length])
 
-      {/* VIDEO bg-video-BM-2.mp4 de fondo — cubre TODO el ancho incluyendo franjas */}
-      <video autoPlay muted loop playsInline
-        style={{ position:'absolute', inset:0, width:'100%', height:'100%',
-          objectFit:'cover', zIndex:0,
-          opacity:0.6, filter:'brightness(0.6) saturate(1.2) contrast(1.1)' }}>
-        <source src={BG_VIDEO} type="video/mp4"/>
-      </video>
-      {/* Overlay sutil */}
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.18)', zIndex:1 }}/>
+  useEffect(()=>{
+    const t=setInterval(next,5000)
+    return()=>clearInterval(t)
+  },[next])
 
-      {/* Grid slider + VIP sin contenedor limitante */}
-      <div style={{ position:'relative', zIndex:2, display:'flex', maxWidth:'100%' }}>
+  const s=slides[idx]||{}
 
-        {/* SLIDER — ocupa todo el espacio hasta el VIP */}
-        <div style={{ flex:1, position:'relative', height:430, overflow:'hidden', minWidth:0 }}>
-          <Link href={SLIDES[cur].href} style={{ display:'block', height:'100%' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={SLIDES[cur].img} alt={SLIDES[cur].alt}
-              style={{ width:'100%', height:430, objectFit:'cover', display:'block',
-                opacity:fade?1:0, transition:'opacity 0.28s ease' }}/>
-          </Link>
+  return(
+    <div style={{position:'relative',width:'100%',height:'clamp(200px,40vw,520px)',background:'#111',overflow:'hidden',userSelect:'none'}}>
+      {/* Imagen */}
+      {s.image_url&&(
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={s.image_url} alt={s.title||'Banner'} key={s.id||idx}
+          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.85,transition:'opacity 0.4s'}}/>
+      )}
 
-          {/* Flecha izq */}
-          <button onClick={prev}
-            style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)',
-              width:44, height:88, background:'rgba(0,0,0,0.5)', border:'none',
-              color:'white', fontSize:32, cursor:'pointer', zIndex:10,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              transition:'background 0.15s' }}
-            onMouseEnter={e=>(e.currentTarget.style.background='rgba(0,0,0,0.78)')}
-            onMouseLeave={e=>(e.currentTarget.style.background='rgba(0,0,0,0.5)')}>‹</button>
+      {/* Overlay */}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.1) 60%,transparent 100%)'}}/>
 
-          {/* Flecha der */}
-          <button onClick={next}
-            style={{ position:'absolute', right:0, top:'50%', transform:'translateY(-50%)',
-              width:44, height:88, background:'rgba(0,0,0,0.5)', border:'none',
-              color:'white', fontSize:32, cursor:'pointer', zIndex:10,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              transition:'background 0.15s' }}
-            onMouseEnter={e=>(e.currentTarget.style.background='rgba(0,0,0,0.78)')}
-            onMouseLeave={e=>(e.currentTarget.style.background='rgba(0,0,0,0.5)')}>›</button>
-
-          {/* Dots */}
-          <div style={{ position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)',
-            display:'flex', gap:7, zIndex:10 }}>
-            {SLIDES.map((_,i) => (
-              <button key={i} onClick={()=>goTo(i)}
-                style={{ width:i===cur?24:8, height:8, borderRadius:4, border:'none', padding:0,
-                  cursor:'pointer', transition:'all 0.3s',
-                  background:i===cur?'var(--red)':'rgba(255,255,255,0.65)' }}/>
-            ))}
-          </div>
+      {/* Texto */}
+      {(s.title||s.subtitle)&&(
+        <div style={{position:'absolute',left:'5%',top:'50%',transform:'translateY(-50%)',zIndex:2,maxWidth:'45%'}}>
+          {s.title&&<h2 style={{margin:0,fontSize:'clamp(18px,3vw,42px)',fontWeight:900,color:'white',textTransform:'uppercase',textShadow:'0 2px 8px rgba(0,0,0,0.6)',lineHeight:1.1}}>{s.title}</h2>}
+          {s.subtitle&&<p style={{margin:'8px 0 0',fontSize:'clamp(12px,1.5vw,18px)',color:'rgba(255,255,255,0.85)',textShadow:'0 1px 4px rgba(0,0,0,0.5)'}}>{s.subtitle}</p>}
+          {s.url&&s.url!=='/'&&(
+            <Link href={s.url} style={{display:'inline-block',marginTop:16,padding:'10px 24px',background:'#ff1e41',color:'white',borderRadius:4,textDecoration:'none',fontWeight:700,fontSize:'clamp(12px,1.2vw,15px)',textTransform:'uppercase',letterSpacing:'0.05em'}}>
+              Ver productos
+            </Link>
+          )}
         </div>
+      )}
 
-        {/* BANNER BM VIP — 380px fijo a la derecha */}
-        <Link href="/distribuidores"
-          style={{ display:'block', width:380, flexShrink:0, height:430, overflow:'hidden' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={VIP} alt="BM VIP BuyMuscle Beneficios Exclusivos"
-            style={{ width:'100%', height:430, objectFit:'cover', display:'block',
-              transition:'transform 0.4s' }}
-            onMouseEnter={e=>((e.target as HTMLImageElement).style.transform='scale(1.04)')}
-            onMouseLeave={e=>((e.target as HTMLImageElement).style.transform='scale(1)')}/>
-        </Link>
-      </div>
-    </div>
+      {/* Arrows */}
+      {slides.length>1&&(
+        <>
+          <button onClick={prev} aria-label="Anterior" style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',background:'rgba(0,0,0,0.45)',border:'none',color:'white',width:40,height:40,borderRadius:'50%',cursor:'pointer',fontSize:18,zIndex:3,display:'flex',alignItems:'center',justifyContent:'center'}}>&#8249;</button>
+          <button onClick={next} aria-label="Siguiente" style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'rgba(0,0,0,0.45)',border:'none',color:'white',width:40,height:40,borderRadius:'50%',cursor:'pointer',fontSize:18,zIndex:3,display:'flex',alignItems:'center',justifyContent:'center'}}>&#8250;</button>
+        </>
+      )}
 
-    {/* FRANJA LUCES — el vídeo sigue de fondo aquí también */}
-    <div style={{ background:'#050505', height:68, position:'relative', overflow:'hidden' }}>
-      {/* Video continúa en la franja — misma fuente */}
-      <video autoPlay muted loop playsInline
-        style={{ position:'absolute', inset:0, width:'100%', height:'100%',
-          objectFit:'cover', opacity:0.85, filter:'brightness(0.55) saturate(1.3)' }}>
-        <source src={BG_VIDEO} type="video/mp4"/>
-      </video>
-      {/* Overlay oscuro para que quede como el original */}
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.35)' }}/>
-      {/* Rayos de luz en diagonal exactos al original */}
-      <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-        <div style={{ position:'absolute', left:'23%', top:'-150%', width:1.5, height:'400%',
-          background:'linear-gradient(180deg,transparent,rgba(255,185,60,0.85) 45%,rgba(255,255,255,1) 50%,rgba(255,185,60,0.85) 55%,transparent)',
-          transform:'rotate(-32deg)', boxShadow:'0 0 8px 2px rgba(255,160,40,0.5)', filter:'blur(0.5px)' }}/>
-        <div style={{ position:'absolute', left:'29%', top:'-150%', width:1, height:'400%',
-          background:'linear-gradient(180deg,transparent,rgba(255,140,40,0.4) 45%,rgba(255,240,170,0.55) 50%,rgba(255,140,40,0.4) 55%,transparent)',
-          transform:'rotate(-32deg)' }}/>
-        <div style={{ position:'absolute', right:'23%', top:'-150%', width:1.5, height:'400%',
-          background:'linear-gradient(180deg,transparent,rgba(255,185,60,0.85) 45%,rgba(255,255,255,1) 50%,rgba(255,185,60,0.85) 55%,transparent)',
-          transform:'rotate(32deg)', boxShadow:'0 0 8px 2px rgba(255,160,40,0.5)', filter:'blur(0.5px)' }}/>
-        <div style={{ position:'absolute', right:'29%', top:'-150%', width:1, height:'400%',
-          background:'linear-gradient(180deg,transparent,rgba(255,140,40,0.4) 45%,rgba(255,240,170,0.55) 50%,rgba(255,140,40,0.4) 55%,transparent)',
-          transform:'rotate(32deg)' }}/>
-      </div>
+      {/* Dots */}
+      {slides.length>1&&(
+        <div style={{position:'absolute',bottom:14,left:'50%',transform:'translateX(-50%)',display:'flex',gap:6,zIndex:3}}>
+          {slides.map((_,i)=>(
+            <button key={i} onClick={()=>setIdx(i)} aria-label={'Slide '+(i+1)}
+              style={{width:i===idx?24:8,height:8,borderRadius:4,border:'none',background:i===idx?'#ff1e41':'rgba(255,255,255,0.5)',cursor:'pointer',padding:0,transition:'all 0.3s'}}/>
+          ))}
+        </div>
+      )}
     </div>
-    </>
   )
 }
