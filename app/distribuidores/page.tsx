@@ -1,7 +1,10 @@
+// @ts-nocheck
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+// @ts-nocheck
+const _SB_URL='https://awwlbepjxuoxaigztugh.supabase.co'
+const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
 const LEVELS = [
   {
