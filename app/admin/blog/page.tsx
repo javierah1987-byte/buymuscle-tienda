@@ -16,7 +16,7 @@ export default function BlogAdmin(){
 
   useEffect(()=>{
     fetch(S+'/rest/v1/blog_posts?order=created_at.desc',{headers:{'apikey':K,'Authorization':'Bearer '+K}})
-      .then(r=>r.json()).then(d=>setPosts(d||[])).catch(()=>{})
+      .then(r=>r.json()).then(d=>setPosts(Array.isArray(d)?d:[])).catch(()=>{})
   },[])
 
   function slugify(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')}
