@@ -181,3 +181,57 @@ table { width: 100%; overflow-x: auto; display: block; }
 .breadcrumb a{color:#888;text-decoration:none}
 .breadcrumb a:hover{color:#ff1e41}
 .breadcrumb span{color:#ff1e41;font-weight:600}
+
+/* ── Botones globales ─────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  background: #ff1e41;
+  color: white !important;
+  border: 2px solid #ff1e41;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 28px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+  letter-spacing: 0.03em;
+}
+.btn-primary:hover { background: #d41535; border-color: #d41535; color: white !important; }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  color: white !important;
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 28px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  letter-spacing: 0.03em;
+}
+.btn-outline:hover { border-color: white; background: rgba(255,255,255,0.08); color: white !important; }
+
+.btn-outline-red {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  color: #ff1e41 !important;
+  border: 2px solid #ff1e41;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 28px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-outline-red:hover { background: #ff1e41; color: white !important; }
