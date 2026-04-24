@@ -1,23 +1,67 @@
 {
-  "name": "BuyMuscle Tienda",
+  "name": "BuyMuscle | Suplementacion Deportiva",
   "short_name": "BuyMuscle",
-  "description": "Suplementacion deportiva de calidad en Canarias",
+  "description": "Suplementacion deportiva de calidad en Canarias. Proteinas, creatinas, BCAA y mas.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#ff1e41",
   "orientation": "portrait-primary",
   "lang": "es",
   "categories": ["shopping", "health", "fitness"],
-  "icons": [
-    { "src": "/icon", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
-  ],
   "screenshots": [
-    { "src": "/icon", "sizes": "512x512", "type": "image/png", "form_factor": "narrow" }
+    {
+      "src": "https://buymuscle-tienda.vercel.app/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "BuyMuscle Tienda Online"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icon?size=192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon?size=512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://tienda.buymuscle.es/img/cms/logo-buymuscle-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://tienda.buymuscle.es/img/cms/logo-buymuscle-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Ver productos", "url": "/tienda", "description": "Catalogo completo" },
-    { "name": "Mi carrito", "url": "/carrito", "description": "Ver carrito de compra" }
+    {
+      "name": "Catalogo",
+      "url": "/tienda",
+      "description": "Ver todos los productos",
+      "icons": [{ "src": "/icon?size=96", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mi carrito",
+      "url": "/carrito",
+      "description": "Ver carrito de compra",
+      "icons": [{ "src": "/icon?size=96", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ofertas",
+      "url": "/tienda?cat=OFERTAS",
+      "description": "Ver ofertas actuales",
+      "icons": [{ "src": "/icon?size=96", "sizes": "96x96" }]
+    }
   ]
 }
