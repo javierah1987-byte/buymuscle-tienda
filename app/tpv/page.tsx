@@ -28,6 +28,7 @@ export default function TPVPage() {
   const [variantModal, setVariantModal] = useState(null) // {product, variants}
   const [customerName, setCustomerName] = useState('')
   const [customerNif, setCustomerNif] = useState('')
+  const searchTimer = useRef(null)
   const searchRef = useRef(null)
 
   // Cargar productos y categorías
@@ -230,10 +231,28 @@ export default function TPVPage() {
         <div style={S.header}>
           <a href="/" style={{ color:'#ff1e41', fontWeight:900, fontSize:18, textDecoration:'none', letterSpacing:1 }}>BM</a>
           <input ref={searchRef} style={S.searchInput} placeholder="Buscar producto..." value={search}
-            onChange={e => setSearch(e.target.value)} autoFocus />
+            onChange={e=>{ const v=e.target.value; clearTimeout(searchTimer.current); searchTimer.current=setTimeout(()=>setSearch(v),200) }} autoFocus />
           <span style={{ fontSize:11, color:'#555', whiteSpace:'nowrap' }}>{filtered.length} prods</span>
         </div>
 
+        
+        {/* v2 ACCESO RAPIDO — productos frecuentes */}
+        {lines.length===0 && (
+          <div style={{padding:'8px 12px',borderBottom:'1px solid #2a2a2a',background:'#0d0d0d'}}>
+            <div style={{fontSize:10,color:'#555',marginBottom:6,letterSpacing:'0.08em',textTransform:'uppercase'}}>Acceso rapido</div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              {products.slice(0,8).map(p=>(
+                <button key={p.id} onClick={()=>addLine(p)}
+                  style={{padding:'4px 10px',background:'#1a1a1a',border:'1px solid #333',borderRadius:3,color:'white',fontSize:11,cursor:'pointer',fontFamily:'inherit',transition:'border-color 0.15s',whiteSpace:'nowrap',overflow:'hidden',maxWidth:130,textOverflow:'ellipsis'}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor='#ff1e41'}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor='#333'}
+                  title={p.name}>
+                  {p.name.slice(0,18)}{p.name.length>18?'...':''}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Filtros categoría */}
         <div style={S.catBar}>
           {categories.map(cat => (
