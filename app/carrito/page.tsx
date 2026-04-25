@@ -111,12 +111,36 @@ export default function CarritoPage() {
                   <h2 style={{fontSize:18,fontWeight:700,marginBottom:'0.5rem',textTransform:'uppercase'}}>Tu carrito esta vacio</h2>
                   <p style={{color:'#999',marginBottom:'1.5rem'}}>Añade productos desde el catalogo</p>
                   <Link href="/tienda" style={{background:'var(--red)',color:'white',padding:'12px 28px',textDecoration:'none',fontWeight:700,fontSize:13,textTransform:'uppercase',display:'inline-block'}}>Ver catalogo</Link>
+                  <div style={{marginTop:'2rem',textAlign:'left',width:'100%',maxWidth:600,margin:'2rem auto 0'}}>
+                    <div style={{fontSize:12,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Productos que te pueden interesar</div>
+                    <RecomendadosVacio />
+                  </div>
                 </div>
               ) : (
                 <>
                   <div style={{padding:'0.875rem 1.5rem',borderBottom:'1px solid #f0f0f0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span style={{fontWeight:700,fontSize:13,textTransform:'uppercase'}}>{count} producto{count!==1?'s':''}</span>
-                    <button onClick={clearCart} style={{fontSize:11,color:'#aaa',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',fontFamily:'var(--font-body)'}}>Vaciar</button>
+                    
+              {/* c2 ELEMENTOS DE CONFIANZA */}
+              <div style={{border:'1px solid #e8e8e8',borderRadius:6,padding:'12px 14px',marginBottom:12,fontSize:12}}>
+                <div style={{display:'flex',flexDirection:'column',gap:7}}>
+                  {[
+                    {icon:'🔒',t:'Pago 100% seguro',s:'SSL y cifrado de extremo a extremo'},
+                    {icon:'🚚',t:'Envio 24-48h',s:'Canarias y Peninsula desde 4.90€'},
+                    {icon:'🔄',t:'Devolucion 14 dias',s:'Sin preguntas ni complicaciones'},
+                    {icon:'📞',t:'Atencion al cliente',s:'828 048 310 · Lun-Sab 9-20h'},
+                  ].map(({icon,t,s})=>(
+                    <div key={t} style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{fontSize:16,flexShrink:0}}>{icon}</span>
+                      <div>
+                        <div style={{fontWeight:600,color:'#333'}}>{t}</div>
+                        <div style={{color:'#999',fontSize:11}}>{s}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button onClick={clearCart} style={{fontSize:11,color:'#aaa',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',fontFamily:'var(--font-body)'}}>Vaciar</button>
                   </div>
                   {items.map(item=>(
                     <div key={item.id+item.variant} style={{display:'flex',gap:'1rem',padding:'1rem 1.5rem',borderBottom:'1px solid #f8f8f8',alignItems:'center'}}>
