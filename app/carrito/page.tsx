@@ -1,4 +1,7 @@
-// @ts-nocheck
+// 
+              <p style={{textAlign:'center',fontSize:11,color:'#aaa',marginTop:8}}>
+                🔒 Tu carrito se guarda 7 días · Puedes continuar más tarde
+              </p>@ts-nocheck
 'use client'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
@@ -8,6 +11,42 @@ import CartUpsell from '@/components/CartUpsell'
 
 const FREE_SHIP = 50
 const SHIP_COST = 4.95
+
+
+// c1: Componente inline de recomendados para carrito vacío
+function RecomendadosInline(){
+  const[prods,setProds]=useState([])
+  const{add}=useCart()
+  useEffect(()=>{
+    fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/products?active=eq.true&stock=gt.0&select=id,name,price_incl_tax,sale_price,on_sale,image_url,categories(name)&order=id.desc&limit=4',
+      {headers:{apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}}
+    ).then(r=>r.json()).then(d=>setProds(Array.isArray(d)?d:[])).catch(()=>{})
+  },[])
+  if(!prods.length) return null
+  return(
+    <div style={{marginTop:'2rem'}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Productos que te pueden interesar</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
+        {prods.map(p=>{
+          const price=Number(p.sale_price&&p.on_sale?p.sale_price:p.price_incl_tax)
+          return(
+            <div key={p.id} style={{border:'1px solid #f0f0f0',borderRadius:4,padding:10,display:'flex',gap:10,alignItems:'center',background:'white'}}>
+              {p.image_url&&<img src={p.image_url} alt="" style={{width:52,height:52,objectFit:'contain',background:'#f9f9f9',borderRadius:4,flexShrink:0}}/>}
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:600,color:'#333',lineHeight:1.3,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{p.name}</div>
+                <div style={{fontSize:13,fontWeight:900,color:'var(--red)',marginTop:3}}>{price.toFixed(2)} €</div>
+              </div>
+              <button onClick={()=>add({id:p.id,name:p.name,price,image:p.image_url,variant:'',qty:1})}
+                style={{padding:'5px 8px',border:'1px solid var(--red)',background:'transparent',color:'var(--red)',fontSize:10,fontWeight:700,cursor:'pointer',flexShrink:0,borderRadius:2}}>
+                +
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 export default function CarritoPage() {
   const { items, removeItem, updateQty, clearCart, count } = useCart()
@@ -113,7 +152,7 @@ export default function CarritoPage() {
                   <Link href="/tienda" style={{background:'var(--red)',color:'white',padding:'12px 28px',textDecoration:'none',fontWeight:700,fontSize:13,textTransform:'uppercase',display:'inline-block'}}>Ver catalogo</Link>
                   <div style={{marginTop:'2rem',textAlign:'left',width:'100%',maxWidth:600,margin:'2rem auto 0'}}>
                     <div style={{fontSize:12,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:12}}>Productos que te pueden interesar</div>
-                    <RecomendadosVacio />
+                    <RecomendadosInline />
                   </div>
                 </div>
               ) : (
@@ -196,6 +235,15 @@ export default function CarritoPage() {
               <div style={{background:'#f9f9f9',border:'1px solid #e8e8e8',padding:'10px',marginBottom:'0.75rem'}}>
                 <div style={{fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',marginBottom:6}}>Pago seguro</div>
                 <div style={{display:'flex',gap:6}}>{['💳 Tarjeta','🏦 Bizum','🔒 SSL'].map(m=><span key={m} style={{fontSize:11,background:'white',border:'1px solid #ddd',padding:'3px 8px',color:'#666'}}>{m}</span>)}</div>
+              </div>
+              
+              {/* c2: elementos de confianza */}
+              <div style={{display:'flex',gap:12,flexWrap:'wrap',padding:'12px 0',borderTop:'1px solid #f0f0f0',marginTop:8}}>
+                {[{i:'🔒',t:'Pago 100% seguro'},{i:'🚚',t:'Envio 24-48h'},{i:'🔄',t:'Devolucion 14 dias'},{i:'📞',t:'Tel: 828 048 310'},].map(({i,t})=>(
+                  <div key={t} style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#666'}}>
+                    <span style={{fontSize:14}}>{i}</span>{t}
+                  </div>
+                ))}
               </div>
               <button onClick={doOrder} disabled={loading} style={{...S.red,background:loading?'#aaa':'var(--red)',cursor:loading?'not-allowed':'pointer'}}>
                 {loading?'⏳ Procesando...':'✓ Confirmar y pagar ${total.toFixed(2)}€'}
