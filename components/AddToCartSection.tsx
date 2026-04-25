@@ -108,6 +108,13 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         </div>
       </div>
 
+      
+      {inStock && variantStock > 0 && variantStock <= 10 && (
+        <div style={{background:'#fff5f0',border:'1px solid #fed7aa',borderRadius:6,padding:'8px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontSize:16}}>⚠️</span>
+          <span style={{fontSize:13,fontWeight:700,color:'#c2410c'}}>¡Solo quedan {variantStock} unidades!</span>
+        </div>
+      )}
       <button
         onClick={handleAdd}
         disabled={!inStock || (hasVariants && !allTypesSelected)}
@@ -115,6 +122,11 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
           background: added ? '#22c55e' : inStock && allTypesSelected ? 'var(--red)' : '#ccc', color:'white', transition:'background 0.2s' }}>
         {added ? '✓ Añadido al carrito' : !inStock ? 'Sin stock' : !allTypesSelected ? 'Selecciona opciones' : '🛒 Añadir al carrito'}
       </button>
+      <a href={'https://wa.me/?text='+encodeURIComponent('¡Mira este producto! '+product.name+' - buymuscle-tienda.vercel.app/producto/'+product.id)}
+        target="_blank" rel="noopener noreferrer"
+        style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,width:'100%',padding:'10px',border:'1px solid #25d366',borderRadius:4,background:'white',color:'#25d366',fontSize:13,fontWeight:700,textDecoration:'none',marginTop:8}}>
+        📱 Compartir en WhatsApp
+      </a>
     </div>
   )
 }
