@@ -49,6 +49,56 @@ export default async function Home() {
   return (
     <div style={{background:'#f5f5f5'}}>
       <HeroSlider />
+      {/* h1 PROPUESTA DE VALOR */}
+      <section style={{background:'#111',padding:'12px 20px',borderBottom:'1px solid #222'}}>
+        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'clamp(16px,4vw,56px)',flexWrap:'wrap'}}>
+          {[
+            {icon:'🚀',t:'Envio 24-48h',s:'Canarias y Peninsula'},
+            {icon:'✅',t:'Marca oficial',s:'100% productos originales'},
+            {icon:'💰',t:'Precio garantizado',s:'Mejor precio o te lo igualamos'},
+            {icon:'🔄',t:'Devolucion 14 dias',s:'Sin preguntas'},
+          ].map(({icon,t,s})=>(
+            <div key={t} style={{display:'flex',alignItems:'center',gap:8,color:'white'}}>
+              <span style={{fontSize:20,lineHeight:1}}>{icon}</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:12,letterSpacing:'0.04em'}}>{t}</div>
+                <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:1}}>{s}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      {/* h3 SOCIAL PROOF */}
+      <section style={{background:'white',padding:'1.25rem 20px',borderBottom:'1px solid #ebebeb'}}>
+        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
+          <div style={{display:'flex',gap:'clamp(24px,5vw,64px)',flexWrap:'wrap',alignItems:'center'}}>
+            {[
+              {n:'+500',l:'Clientes activos'},
+              {n:'316',l:'Productos'},
+              {n:'24h',l:'Envio express'},
+              {n:'4.9★',l:'Valoracion'},
+            ].map(({n,l})=>(
+              <div key={l} style={{textAlign:'center'}}>
+                <div style={{fontWeight:900,fontSize:'clamp(20px,2.5vw,28px)',color:'#ff1e41',lineHeight:1}}>{n}</div>
+                <div style={{fontSize:11,color:'#999',marginTop:2}}>{l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+            {[
+              {t:'La mejor tienda de suplementacion de Canarias. Envio en 24h.',a:'Carlos M.'},
+              {t:'Precios imbatibles y atencion 10/10. Repito seguro.',a:'Laura G.'},
+              {t:'Productos originales y bien embalados. Muy recomendable.',a:'Marta R.'},
+            ].map(({t,a})=>(
+              <div key={a} style={{background:'#f9f9f9',border:'1px solid #ebebeb',borderRadius:8,padding:'10px 12px',maxWidth:190,flexShrink:0}}>
+                <div style={{color:'#f59e0b',fontSize:12,marginBottom:3}}>★★★★★</div>
+                <div style={{fontSize:11,color:'#666',lineHeight:1.45,fontStyle:'italic'}}>"{t}"</div>
+                <div style={{fontWeight:700,color:'#333',marginTop:5,fontSize:10}}>— {a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Categorias rapidas */}
       <section style={{background:'white',borderBottom:'1px solid #ebebeb',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
