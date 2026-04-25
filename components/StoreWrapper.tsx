@@ -6,6 +6,8 @@ import Footer from '@/components/Footer'
 import ExitIntent from '@/components/ExitIntent'
 import WhatsAppButton from '@/components/WhatsAppButton'
 import EmailPopup from '@/components/EmailPopup'
+import CookieBanner from '@/components/CookieBanner'
+import PushNotifPrompt from '@/components/PushNotifPrompt'
 
 export default function StoreWrapper({ children }) {
   const pathname = usePathname()
@@ -26,6 +28,8 @@ export default function StoreWrapper({ children }) {
       <Footer />
       <WhatsAppButton />
       <EmailPopup />
+      <CookieBanner />
+      <PushNotifPrompt />
     </>
   )
 }
