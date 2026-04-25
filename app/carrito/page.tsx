@@ -168,7 +168,7 @@ export default function CarritoPage() {
                         <div style={{fontSize:14,fontWeight:900,color:'#ff1e41',marginTop:4}}>{item.price.toFixed(2)} €</div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                        <button onClick={()=>remove(item.id,item.variant)} style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:18',lineHeight:1}}>✕</button>
+                        <button onClick={()=>remove(item.id,item.variant)} style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:18,lineHeight:1}}>✕</button>
                         <div style={{display:'flex',alignItems:'center',border:'1px solid #e8e8e8',borderRadius:4}}>
                           <button onClick={()=>update(item.id,item.variant,Math.max(1,item.qty-1))} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>−</button>
                           <span style={{width:32,textAlign:'center',fontSize:13,fontWeight:600}}>{item.qty}</span>
