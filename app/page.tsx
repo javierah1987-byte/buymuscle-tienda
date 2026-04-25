@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import ProductCarousel from '@/components/ProductCarousel'
 import HeroSlider from '@/components/HeroSlider'
+import OfertaDia from '@/components/OfertaDia'
 
 const BG_VIDEO_3 = 'https://tienda.buymuscle.es/img/cms/bg-video-BM-3.mp4'
 const BASE_BLOG = 'https://tienda.buymuscle.es'
@@ -113,6 +114,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* h5 OFERTA DEL DIA */}
+      <OfertaDia />
 
       {/* NOVEDADES — layout 2 columnas fijo igual que el original */}
       <section style={{background:'white',padding:'2rem 0 2.5rem',borderBottom:'1px solid #ebebeb'}}>
