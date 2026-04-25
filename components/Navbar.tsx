@@ -1,4 +1,5 @@
 'use client'
+import SearchAutocomplete from '@/components/SearchAutocomplete'
 import Link from 'next/link'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
@@ -87,13 +88,7 @@ export default function Navbar(){
               <Link href="/" style={{fontFamily:'var(--font-body)',fontSize:26,fontWeight:900,color:'var(--red)',fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.02em',textDecoration:'none',flexShrink:0}}>
                 BUYMUSCLE
               </Link>
-              <form style={{flex:1,display:'flex',maxWidth:560}}
-                onSubmit={e=>{e.preventDefault();const q=(e.currentTarget.querySelector('input') as HTMLInputElement).value;if(q)router.push('/tienda?q='+encodeURIComponent(q))}}>
-                <input placeholder="Buscar..." style={{flex:1,background:'white',border:'none',padding:'9px 14px',fontSize:13,margin:0,outline:'none',color:'#333'}}/>
-                <button type="submit" style={{background:'var(--red)',border:'none',color:'white',padding:'9px 16px',cursor:'pointer',fontSize:14,flexShrink:0}}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                </button>
-              </form>
+              <div style={{flex:1,maxWidth:560}}><SearchAutocomplete placeholder="Buscar productos..." /></div>
               <div style={{display:'flex',alignItems:'center',gap:'1rem',flexShrink:0}}>
                 {!loading&&(isDistributor&&levelName?(
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
