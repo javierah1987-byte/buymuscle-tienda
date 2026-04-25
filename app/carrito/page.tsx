@@ -198,7 +198,7 @@ export default function CarritoPage() {
                 <div style={{display:'flex',gap:6}}>{['💳 Tarjeta','🏦 Bizum','🔒 SSL'].map(m=><span key={m} style={{fontSize:11,background:'white',border:'1px solid #ddd',padding:'3px 8px',color:'#666'}}>{m}</span>)}</div>
               </div>
               <button onClick={doOrder} disabled={loading} style={{...S.red,background:loading?'#aaa':'var(--red)',cursor:loading?'not-allowed':'pointer'}}>
-                {loading?'⏳ Procesando...':'✓ Confirmar pedido'}
+                {loading?'⏳ Procesando...':'✓ Confirmar y pagar ${total.toFixed(2)}€'}
               </button>
               <div style={{textAlign:'center',margin:'12px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
               <button onClick={()=>doPayPal()} style={{width:'100%',background:'#ffc439',border:'none',borderRadius:4,cursor:'pointer',padding:'11px',fontWeight:800,fontSize:14,color:'#111',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:8}}>
