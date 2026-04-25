@@ -91,7 +91,7 @@ export default function AdminDashboard(){
       <div style={{background:'#080808',padding:'16px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
         <div style={{display:'flex',alignItems:'center',gap:14}}>
           <span style={{fontSize:20,fontWeight:900,color:'#ff1e41',letterSpacing:'-1px'}}>BUYMUSCLE</span>
-          <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>Panel de Administracion</span>
+          <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>{stats.pendientes>0 ? `Panel de Administracion (${stats.pendientes} pendiente${stats.pendientes>1?'s':''})` : 'Panel de Administracion'}</span>
         </div>
         <a href="/tienda" style={{fontSize:12,color:'rgba(255,255,255,0.4)',textDecoration:'none'}}>Ir a la tienda →</a>
       </div>
@@ -103,9 +103,9 @@ export default function AdminDashboard(){
         <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:18}}>
           {[
             {label:'FACTURACION',val:stats.facturacion.toFixed(0)+' €',icon:'💰',c:'#22c55e'},
-            {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'white'},
-            {label:'PENDIENTES',val:stats.pendientes,icon:'⏳',c:stats.pendientes>0?'#f59e0b':'white'},
-            {label:'VENTAS TPV',val:stats.tpv,icon:'🛒',c:'white'},
+            {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'white',href:'/admin/pedidos'},
+            {label:'PENDIENTES',val:stats.pendientes,icon:'⏳',c:stats.pendientes>0?'#f59e0b':'white',href:'/admin/pedidos?status=pending'},
+            {label:'VENTAS TPV',val:stats.tpv,icon:'🛒',c:'white',href:'/tpv'},
             {label:'PRODUCTOS',val:stats.productos,icon:'📋',c:'#3b82f6'},
             {label:'STOCK BAJO',val:stats.stockBajo,icon:'⚠️',c:stats.stockBajo>50?'#ef4444':'#f59e0b'},
             {label:'TICKET MEDIO',val:stats.ticketMedio.toFixed(0)+' €',icon:'📈',c:'#8b5cf6'},
