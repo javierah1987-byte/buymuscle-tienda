@@ -98,7 +98,7 @@ export default function CarritoPage() {
   }
 
   // PASO 3 — Confirmación c5
-  if(paso===3&&orderDone) return(
+  if(paso===3&&orderDone){return(
     <div style={{maxWidth:640,margin:'3rem auto',padding:'0 20px'}}>
       <div style={{background:'white',border:'1px solid #e8e8e8',borderRadius:8,padding:'2.5rem',textAlign:'center'}}>
         <div style={{fontSize:56,marginBottom:16}}>🎉</div>
@@ -126,7 +126,7 @@ export default function CarritoPage() {
         </div>
       )}
     </div>
-  )
+  )}
 
   return(
     <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 20px'}}>
