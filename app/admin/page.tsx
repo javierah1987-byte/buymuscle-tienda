@@ -106,11 +106,11 @@ export default function AdminDashboard(){
             {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'white',href:'/admin/pedidos'},
             {label:'PENDIENTES',val:stats.pendientes,icon:'⏳',c:stats.pendientes>0?'#f59e0b':'white',href:'/admin/pedidos?status=pending'},
             {label:'VENTAS TPV',val:stats.tpv,icon:'🛒',c:'white',href:'/tpv'},
-            {label:'PRODUCTOS',val:stats.productos,icon:'📋',c:'#3b82f6'},
-            {label:'STOCK BAJO',val:stats.stockBajo,icon:'⚠️',c:stats.stockBajo>50?'#ef4444':'#f59e0b'},
+            {label:'PRODUCTOS',val:stats.productos,icon:'📋',c:'#3b82f6',href:'/admin/productos'},
+            {label:'STOCK BAJO',val:stats.stockBajo,icon:'⚠️',c:stats.stockBajo>50?'#ef4444':'#f59e0b',href:'/admin/stock'},
             {label:'TICKET MEDIO',val:stats.ticketMedio.toFixed(0)+' €',icon:'📈',c:'#8b5cf6'},
           ].map(k=>(
-            <div key={k.label} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 12px',textAlign:'center'}}>
+            <div key={k.label} onClick={()=>{if(k.href)window.location.href=k.href}} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 12px',textAlign:'center',cursor:k.href?'pointer':'default',transition:'background 0.15s'}} onMouseEnter={e=>{if(k.href)e.currentTarget.style.background='rgba(255,255,255,0.07)'}} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.03)'}}>
               <div style={{fontSize:18,marginBottom:4}}>{k.icon}</div>
               <div style={{fontSize:20,fontWeight:900,color:k.c}}>{k.val}</div>
               <div style={{fontSize:9,color:'rgba(255,255,255,0.35)',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{k.label}</div>
@@ -209,3 +209,17 @@ export default function AdminDashboard(){
     </div>
   )
 }
+        {/* a5: Comparativa métricas */}
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:16}}>
+          {[
+            {label:'Esta semana',val:stats.facturacion.toFixed(0)+' €',ref:'vs semana anterior: calcular al acumular más pedidos',color:'#22c55e'},
+            {label:'Pedidos esta semana',val:stats.pedidos,color:'white'},
+            {label:'Ticket medio',val:stats.ticketMedio.toFixed(0)+' €',color:'#8b5cf6'},
+          ].map(m=>(
+            <div key={m.label} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'10px 16px',borderRadius:4,minWidth:140}}>
+              <div style={{fontSize:10,color:'#888',marginBottom:4,textTransform:'uppercase'}}>{m.label}</div>
+              <div style={{fontSize:18,fontWeight:700,color:m.color}}>{m.val}</div>
+            </div>
+          ))}
+        </div>
+        
