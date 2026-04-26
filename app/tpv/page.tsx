@@ -36,7 +36,7 @@ export default function TPVPage() {
   // Cargar productos y categorías
   useEffect(() => {
     db.from('products').select('*, categories(name)').eq('active', true).gt('stock', 0).order('name').limit(500)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         const prods = data || []
         setProducts(prods)
         setFiltered(prods)
