@@ -29,7 +29,9 @@ export default function TPVPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerNif, setCustomerNif] = useState('')
   const searchTimer = useRef(null)
-  const searchRef = useRef(null)
+  const [ventasDia, setVentasDia] = useState({total:0,count:0})
+  const [topFavs, setTopFavs] = useState([])
+    const searchRef = useRef(null)
 
   // Cargar productos y categorías
   useEffect(() => {
@@ -42,6 +44,17 @@ export default function TPVPage() {
         const cats = ['Todos', ...new Set(prods.map(p => p.categories?.name).filter(Boolean).sort())]
         setCategories(cats)
         setLoading(false)
+      // v4: Ventas del día
+      try {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const {data:orders} = await db.from('orders').select('total').gte('created_at',today.toISOString());
+        if(orders) setVentasDia({total:orders.reduce((s,o)=>s+Number(o.total),0),count:orders.length});
+      } catch(e){}
+      // v2: Top productos frecuentes para favoritos rápidos
+      try {
+        const {data:prods} = await db.from('products').select('id,name,price_incl_tax,stock').eq('active',true).gt('stock',0).order('id',{ascending:false}).limit(8);
+        if(prods) setTopFavs(prods);
+      } catch(e){}
       })
   }, [])
 
@@ -253,7 +266,20 @@ export default function TPVPage() {
             </div>
           </div>
         )}
-        {/* Filtros categoría */}
+        {/* v2 FAVORITOS RÁPIDOS */}
+        {topFavs.length>0&&(
+          <div style={{padding:'6px 10px',borderBottom:'1px solid #222',display:'flex',gap:4,flexWrap:'wrap',alignItems:'center'}}>
+            <span style={{fontSize:9,color:'#666',textTransform:'uppercase',letterSpacing:'0.08em',marginRight:4}}>⚡</span>
+            {topFavs.map(p=>(
+              <button key={p.id} onClick={()=>addLine(p)}
+                style={{fontSize:10,padding:'4px 8px',background:'#1a1a1a',border:'1px solid #333',color:p.stock<=5?'#f59e0b':'#aaa',borderRadius:3,cursor:'pointer',whiteSpace:'nowrap',maxWidth:110,overflow:'hidden',textOverflow:'ellipsis'}}
+                title={p.name}>
+                {p.name.slice(0,14)}{p.name.length>14?'…':''}
+              </button>
+            ))}
+          </div>
+        )}
+                {/* Filtros categoría */}
         <div style={S.catBar}>
           {categories.map(cat => (
             <button key={cat} style={S.catBtn(catFilter===cat)} onClick={() => setCatFilter(cat)}>{cat}</button>
@@ -370,7 +396,17 @@ export default function TPVPage() {
         </div>
       </div>
 
-      {/* MODAL VARIANTES */}
+      {/* v4 RESUMEN DEL DÍA */}
+      {ventasDia.count>0&&(
+        <div style={{position:'fixed',bottom:0,left:0,right:'340px',background:'#0a0a0a',borderTop:'1px solid #1e1e1e',padding:'6px 16px',display:'flex',gap:20,alignItems:'center',fontSize:11,zIndex:90}}>
+          <span style={{color:'#555'}}>📊 HOY:</span>
+          <span style={{color:'#22c55e',fontWeight:700}}>{ventasDia.total.toFixed(2)} €</span>
+          <span style={{color:'#555'}}>{ventasDia.count} venta{ventasDia.count!==1?'s':''}</span>
+          <span style={{color:'#555'}}>·</span>
+          <span style={{color:'#888'}}>Ticket medio: {ventasDia.count>0?(ventasDia.total/ventasDia.count).toFixed(2):0} €</span>
+        </div>
+      )}
+            {/* MODAL VARIANTES */}
       {variantModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
           <div style={{ background:'#111', border:'1px solid #333', padding:'1.5rem', minWidth:320, maxWidth:480 }}>
