@@ -84,7 +84,7 @@ export default function AdminDashboard(){
   const fmt=d=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})
   const SC={pending:'#f59e0b',processing:'#3b82f6',shipped:'#8b5cf6',delivered:'#22c55e',cancelled:'#ef4444',tpv:'#555'}
   const SL={pending:'Pendiente',processing:'Preparando',shipped:'Enviado',delivered:'Entregado',cancelled:'Cancelado',tpv:'TPV'}
-  const maxV=ventas7.length?ventas7.slice().sort((x,y)=>y.total-x.total)[0].total:1
+  const maxV=ventas7.length?ventas7.reduce(function(m,v){return v.total>m?v.total:m},1):1
 
   return(
     <div style={{background:'#0d0d0d',minHeight:'100vh',fontFamily:'Arial,sans-serif',color:'white'}}>
