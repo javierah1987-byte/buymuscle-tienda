@@ -83,7 +83,7 @@ function TiendaContent() {
   useEffect(()=>{fetchProducts()},[fetchProducts])
 
   const totalPages = Math.ceil(total/PER_PAGE)
-  const updateUrl = (params: Record<string,string>)=>{
+  const updateUrl = (params)=>{
     const p = new URLSearchParams(searchParams.toString())
     Object.entries(params).forEach(([k,v])=>v?p.set(k,v):p.delete(k))
     p.delete('page')
@@ -302,7 +302,7 @@ function TiendaContent() {
   useEffect(()=>{fetchProducts()},[fetchProducts])
 
   const totalPages = Math.ceil(total/PER_PAGE)
-  const updateUrl = (params: Record<string,string>)=>{
+  const updateUrl = (params)=>{
     const p = new URLSearchParams(searchParams.toString())
     Object.entries(params).forEach(([k,v])=>v?p.set(k,v):p.delete(k))
     p.delete('page')
