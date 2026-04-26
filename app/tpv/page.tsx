@@ -392,6 +392,15 @@ export default function TPVPage() {
           <button style={S.cobraBtn} onClick={cobrar} disabled={!lines.length || saving}>
             {saving ? '⏳ Procesando...' : lines.length ? `✓ COBRAR ${total.toFixed(2)} €` : 'TICKET VACÍO'}
           </button>
+          {/* v4 RESUMEN VENTAS DEL DIA */}
+          <div style={{borderTop:'1px solid #1a1a1a',padding:'10px 12px',background:'#0a0a0a'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:10,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em'}}>Ventas hoy</span>
+              <span style={{fontSize:10,color:'#555'}}>{ventasDia.count} pedidos</span>
+            </div>
+            <div style={{fontSize:18,fontWeight:900,color:'#ff1e41',marginTop:4}}>{ventasDia.total.toFixed(2)} €</div>
+          </div>
+          
           {lines.length > 0 && <div style={{ textAlign:'center', fontSize:9, color:'#555', marginTop:6 }}>ESC para limpiar · ENTER para cobrar</div>}
         </div>
       </div>
