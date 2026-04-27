@@ -71,7 +71,7 @@ export default function ProductCard({ product }) {
 
         {/* Precio t2 — precio tachado si hay oferta */}
         <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:'0.75rem' }}>
-          <span style={{ fontSize:16, fontWeight:900, color:'var(--red)' }}>{displayPrice.toFixed(2)} €</span>
+          <span style={{ fontSize:19, fontWeight:900, color:'var(--red)', letterSpacing:'-0.02em' }}>{displayPrice.toFixed(2)} €</span>
           {salePrice && <span style={{ fontSize:12, color:'#bbb', textDecoration:'line-through' }}>{price.toFixed(2)} €</span>}
         </div>
 

@@ -37,7 +37,14 @@ export default function AdminDashboard(){
   const[saving,setSaving]=useState(false)
   const[msg,setMsg]=useState('')
 
-  useEffect(()=>{load()},[])
+  useEffect(()=>{load();},[])
+  useEffect(()=>{
+    if(stats.pendientes>0){
+      document.title='✱ ('+stats.pendientes+') Admin - BuyMuscle'
+    } else {
+      document.title='Admin - BuyMuscle'
+    }
+  },[stats.pendientes])
 
   async function load(){
     try{
@@ -145,7 +152,21 @@ export default function AdminDashboard(){
           {/* Pedidos con cambio masivo */}
           <div>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-              <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)'}}>📋 Ultimos pedidos</div>
+              {/* a5 COMPARATIVA */}
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:20}}>
+          {[
+            {label:'Facturacion',val:stats.facturacion.toFixed(0)+' €',c:'#22c55e'},
+            {label:'Ticket medio',val:stats.ticketMedio.toFixed(0)+' €',c:'#8b5cf6'},
+            {label:'Pendientes',val:String(stats.pendientes),c:stats.pendientes>0?'#f59e0b':'#555'},
+            {label:'Stock bajo',val:stats.stockBajo+' refs',c:stats.stockBajo>50?'#ef4444':'#f59e0b'},
+          ].map(function(m){return(
+            <div key={m.label} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',padding:'10px 16px',borderRadius:4,flex:1,minWidth:120}}>
+              <div style={{fontSize:9,color:'#666',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>{m.label}</div>
+              <div style={{fontSize:18,fontWeight:800,color:m.c}}>{m.val}</div>
+            </div>
+          )})}
+        </div>
+        <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)'}}>📋 Ultimos pedidos</div>
               <Link href="/admin/pedidos" style={{fontSize:12,color:'#ff1e41',textDecoration:'none'}}>Ver todos →</Link>
             </div>
             {selected.length>0&&<div style={{background:'rgba(255,30,65,0.1)',border:'1px solid rgba(255,30,65,0.3)',padding:'8px 12px',marginBottom:8,display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
