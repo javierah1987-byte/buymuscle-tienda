@@ -56,21 +56,21 @@ export default async function Home() {
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120}}>
           <div style={{flex:1,padding:'24px 0'}}>
             <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>🏆 PRODUCTO ESTRELLA</div>
-            <div style={{fontSize:'clamp(18px,3vw,28px)',fontWeight:900,color:'white',lineHeight:1.1,marginBottom:8}}>
-              100% Whey Protein Professional<br/>
-              <span style={{color:'#ff1e41'}}>Scitec Nutrition</span>
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-              <span style={{fontSize:26,fontWeight:900,color:'white'}}>24.00 €</span>
-              <span style={{fontSize:15,color:'rgba(255,255,255,0.4)',textDecoration:'line-through'}}>30.00 €</span>
-              <span style={{background:'#ff1e41',color:'white',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:3}}>-20%</span>
-            </div>
-            <Link href="/producto/831" style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'11px 28px',fontWeight:800,fontSize:13,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.06em'}}>
-              Comprar ahora →
-            </Link>
+            {novedades[0] && <>
+              <div style={{fontSize:'clamp(18px,3vw,26px)',fontWeight:900,color:'white',lineHeight:1.1,marginBottom:8}}>
+                {novedades[0].name.slice(0,40)}{novedades[0].name.length>40?'...':''}
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+                <span style={{fontSize:26,fontWeight:900,color:'white'}}>{novedades[0].sale_price ? Number(novedades[0].sale_price).toFixed(2) : Number(novedades[0].price_incl_tax).toFixed(2)} €</span>
+                {novedades[0].sale_price && <span style={{fontSize:15,color:'rgba(255,255,255,0.4)',textDecoration:'line-through'}}>{Number(novedades[0].price_incl_tax).toFixed(2)} €</span>}
+              </div>
+              <Link href={'/producto/'+novedades[0].id} style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'11px 28px',fontWeight:800,fontSize:13,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+                Comprar ahora →
+              </Link>
+            </>}
           </div>
           <div style={{width:'clamp(140px,25vw,260px)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 0'}}>
-            <img src="https://tienda.buymuscle.es/4043/100-whey-protein-professional-920g-scitec.jpg" alt="100% Whey Protein Professional" style={{maxWidth:'100%',maxHeight:200,objectFit:'contain',filter:'drop-shadow(0 8px 24px rgba(255,30,65,0.3))'}} loading="eager"/>
+            {novedades[0]?.image_url && <img src={novedades[0].image_url} alt={novedades[0].name} style={{maxWidth:'100%',maxHeight:200,objectFit:'contain',filter:'drop-shadow(0 8px 24px rgba(255,30,65,0.3))'}} loading="eager"/>}
           </div>
         </div>
       </section>
