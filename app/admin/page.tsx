@@ -84,14 +84,14 @@ export default function AdminDashboard(){
   const fmt=d=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})
   const SC={pending:'#f59e0b',processing:'#3b82f6',shipped:'#8b5cf6',delivered:'#22c55e',cancelled:'#ef4444',tpv:'#555'}
   const SL={pending:'Pendiente',processing:'Preparando',shipped:'Enviado',delivered:'Entregado',cancelled:'Cancelado',tpv:'TPV'}
-
+  const maxV=Math.max(...ventas7.map(v=>v.total),1)
 
   return(
     <div style={{background:'#0d0d0d',minHeight:'100vh',fontFamily:'Arial,sans-serif',color:'white'}}>
       <div style={{background:'#080808',padding:'16px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
         <div style={{display:'flex',alignItems:'center',gap:14}}>
           <span style={{fontSize:20,fontWeight:900,color:'#ff1e41',letterSpacing:'-1px'}}>BUYMUSCLE</span>
-          <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>{stats.pendientes>0 ? `Panel de Administracion (${stats.pendientes} pendiente${stats.pendientes>1?'s':''})` : 'Panel de Administracion'}</span>
+          <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>{stats.pendientes>0?'Panel de Administracion ('+stats.pendientes+' pendientes)':'Panel de Administracion'}</span>
         </div>
         <a href="/tienda" style={{fontSize:12,color:'rgba(255,255,255,0.4)',textDecoration:'none'}}>Ir a la tienda →</a>
       </div>
@@ -110,7 +110,7 @@ export default function AdminDashboard(){
             {label:'STOCK BAJO',val:stats.stockBajo,icon:'⚠️',c:stats.stockBajo>50?'#ef4444':'#f59e0b',href:'/admin/stock'},
             {label:'TICKET MEDIO',val:stats.ticketMedio.toFixed(0)+' €',icon:'📈',c:'#8b5cf6'},
           ].map(k=>(
-            <div key={k.label} onClick={()=>{if(k.href)window.location.href=k.href}} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 12px',textAlign:'center',cursor:k.href?'pointer':'default',transition:'background 0.15s'}} onMouseEnter={e=>{if(k.href)e.currentTarget.style.background='rgba(255,255,255,0.07)'}} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.03)'}}>
+            <div key={k.label} onClick={function(){if(k.href)window.location.href=k.href}} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 12px',textAlign:'center',cursor:k.href?'pointer':'default'}}>
               <div style={{fontSize:18,marginBottom:4}}>{k.icon}</div>
               <div style={{fontSize:20,fontWeight:900,color:k.c}}>{k.val}</div>
               <div style={{fontSize:9,color:'rgba(255,255,255,0.35)',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{k.label}</div>
@@ -129,7 +129,7 @@ export default function AdminDashboard(){
           </div>
           <div style={{display:'flex',alignItems:'flex-end',gap:6,height:80}}>
             {ventas7.map((v,i)=>{
-              const hh=Math.max(4,Math.round((v.total/(ventas7.length?ventas7.reduce(function(a,x){return x.total>a?x.total:a},1):1))*72))
+              const hh=Math.max(4,Math.round((v.total/maxV)*72))
               return(
                 <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   {v.total>0&&<div style={{fontSize:9,color:'rgba(255,255,255,0.5)'}}>{v.total.toFixed(0)}</div>}
@@ -209,17 +209,3 @@ export default function AdminDashboard(){
     </div>
   )
 }
-        {/* a5: Comparativa métricas */}
-        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:16}}>
-          {[
-            {label:'Esta semana',val:stats.facturacion.toFixed(0)+' €',ref:'vs semana anterior: calcular al acumular más pedidos',color:'#22c55e'},
-            {label:'Pedidos esta semana',val:stats.pedidos,color:'white'},
-            {label:'Ticket medio',val:stats.ticketMedio.toFixed(0)+' €',color:'#8b5cf6'},
-          ].map(m=>(
-            <div key={m.label} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'10px 16px',borderRadius:4,minWidth:140}}>
-              <div style={{fontSize:10,color:'#888',marginBottom:4,textTransform:'uppercase'}}>{m.label}</div>
-              <div style={{fontSize:18,fontWeight:700,color:m.color}}>{m.val}</div>
-            </div>
-          ))}
-        </div>
-        
