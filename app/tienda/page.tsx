@@ -88,6 +88,7 @@ function TiendaContent() {
     Object.entries(params).forEach(([k,v])=>v?p.set(k,v):p.delete(k))
     p.delete('page')
     router.push('/tienda?'+p.toString())
+  }
 
   return (
     <div style={{maxWidth:1280,margin:'0 auto',padding:'1.25rem 20px 3rem'}}>
