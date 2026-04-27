@@ -50,6 +50,31 @@ export default async function Home() {
   return (
     <div style={{background:'#f5f5f5'}}>
       <HeroSlider />
+
+      {/* h2 BANNER OFERTA PRINCIPAL */}
+      <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
+        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120}}>
+          <div style={{flex:1,padding:'24px 0'}}>
+            <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>🏆 PRODUCTO ESTRELLA</div>
+            <div style={{fontSize:'clamp(18px,3vw,28px)',fontWeight:900,color:'white',lineHeight:1.1,marginBottom:8}}>
+              100% Whey Protein Professional<br/>
+              <span style={{color:'#ff1e41'}}>Scitec Nutrition</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+              <span style={{fontSize:26,fontWeight:900,color:'white'}}>24.00 €</span>
+              <span style={{fontSize:15,color:'rgba(255,255,255,0.4)',textDecoration:'line-through'}}>30.00 €</span>
+              <span style={{background:'#ff1e41',color:'white',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:3}}>-20%</span>
+            </div>
+            <Link href="/producto/831" style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'11px 28px',fontWeight:800,fontSize:13,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+              Comprar ahora →
+            </Link>
+          </div>
+          <div style={{width:'clamp(140px,25vw,260px)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 0'}}>
+            <img src="https://tienda.buymuscle.es/4043/100-whey-protein-professional-920g-scitec.jpg" alt="100% Whey Protein Professional" style={{maxWidth:'100%',maxHeight:200,objectFit:'contain',filter:'drop-shadow(0 8px 24px rgba(255,30,65,0.3))'}} loading="eager"/>
+          </div>
+        </div>
+      </section>
+
       {/* h1 PROPUESTA DE VALOR */}
       <section style={{background:'#111',padding:'12px 20px',borderBottom:'1px solid #222'}}>
         <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'clamp(16px,4vw,56px)',flexWrap:'wrap'}}>
@@ -91,37 +116,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      {/* h3 SOCIAL PROOF */}
-      <section style={{background:'white',padding:'1.25rem 20px',borderBottom:'1px solid #ebebeb'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
-          <div style={{display:'flex',gap:'clamp(24px,5vw,64px)',flexWrap:'wrap',alignItems:'center'}}>
-            {[
-              {n:'+500',l:'Clientes activos'},
-              {n:'316',l:'Productos'},
-              {n:'24h',l:'Envio express'},
-              {n:'4.9★',l:'Valoracion'},
-            ].map(({n,l})=>(
-              <div key={l} style={{textAlign:'center'}}>
-                <div style={{fontWeight:900,fontSize:'clamp(20px,2.5vw,28px)',color:'#ff1e41',lineHeight:1}}>{n}</div>
-                <div style={{fontSize:11,color:'#999',marginTop:2}}>{l}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-            {[
-              {t:'La mejor tienda de suplementacion de Canarias. Envio en 24h.',a:'Carlos M.'},
-              {t:'Precios imbatibles y atencion 10/10. Repito seguro.',a:'Laura G.'},
-              {t:'Productos originales y bien embalados. Muy recomendable.',a:'Marta R.'},
-            ].map(({t,a})=>(
-              <div key={a} style={{background:'#f9f9f9',border:'1px solid #ebebeb',borderRadius:8,padding:'10px 12px',maxWidth:190,flexShrink:0}}>
-                <div style={{color:'#f59e0b',fontSize:12,marginBottom:3}}>★★★★★</div>
-                <div style={{fontSize:11,color:'#666',lineHeight:1.45,fontStyle:'italic'}}>"{t}"</div>
-                <div style={{fontWeight:700,color:'#333',marginTop:5,fontSize:10}}>— {a}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* h3: social proof ya está arriba */}
 
       {/* Categorias rapidas */}
       <section style={{background:'white',borderBottom:'1px solid #ebebeb',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>

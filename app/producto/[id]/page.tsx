@@ -38,7 +38,8 @@ export default async function ProductoPage({ params }) {
   if (!product) notFound()
   const rawVariants = variantsRes.data || []
   const reviews = reviewsRes.data || []
-  const relatedPromise = supabase.from('products').select('id,name,price_incl_tax,sale_price,image_url,stock,active').eq('category_id', product.category_id).eq('active', true).neq('id', params.id).limit(4)
+  // p6: Relacionados por categoría + brand como fallback
+  const relatedPromise = supabase.from('products').select('id,name,price_incl_tax,sale_price,image_url,stock,active,brand').eq('category_id', product.category_id).eq('active', true).gt('stock', 0).neq('id', params.id).order('id', {ascending: false}).limit(8)
   const variantsByType = {}
   const typeOrder = []
   for (const v of rawVariants) {
@@ -53,7 +54,7 @@ export default async function ProductoPage({ params }) {
   const displayPrice = salePrice || price
   const discount = salePrice ? Math.round((1 - salePrice/price)*100) : null
   const desc = product.description || ''
-  const images = [product.image_url].filter(Boolean)
+  const images = (product.images && product.images.length > 0 ? product.images : [product.image_url]).filter(Boolean)
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
   const { data: related } = await relatedPromise
   const jsonLd = {
@@ -118,6 +119,11 @@ export default async function ProductoPage({ params }) {
         </div>}
         <ProductReviews productId={product.id} initialReviews={reviews}/>
         {related&&related.length>0&&<div style={{marginTop:24}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16,paddingBottom:10,borderBottom:'2px solid #ff1e41'}}>
+            <span style={{fontSize:16}}>🔥</span>
+            <h3 style={{margin:0,fontSize:15,fontWeight:800,textTransform:'uppercase',color:'#111'}}>Complementa tu compra</h3>
+            <span style={{fontSize:12,color:'#888',fontWeight:400,marginLeft:'auto'}}>También se lleva con {product.name.split(' ')[0]}</span>
+          </div>
           <h2 style={{fontSize:16,fontWeight:900,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:16,color:'#111'}}>Productos relacionados</h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
             {related.map(r=><ProductCard key={r.id} product={r}/>)}

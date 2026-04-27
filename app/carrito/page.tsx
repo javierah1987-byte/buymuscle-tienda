@@ -78,6 +78,12 @@ export default function CarritoPage() {
     const order = await r.json()
     const orderId = Array.isArray(order)?order[0]?.id:order?.id
     if(orderId) {
+      // a3: CRM - upsert del cliente
+      if(form.email) {
+        fetch(S+'/rest/v1/customers',{method:'POST',headers:{apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+          body:JSON.stringify({email:form.email,name:form.name,phone:form.phone||'',last_order_date:new Date().toISOString(),orders_count:1,total_spent:total})
+        }).catch(function(){})
+      }
       await fetch(S+'/rest/v1/order_lines',{method:'POST',headers:{apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'},
         body:JSON.stringify(items.map(i=>({order_id:orderId,product_id:i.id,product_name:i.name,qty:i.qty,price:i.price,variant:i.variant||''})))
       })

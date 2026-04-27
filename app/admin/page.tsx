@@ -41,6 +41,10 @@ export default function AdminDashboard(){
   useEffect(()=>{
     if(stats.pendientes>0){
       document.title='✱ ('+stats.pendientes+') Admin - BuyMuscle'
+      // a4: Notificación browser si hay pendientes nuevos
+      if(stats.pendientes > 0 && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('BuyMuscle Admin', {body: stats.pendientes+' pedido'+( stats.pendientes>1?'s':'')+' pendiente'+( stats.pendientes>1?'s':''), icon: '/icon'})
+      }
     } else {
       document.title='Admin - BuyMuscle'
     }
@@ -210,6 +214,24 @@ export default function AdminDashboard(){
           </div>
 
           {/* Modulos */}
+          {/* a5: Comparativa métricas */}
+          <div style={{background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',padding:'16px',marginBottom:16}}>
+            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)',marginBottom:12}}>📊 RESUMEN PERIODO</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+              {[
+                {label:'Facturacion total',val:stats.facturacion.toFixed(0)+' €',color:'#ff1e41',icon:'💰'},
+                {label:'Ticket medio',val:stats.ticketMedio.toFixed(0)+' €',color:'#8b5cf6',icon:'🎫'},
+                {label:'Productos activos',val:stats.productos,color:'#22c55e',icon:'📦'},
+              ].map(function(m){return(
+                <div key={m.label} style={{textAlign:'center',padding:'10px 6px',background:'rgba(255,255,255,0.02)',borderRadius:4}}>
+                  <div style={{fontSize:20,marginBottom:4}}>{m.icon}</div>
+                  <div style={{fontSize:20,fontWeight:900,color:m.color,lineHeight:1}}>{m.val}</div>
+                  <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:4,textTransform:'uppercase'}}>{m.label}</div>
+                </div>
+              )})}
+            </div>
+          </div>
+
           <div>
             <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)',marginBottom:10}}>⚡ MODULOS</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
