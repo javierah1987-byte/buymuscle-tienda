@@ -83,7 +83,7 @@ function TiendaContent() {
   useEffect(()=>{fetchProducts()},[fetchProducts])
 
   const totalPages = Math.ceil(total/PER_PAGE)
-  const updateUrl = (params)=>{
+  const updateUrl = (params: Record<string,string>)=>{
     const p = new URLSearchParams(searchParams.toString())
     Object.entries(params).forEach(([k,v])=>v?p.set(k,v):p.delete(k))
     p.delete('page')
@@ -99,14 +99,13 @@ function TiendaContent() {
         ) : <span style={{color:'#333',fontWeight:600}}>Tienda</span>}
       </div>
 
-      <div>
-        {/* t6 BOTÓN FILTRAR MÓVIL */}
-        <button onClick={()=>setShowFilters(f=>!f)} style={{display:'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
-          {showFilters?'✕ Cerrar filtros':'☰ Filtrar por categoría'}
-        </button>
-        <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}} className="tienda-grid">
+      {/* t6 BOTÓN FILTRAR MÓVIL */}
+      <button onClick={()=>setShowFilters(function(f){return !f})} style={{display:'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
+        {showFilters ? 'Cerrar filtros' : 'Filtrar por categoria'}
+      </button>
+      <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
         {/* SIDEBAR */}
-        <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0}} className={showFilters?'sidebar-visible':''} id="tienda-sidebar">
+        <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0}} className={showFilters?'sidebar-visible':'sidebar-hidden'} id="tienda-sidebar">
           {CAT_GROUPS.map(group=>(
             <SidebarSection key={group.label} title={group.label}>
               {group.cats.map(cat=>(
