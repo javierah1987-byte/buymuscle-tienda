@@ -110,22 +110,28 @@ export default function AdminDashboard(){
       <div style={{maxWidth:1400,margin:'0 auto',padding:'20px 20px'}}>
         {msg&&<div style={{background:'#166534',padding:'8px 16px',marginBottom:12,fontSize:13,borderRadius:4}}>{msg}</div>}
 
-        {/* ACCIONES RÁPIDAS */}
+        {/* ACCIONES RAPIDAS */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:18}}>
-          {[
-            {icon:'➕',l:'Nuevo producto',d:'Añadir al catálogo',href:'/admin/nuevo-producto',c:'#ff6b35',bg:'rgba(255,107,53,0.1)'},
-            {icon:'📦',l:'Pedidos pendientes',d:stats.pendientes+' sin gestionar',href:'/admin/pedidos?status=pending',c:'#f59e0b',bg:stats.pendientes>0?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.03)'},
-            {icon:'📊',l:'Gestión de stock',d:stats.stockBajo+' referencias bajas',href:'/admin/stock',c:'#22c55e',bg:stats.stockBajo>50?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.08)'},
-            {icon:'🖥️',l:'Ir al TPV',d:'Punto de venta',href:'/tpv',c:'#3b82f6',bg:'rgba(59,130,246,0.1)'},
-          ].map(function(a){return(
-            <a key={a.href} href={a.href} style={{display:'block',background:a.bg,border:'1px solid '+a.c+'40',padding:'14px 16px',textDecoration:'none',borderRadius:4,transition:'border-color 0.15s'}}
-              onMouseEnter={e=>e.currentTarget.style.borderColor=a.c}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=a.c+'40'}>
-              <div style={{fontSize:22,marginBottom:6}}>{a.icon}</div>
-              <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>{a.l}</div>
-              <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{a.d}</div>
-            </a>
-          ))}
+          <a href="/admin/nuevo-producto" style={{display:'block',background:'rgba(255,107,53,0.1)',border:'1px solid rgba(255,107,53,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
+            <div style={{fontSize:22,marginBottom:6}}>➕</div>
+            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Nuevo producto</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Añadir al catalogo</div>
+          </a>
+          <a href="/admin/pedidos?status=pending" style={{display:'block',background:stats.pendientes>0?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.03)',border:'1px solid rgba(245,158,11,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
+            <div style={{fontSize:22,marginBottom:6}}>📦</div>
+            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Pedidos pendientes</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{stats.pendientes} sin gestionar</div>
+          </a>
+          <a href="/admin/stock" style={{display:'block',background:stats.stockBajo>50?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.08)',border:'1px solid rgba(34,197,94,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
+            <div style={{fontSize:22,marginBottom:6}}>📊</div>
+            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Gestion de stock</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{stats.stockBajo} referencias bajas</div>
+          </a>
+          <a href="/tpv" style={{display:'block',background:'rgba(59,130,246,0.1)',border:'1px solid rgba(59,130,246,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
+            <div style={{fontSize:22,marginBottom:6}}>🖥️</div>
+            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Ir al TPV</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Punto de venta</div>
+          </a>
         </div>
 
         {/* KPIs */}
