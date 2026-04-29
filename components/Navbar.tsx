@@ -89,6 +89,16 @@ export default function Navbar(){
                 BUYMUSCLE
               </Link>
               <div style={{flex:1,maxWidth:560}}><SearchAutocomplete placeholder="Buscar productos..." /></div>
+              {/* HAMBURGER MÓVIL */}
+              <button className="nav-hamburger" onClick={()=>setMobileOpen(o=>!o)}
+                aria-label="Menú" style={{background:'none',border:'none',cursor:'pointer',color:'white',padding:4,display:'none'}}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {mobileOpen
+                    ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
+                    : <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>
+                  }
+                </svg>
+              </button>
               <div style={{display:'flex',alignItems:'center',gap:'1rem',flexShrink:0}}>
                 {!loading&&(isDistributor&&levelName?(
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -120,7 +130,7 @@ export default function Navbar(){
         </div>
 
         {/* Fila 2: Nav bar inferior */}
-        <div style={{background:'#111'}}>
+        <div style={{background:'#111'}} className="nav-bottom-bar">
           <div className="container">
             <div style={{display:'flex',alignItems:'stretch',position:'relative'}}>
 
@@ -213,6 +223,46 @@ export default function Navbar(){
         </div>
       </header>
     <SideCart open={cartOpen} onClose={()=>setCartOpen(false)}/>
+
+      {/* MENÚ MÓVIL */}
+      <div className={'nav-mobile-menu'+(mobileOpen?' open':'')} style={{paddingTop:0}}>
+        <div style={{background:'#000',padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:1}}>
+          <span style={{color:'var(--red)',fontWeight:900,fontSize:20}}>BUYMUSCLE</span>
+          <button onClick={()=>setMobileOpen(false)} style={{background:'none',border:'none',color:'white',cursor:'pointer',fontSize:28,lineHeight:1}}>✕</button>
+        </div>
+        <div style={{padding:'12px 0'}}>
+          {[
+            {l:'🏠 Inicio', h:'/'},
+            {l:'🛍️ Tienda', h:'/tienda'},
+            {l:'🥛 Proteínas', h:'/tienda?cat=Proteinas'},
+            {l:'⚡ Creatinas', h:'/tienda?cat=Creatinas Monohidratos'},
+            {l:'🔥 Pre-entrenos', h:'/tienda?cat=Pre-entrenos'},
+            {l:'💪 BCAA', h:'/tienda?cat=BCAA'},
+            {l:'💊 Vitaminas', h:'/tienda?cat=Vitaminas'},
+            {l:'🌱 Veganos', h:'/veganos'},
+            {l:'👕 Sport Wear', h:'/sport-wear'},
+            {l:'🎽 StreetFlavour', h:'/streetflavour'},
+            {l:'🏆 Ofertas', h:'/tienda?cat=Ofertas'},
+            {l:'📰 Blog', h:'/blog'},
+            {l:'📞 Distribuidores', h:'/distribuidores'},
+          ].map(({l,h})=>(
+            <Link key={h} href={h} onClick={()=>setMobileOpen(false)}
+              style={{display:'block',padding:'14px 24px',color:'white',fontSize:15,fontWeight:600,borderBottom:'1px solid rgba(255,255,255,0.05)',textDecoration:'none'}}>
+              {l}
+            </Link>
+          ))}
+          <div style={{padding:'20px 24px',display:'flex',flexDirection:'column',gap:10}}>
+            <Link href="/carrito" onClick={()=>setMobileOpen(false)}
+              style={{display:'block',background:'var(--red)',color:'white',padding:'13px',fontWeight:700,fontSize:14,textAlign:'center',borderRadius:4,textDecoration:'none'}}>
+              🛒 Ver carrito {count>0?'('+count+')':''}
+            </Link>
+            <Link href="/mis-pedidos" onClick={()=>setMobileOpen(false)}
+              style={{display:'block',border:'1px solid rgba(255,255,255,0.2)',color:'white',padding:'12px',fontWeight:600,fontSize:13,textAlign:'center',borderRadius:4,textDecoration:'none'}}>
+              Mis pedidos
+            </Link>
+          </div>
+        </div>
+      </div>
     </>
   )
 }

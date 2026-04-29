@@ -53,7 +53,7 @@ export default async function Home() {
 
       {/* h2 BANNER OFERTA PRINCIPAL */}
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120}}>
+        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120}} className="h2-banner">
           <div style={{flex:1,padding:'24px 0'}}>
             <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>🏆 PRODUCTO ESTRELLA</div>
             {novedades[0] && <>
@@ -77,7 +77,7 @@ export default async function Home() {
 
       {/* h1 PROPUESTA DE VALOR */}
       <section style={{background:'#111',padding:'12px 20px',borderBottom:'1px solid #222'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'clamp(16px,4vw,56px)',flexWrap:'wrap'}}>
+        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'clamp(16px,4vw,56px)',flexWrap:'wrap'}} className="propuesta-grid">
           {[
             {icon:'🚀',t:'Envio 24-48h',s:'Canarias y Peninsula'},
             {icon:'✅',t:'Marca oficial',s:'100% productos originales'},
@@ -97,7 +97,7 @@ export default async function Home() {
       {/* === h3 SOCIAL PROOF === */}
       <section style={{background:'#f9f9f9',padding:'1.25rem 20px',borderBottom:'1px solid #ebebeb'}}>
         <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
-          <div style={{display:'flex',gap:'clamp(20px,4vw,56px)',flexWrap:'wrap',alignItems:'center'}}>
+          <div style={{display:'flex',gap:'clamp(20px,4vw,56px)',flexWrap:'wrap',alignItems:'center'}} className="social-proof-stats">
             {([{n:'+500',l:'Clientes en Canarias'},{n:'316',l:'Productos disponibles'},{n:'24h',l:'Envio express'},{n:'4.9★',l:'Valoracion media'}]).map(({n,l})=>(
               <div key={l} style={{textAlign:'center'}}>
                 <div style={{fontWeight:900,fontSize:'clamp(20px,2.5vw,28px)',color:'#ff1e41',lineHeight:1}}>{n}</div>
@@ -105,7 +105,7 @@ export default async function Home() {
               </div>
             ))}
           </div>
-          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}} className="social-proof-reviews">
             {([{t:'La mejor tienda de suplementacion de Canarias. Envio en 24h.',a:'Carlos M.'},{t:'Precios imbatibles y atencion al cliente 10/10.',a:'Laura G.'},{t:'Productos originales y bien embalados. Repito seguro.',a:'Marta R.'}]).map(({t,a})=>(
               <div key={a} style={{background:'white',border:'1px solid #ebebeb',borderRadius:8,padding:'10px 12px',maxWidth:200,fontSize:12}}>
                 <div style={{color:'#f59e0b',fontSize:12,marginBottom:3}}>★★★★★</div>
@@ -138,7 +138,7 @@ export default async function Home() {
       {/* NOVEDADES — layout 2 columnas fijo igual que el original */}
       <section style={{background:'white',padding:'2rem 0 2.5rem',borderBottom:'1px solid #ebebeb'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'240px 1fr',gap:0,alignItems:'start'}}>
+          <div style={{display:'grid',gridTemplateColumns:'240px 1fr',gap:0,alignItems:'start'}} className="novedades-grid">
             {/* Texto izq */}
             <div style={{padding:'0 2rem 0 0',borderRight:'1px solid #ebebeb'}}>
               <div style={{fontSize:11,fontWeight:700,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.4rem'}}>BUYMUSCLE</div>

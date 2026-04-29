@@ -80,7 +80,7 @@ export default async function ProductoPage({ params }) {
         </div>
       </div>
       <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 20px'}}>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:32,background:'white',padding:24,marginBottom:24}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:32,background:'white',padding:24,marginBottom:24}} className="producto-grid">
           <ImageGallery images={images} name={product.name}/>
           <div>
             {catName&&<div style={{fontSize:12,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>{catName}</div>}

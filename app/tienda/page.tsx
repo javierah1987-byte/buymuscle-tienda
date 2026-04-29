@@ -103,7 +103,7 @@ function TiendaContent() {
       <button onClick={()=>setShowFilters(function(f){return !f})} style={{display:'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
         {showFilters ? 'Cerrar filtros' : 'Filtrar por categoria'}
       </button>
-      <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
+      <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}} className="tienda-layout">
         {/* SIDEBAR */}
         <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0}} className={showFilters?'sidebar-visible':'sidebar-hidden'} id="tienda-sidebar">
           {CAT_GROUPS.map(group=>(

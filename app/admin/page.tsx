@@ -111,7 +111,7 @@ export default function AdminDashboard(){
         {msg&&<div style={{background:'#166534',padding:'8px 16px',marginBottom:12,fontSize:13,borderRadius:4}}>{msg}</div>}
 
         {/* KPIs */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:18}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:18}} className="admin-kpis">
           {[
             {label:'FACTURACION',val:stats.facturacion.toFixed(0)+' €',icon:'💰',c:'#22c55e'},
             {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'white',href:'/admin/pedidos'},
