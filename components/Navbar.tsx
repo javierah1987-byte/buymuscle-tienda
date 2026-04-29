@@ -56,6 +56,7 @@ export default function Navbar(){
   const router=useRouter()
   const [openMenu,setOpenMenu]=useState<string|null>(null)
   const[cartOpen,setCartOpen]=useState(false)
+  const[mobileOpen,setMobileOpen]=useState(false)
   const isTPV=path.startsWith('/tpv')
   const handleSignOut=async()=>{await signOut();router.push('/')}
 
