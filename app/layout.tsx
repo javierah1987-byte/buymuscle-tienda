@@ -9,9 +9,12 @@ import Script from 'next/script'
 const heebo = Heebo({ subsets: ['latin'], variable: '--font-heebo' })
 
 export const metadata: Metadata = {
-  title: 'BUYMUSCLE | Tienda Online de Suplementacion Deportiva',
-  description: 'Suplementación deportiva de calidad en Canarias. Proteínas, creatinas, BCAA y más. Envío 24-48h.',
-  keywords: ['suplementación', 'proteínas', 'creatina', 'musculación', 'Canarias', 'Gran Canaria'],
+  title: { default: 'BUYMUSCLE | Tienda Online de Suplementación Deportiva', template: '%s | BuyMuscle' },
+  description: 'Tienda de suplementación deportiva en Canarias. Proteínas, creatinas, pre-entrenos y más. Envío 24-48h · Precios garantizados · Marca oficial.',
+  keywords: ['suplementación', 'proteínas', 'creatina', 'musculación', 'Canarias', 'Gran Canaria', 'suplementos deportivos', 'whey', 'pre-entreno', 'BCAA'],
+  authors: [{ name: 'BuyMuscle', url: 'https://buymuscle-tienda.vercel.app' }],
+  creator: 'BuyMuscle',
+  metadataBase: new URL('https://buymuscle-tienda.vercel.app'),
   openGraph: {
     title: 'BUYMUSCLE | Suplementación Deportiva',
     description: 'Tu tienda de suplementación en Canarias',

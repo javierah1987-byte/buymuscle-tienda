@@ -91,8 +91,8 @@ export default function CarritoPage() {
       fetch(S+'/rest/v1/products?active=eq.true&stock=gt.0&order=id.desc&limit=4&select=id,name,price_incl_tax,image_url',{headers:{apikey:K,'Authorization':'Bearer '+K}})
         .then(r2=>r2.json()).then(d=>Array.isArray(d)&&setUpsellProds(d)).catch(()=>{})
       clear()
-      setOrderDone({orderNum,email:form.email})
-      setPaso(3)
+      // Redirigir a página de confirmación
+      if(typeof window !== 'undefined') window.location.href = '/pedido-confirmado?n='+orderNum
     }
     setOrdering(false)
   }

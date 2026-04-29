@@ -41,7 +41,7 @@ export default function ProductCard({ product }) {
       {/* Imagen */}
       <div style={{ background:'#f9f9f9', aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'1rem', position:'relative' }}>
         {product.image_url
-          ? <img src={product.image_url} alt={product.name} style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain', transition:'transform 0.3s' }}
+          ? <img src={product.image_url} alt={product.name} loading='lazy' decoding='async' style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain', transition:'transform 0.3s' }}
               onMouseEnter={e=>e.target.style.transform='scale(1.05)'}
               onMouseLeave={e=>e.target.style.transform='scale(1)'}/>
           : <div style={{ fontSize:48, opacity:0.3 }}>📦</div>}

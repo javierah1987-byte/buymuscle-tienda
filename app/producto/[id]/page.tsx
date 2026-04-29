@@ -20,9 +20,13 @@ const getProduct = cache(async (id) => {
 
 export async function generateMetadata({ params }): Promise<Metadata> {
   const p = await getProduct(params.id)
-  if (!p) return { title: 'Producto | BUYMUSCLE' }
+  if (!p) return { title: 'Producto | BuyMuscle' }
+  const price = p.sale_price ? Number(p.sale_price) : Number(p.price_incl_tax)
+  const desc = p.description 
+    ? p.description.slice(0, 155).replace(/<[^>]+>/g, '')
+    : p.name + ' — ' + (p.brand ? 'Marca ' + p.brand + '. ' : '') + 'Disponible en BuyMuscle Canarias. Envío 24-48h · IVA incluido · Precio: ' + price.toFixed(2) + '€.'
   return {
-    title: p.name + ' | BUYMUSCLE',
+    title: p.name,
     alternates: { canonical: 'https://buymuscle-tienda.vercel.app/producto/' + params.id },
     description: (p.description||'').slice(0,160)||'Suplementacion deportiva BuyMuscle',
     openGraph: { images: p.image_url ? [{ url: p.image_url }] : [] }
