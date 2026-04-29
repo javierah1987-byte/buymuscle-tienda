@@ -110,6 +110,24 @@ export default function AdminDashboard(){
       <div style={{maxWidth:1400,margin:'0 auto',padding:'20px 20px'}}>
         {msg&&<div style={{background:'#166534',padding:'8px 16px',marginBottom:12,fontSize:13,borderRadius:4}}>{msg}</div>}
 
+        {/* ACCIONES RÁPIDAS */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:18}}>
+          {[
+            {icon:'➕',l:'Nuevo producto',d:'Añadir al catálogo',href:'/admin/nuevo-producto',c:'#ff6b35',bg:'rgba(255,107,53,0.1)'},
+            {icon:'📦',l:'Pedidos pendientes',d:stats.pendientes+' sin gestionar',href:'/admin/pedidos?status=pending',c:'#f59e0b',bg:stats.pendientes>0?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.03)'},
+            {icon:'📊',l:'Gestión de stock',d:stats.stockBajo+' referencias bajas',href:'/admin/stock',c:'#22c55e',bg:stats.stockBajo>50?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.08)'},
+            {icon:'🖥️',l:'Ir al TPV',d:'Punto de venta',href:'/tpv',c:'#3b82f6',bg:'rgba(59,130,246,0.1)'},
+          ].map(function(a){return(
+            <a key={a.href} href={a.href} style={{display:'block',background:a.bg,border:'1px solid '+a.c+'40',padding:'14px 16px',textDecoration:'none',borderRadius:4,transition:'border-color 0.15s'}}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=a.c}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=a.c+'40'}>
+              <div style={{fontSize:22,marginBottom:6}}>{a.icon}</div>
+              <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>{a.l}</div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{a.d}</div>
+            </a>
+          ))}
+        </div>
+
         {/* KPIs */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:18}} className="admin-kpis">
           {[
@@ -233,16 +251,15 @@ export default function AdminDashboard(){
           </div>
 
           <div>
-            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)',marginBottom:10}}>⚡ MODULOS</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)',marginBottom:10}}>⚡ TODAS LAS SECCIONES</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
               {MODULOS.map(m=>(
                 <a key={m.href} href={m.href} target={m.ext?'_blank':undefined}
-                  style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'12px 14px',textDecoration:'none',display:'block',transition:'border-color 0.15s'}}
-                  onMouseEnter={e=>e.currentTarget.style.borderColor=m.c}
-                  onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'}>
-                  <div style={{fontSize:18,marginBottom:4}}>{m.icon}</div>
-                  <div style={{fontSize:12,fontWeight:700,color:'white',marginBottom:1}}>{m.t}</div>
-                  <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>{m.d}</div>
+                  style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 8px',textDecoration:'none',borderRadius:4,transition:'all 0.15s',gap:4}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=m.c;e.currentTarget.style.background='rgba(255,255,255,0.05)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.06)';e.currentTarget.style.background='rgba(255,255,255,0.02)'}}>
+                  <div style={{fontSize:24}}>{m.icon}</div>
+                  <div style={{fontSize:11,fontWeight:700,color:'white',lineHeight:1.2}}>{m.t}</div>
                 </a>
               ))}
             </div>
