@@ -95,7 +95,7 @@ export default function AdminDashboard(){
   const fmt=d=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})
   const SC={pending:'#f59e0b',processing:'#3b82f6',shipped:'#8b5cf6',delivered:'#22c55e',cancelled:'#ef4444',tpv:'#555'}
   const SL={pending:'Pendiente',processing:'Preparando',shipped:'Enviado',delivered:'Entregado',cancelled:'Cancelado',tpv:'TPV'}
-  const maxV=ventas7.reduce(function(m,v){return v.total>m?v.total:m},1)
+
 
   return(
     <div style={{background:'#0d0d0d',minHeight:'100vh',fontFamily:'Arial,sans-serif',color:'white'}}>
@@ -158,7 +158,7 @@ export default function AdminDashboard(){
           </div>
           <div style={{display:'flex',alignItems:'flex-end',gap:6,height:80}}>
             {ventas7.map((v,i)=>{
-              const hh=Math.max(4,Math.round((v.total/maxV)*72))
+              const mx=ventas7.length>0?ventas7.reduce(function(a,x){return x.total>a?x.total:a},1):1; const hh=Math.max(4,Math.round((v.total/mx)*72))
               return(
                 <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   {v.total>0&&<div style={{fontSize:9,color:'rgba(255,255,255,0.5)'}}>{v.total.toFixed(0)}</div>}
