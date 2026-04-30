@@ -40,9 +40,8 @@ export default function Devoluciones(){
       const dp=await rp.json()
       const curStock=Array.isArray(dp)&&dp[0]?Number(dp[0].stock||0):0
       await fetch(S+'/rest/v1/products?id=eq.'+l.product_id,{method:'PATCH',headers:h,
-        body:JSON.stringify({stock:curStock+Number(selected[l.id]||0)})}).catch(()=>{});
-    }}).catch(()=>{})
-    ))
+        body:JSON.stringify({stock:curStock+Number(selected[l.id]||0)})}).catch(()=>{})
+    }
     // Guardar registro de devolución
     const totalDev=itemsADevolver.reduce((s,l)=>s+(Number(l.unit_price||0)*selected[l.id]),0)
     await fetch(S+'/rest/v1/devoluciones',{method:'POST',headers:{...h,'Prefer':'return=minimal'},
