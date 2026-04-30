@@ -34,12 +34,30 @@ export default function Devoluciones(){
     if(itemsADevolver.length===0){setMsg('Selecciona al menos un producto a devolver');return}
     setLoading(true)
     // Reponer stock
-    await Promise.all(itemsADevolver.map(l=>
-      fetch(S+'/rest/v1/products?id=eq.'+l.product_id,{method:'PATCH',headers:h,
-        body:JSON.stringify({stock:selected[l.id]})}).catch(()=>{})
+    // FIX: Reponer stock sumando al actual
+    for(const l of itemsADevolver){
+      const rp=await fetch(S+'/rest/v1/products?id=eq.'+l.product_id+'&select=stock',{headers:h})
+      const dp=await rp.json()
+      const curStock=Array.isArray(dp)&&dp[0]?Number(dp[0].stock||0):0
+      await fetch(S+'/rest/v1/products?id=eq.'+l.product_id,{method:'PATCH',headers:h,
+        body:JSON.stringify({stock:curStock+Number(selected[l.id]||0)})}).catch(()=>{});
+    }}).catch(()=>{})
     ))
-    // Marcar pedido como devuelto parcialmente
+    // Guardar registro de devolución
     const totalDev=itemsADevolver.reduce((s,l)=>s+(Number(l.unit_price||0)*selected[l.id]),0)
+    await fetch(S+'/rest/v1/devoluciones',{method:'POST',headers:{...h,'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        order_number:order.order_number,
+        order_id:order.id,
+        items:itemsADevolver.map(l=>({product_id:l.product_id,product_name:l.product_name,qty_dev:selected[l.id],unit_price:l.unit_price})),
+        total_devuelto:totalDev,
+        method:'efectivo',
+        motivo:'Devolución desde admin',
+        operator:'Admin',
+        created_at:new Date().toISOString()
+      })
+    }).catch(()=>{})
+    // Marcar pedido como devuelto parcialmente
     await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:h,
       body:JSON.stringify({status:'returned',notes:'Devolucion: '+itemsADevolver.map(l=>l.product_name+'('+selected[l.id]+')').join(', ')})})
     setMsg('Devolucion procesada. Stock repuesto. Total a reembolsar: '+totalDev.toFixed(2)+' €')

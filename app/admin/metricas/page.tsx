@@ -16,7 +16,7 @@ export default function Metricas(){
     const[r1,r2,r3,r4]=await Promise.all([
       fetch(S+'/rest/v1/orders?created_at=gte.'+since+'&order=created_at.asc',{headers:h}),
       fetch(S+'/rest/v1/order_lines?select=product_name,quantity,unit_price',{headers:h}),
-      fetch(S+'/rest/v1/products?active=eq.true&select=id,name,stock,price_incl_tax,brand,category',{headers:h}),
+      fetch(S+'/rest/v1/products?active=eq.true&select=id,name,stock,price_incl_tax,brand,category_id,categories(name)',{headers:h}),
       fetch(S+'/rest/v1/email_subscribers?select=count',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
     ])
     const[ords,lines,prods]=await Promise.all([r1.json(),r2.json(),r3.json()])

@@ -44,6 +44,7 @@ export default function NuevoProducto() {
         stock:Number(form.stock)||0,
         description:form.description.trim()||null,
         active:form.active,
+        has_variants:variantes.length>0,
       }).select().single()
       if(pe) throw pe
       for(const v of variantes){
