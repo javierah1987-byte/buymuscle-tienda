@@ -98,7 +98,7 @@ export default function CarritoPage() {
   }
 
   async function doPayPal(){
-    if(!form.name||!form.email||!form.address||!form.city||!form.postal_code){alert('Por favor completa todos los campos para continuar con PayPal');return}
+    if(!form.name||!form.email){alert('Por favor indica tu nombre y email para continuar');return}
     window.open('https://www.paypal.com/paypalme/buymuscle/'+total.toFixed(2)+'EUR','_blank')
     await doOrder('paypal')
   }
@@ -204,7 +204,7 @@ export default function CarritoPage() {
                 ))}
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}} className="form-grid-2">
-                {[['name','Nombre completo *'],['email','Email *'],['phone','Telefono'],['address','Direccion *'],['city','Ciudad *'],['postal_code','Cod. Postal *'],['province','Provincia'],['nif','NIF/CIF']].map(([k,l])=>(
+                {[['name','Nombre completo *'],['email','Email *'],['phone','Telefono'],['address','Direccion'],['city','Ciudad'],['postal_code','Cod. Postal'],['province','Provincia'],['nif','NIF/CIF']].map(([k,l])=>(
                   <div key={k} style={{gridColumn:k==='address'||k==='notes'?'1/-1':'auto'}}>
                     <label style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:4}}>{l}</label>
                     <input value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}
@@ -265,7 +265,7 @@ export default function CarritoPage() {
             {/* c3 BOTÓN CON PRECIO */}
             {paso===2&&(
               <div style={{marginTop:16}}>
-                <button onClick={()=>doOrder('card')} disabled={ordering||!form.name||!form.email||!form.address||!form.city||!form.postal_code}
+                <button onClick={()=>doOrder('card')} disabled={ordering||!form.name||!form.email}
                   style={{width:'100%',padding:'13px',background:ordering?'#ccc':'#ff1e41',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',borderRadius:4,opacity:(!form.name||!form.email||!form.address)?0.6:1}}>
                   {ordering?'Procesando...':'✓ CONFIRMAR Y PAGAR '+total.toFixed(2)+' €'}
                 </button>
