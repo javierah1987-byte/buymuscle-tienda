@@ -59,7 +59,7 @@ export default function OfertaDia() {
 
   return (
     <section style={{background:'linear-gradient(135deg,#1a0a0a 0%,#2d0000 100%)',padding:'1.5rem 20px',borderBottom:'1px solid #3d0000'}}>
-      <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',gap:24,flexWrap:'wrap'}}>
+      <div className="oferta-inner" style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',flexWrap:'wrap',justifyContent:'space-between',gap:24,flexWrap:'wrap'}}>
         {/* Label */}
         <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -81,7 +81,7 @@ export default function OfertaDia() {
         </div>
 
         {/* Producto */}
-        <Link href={'/producto/'+product.id} style={{display:'flex',alignItems:'center',gap:16,textDecoration:'none',flex:1,minWidth:0,maxWidth:480}}>
+        <Link href={'/producto/'+product.id} style={{display:'flex',alignItems:'center',gap:12,textDecoration:'none',flex:1,minWidth:0,maxWidth:480}}>
           {product.image_url && (
             <div style={{width:72,height:72,background:'rgba(255,255,255,0.06)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden',border:'1px solid rgba(255,255,255,0.1)'}}>
               <img src={product.image_url} alt={product.name} style={{maxWidth:60,maxHeight:60,objectFit:'contain'}}/>

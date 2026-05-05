@@ -145,7 +145,7 @@ export default function CarritoPage() {
       <h1 style={{fontSize:14,color:'#888',margin:'0 0 24px',fontWeight:400}}>Inicio › <strong style={{color:'#111'}}>Mi Carrito</strong></h1>
 
       {/* Pasos */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',marginBottom:24,border:'1px solid #e8e8e8',borderRadius:4,overflow:'hidden'}} className="checkout-steps">
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',marginBottom:24,border:'1px solid #e8e8e8',borderRadius:4,overflow:'hidden'}} className="checkout-steps">
         {['1. CARRITO','2. DATOS','3. CONFIRMACION'].map((s,i)=>(
           <div key={s} style={{padding:'12px',textAlign:'center',background:paso===i+1?'#ff1e41':paso>i+1?'#111':'white',color:paso===i+1||paso>i+1?'white':'#999',fontSize:12,fontWeight:700,letterSpacing:'0.05em'}}>{s}</div>
         ))}

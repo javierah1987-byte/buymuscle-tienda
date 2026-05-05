@@ -175,7 +175,7 @@ export default function Navbar(){
                           </div>
                         ))}
                       </div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'1.5rem',marginTop:'1.25rem',paddingTop:'1.25rem',borderTop:'1px solid #f0f0f0'}}>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:'1rem',marginTop:'1.25rem',paddingTop:'1.25rem',borderTop:'1px solid #f0f0f0'}}>
                         {NUTRICION_MEGA.slice(4).map(col=>(
                           <div key={col.col}>
                             <div style={{fontSize:11,fontWeight:800,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'0.6rem',paddingBottom:'0.4rem',borderBottom:'2px solid var(--red)'}}>{col.col}</div>

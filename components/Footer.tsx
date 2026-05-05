@@ -28,7 +28,7 @@ export default function Footer(){
       </div>
       {/* Grid 5 columnas */}
       <div style={{padding:'40px 32px 24px',maxWidth:1280,margin:'0 auto'}}>
-        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',gap:32,marginBottom:32}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:24,marginBottom:32}}>
           {/* Logo + info */}
           <div>
             <div style={{fontSize:28,fontWeight:900,fontStyle:'italic',color:'#ff1e41',letterSpacing:'-1px',marginBottom:12}}>BUYMUSCLE</div>

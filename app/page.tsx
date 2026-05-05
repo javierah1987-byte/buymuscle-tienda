@@ -53,7 +53,7 @@ export default async function Home() {
 
       {/* h2 BANNER OFERTA PRINCIPAL */}
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120}} className="h2-banner">
+        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120,flexWrap:'wrap'}} className="h2-banner">
           <div style={{flex:1,padding:'24px 0'}}>
             <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>🏆 PRODUCTO ESTRELLA</div>
             {novedades[0] && <>
@@ -138,7 +138,7 @@ export default async function Home() {
       {/* NOVEDADES — layout 2 columnas fijo igual que el original */}
       <section style={{background:'white',padding:'2rem 0 2.5rem',borderBottom:'1px solid #ebebeb'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'240px 1fr',gap:0,alignItems:'start'}} className="novedades-grid">
+          <div style={{display:'grid',gridTemplateColumns:'clamp(180px,22vw,240px) 1fr',gap:0,alignItems:'start'}} className="novedades-grid">
             {/* Texto izq */}
             <div style={{padding:'0 2rem 0 0',borderRight:'1px solid #ebebeb'}}>
               <div style={{fontSize:11,fontWeight:700,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.4rem'}}>BUYMUSCLE</div>
