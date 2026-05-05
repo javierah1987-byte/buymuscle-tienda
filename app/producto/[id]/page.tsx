@@ -8,6 +8,7 @@ import ProductReviews from '@/components/ProductReviews'
 import AddToCartSection from '@/components/AddToCartSection'
 import ProductCard from '@/components/ProductCard'
 import ImageGallery from '@/components/ImageGallery'
+import ProductoGrid from '@/components/ProductoGrid'
 import Script from 'next/script'
 
 const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
@@ -80,7 +81,7 @@ export default async function ProductoPage({ params }) {
         </div>
       </div>
       <div style={{maxWidth:1200,margin:'0 auto',padding:'24px 20px'}}>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:32,background:'white',padding:24,marginBottom:24}} className="producto-grid">
+        <ProductoGrid>
           <ImageGallery images={images} name={product.name}/>
           <div>
             {catName&&<div style={{fontSize:12,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>{catName}</div>}
@@ -111,7 +112,7 @@ export default async function ProductoPage({ params }) {
               ))}
             </div>
           </div>
-        </div>
+        </ProductoGrid>
         {desc&&<div style={{background:'white',marginBottom:24}}>
           <div style={{borderBottom:'2px solid #f0f0f0',padding:'0 24px'}}>
             <div style={{padding:'14px 0',borderBottom:'2px solid #ff1e41',display:'inline-block',fontSize:13,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.05em'}}>Descripcion</div>

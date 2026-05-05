@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SideCart from '@/components/SideCart'
 import ShippingBar from '@/components/ShippingBar'
 
@@ -57,6 +57,15 @@ export default function Navbar(){
   const [openMenu,setOpenMenu]=useState<string|null>(null)
   const[cartOpen,setCartOpen]=useState(false)
   const[mobileOpen,setMobileOpen]=useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(function(){
+    function checkMobile(){ setIsMobile(window.innerWidth <= 768) }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return function(){ window.removeEventListener('resize', checkMobile) }
+  }, [])
+
   const isTPV=path.startsWith('/tpv')
   const handleSignOut=async()=>{await signOut();router.push('/')}
 
@@ -89,10 +98,10 @@ export default function Navbar(){
               <Link href="/" style={{fontFamily:'var(--font-body)',fontSize:26,fontWeight:900,color:'var(--red)',fontStyle:'italic',textTransform:'uppercase',letterSpacing:'0.02em',textDecoration:'none',flexShrink:0}}>
                 BUYMUSCLE
               </Link>
-              <div style={{flex:1,maxWidth:560}}><SearchAutocomplete placeholder="Buscar productos..." /></div>
+              <div style={{flex:1,maxWidth:isMobile?'100%':560}}><SearchAutocomplete placeholder="Buscar productos..." /></div>
               {/* HAMBURGER MÓVIL */}
-              <button className="nav-hamburger" onClick={()=>setMobileOpen(o=>!o)}
-                aria-label="Menú" style={{background:'none',border:'none',cursor:'pointer',color:'white',padding:4,display:'none'}}>
+              <button onClick={()=>setMobileOpen(function(o){ return !o })}
+                aria-label="Menú" style={{background:'none',border:'none',cursor:'pointer',color:'white',padding:4,display:isMobile?'flex':'none',alignItems:'center',ng:4,display:'none'}}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   {mobileOpen
                     ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
@@ -109,15 +118,15 @@ export default function Navbar(){
                     <button onClick={handleSignOut} style={{fontSize:11,color:'rgba(255,255,255,0.4)',background:'none',border:'1px solid rgba(255,255,255,0.15)',padding:'4px 10px',cursor:'pointer',fontFamily:'var(--font-body)'}}>Salir</button>
                   </div>
                 ):(
-                  <Link href="/distribuidores/login" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
+                  !isMobile&&<Link href="/distribuidores/login" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Acceder
                   </Link>
                 ))}
-                <Link href="/tpv" style={{color:'rgba(255,255,255,0.4)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
+                {!isMobile&&<Link href="/tpv" style={{color:'rgba(255,255,255,0.4)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                   TPV
-                </Link>
+                </Link>}
                 <Link href="#" onClick={e=>{e.preventDefault();setCartOpen(true)}} style={{color:'white',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',position:'relative',fontSize:11,fontWeight:600}}>
                   <div style={{position:'relative'}}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -131,7 +140,7 @@ export default function Navbar(){
         </div>
 
         {/* Fila 2: Nav bar inferior */}
-        <div style={{background:'#111'}} className="nav-bottom-bar">
+        <div style={{background:'#111',display:isMobile?'none':'block'}}>
           <div className="container">
             <div style={{display:'flex',alignItems:'stretch',position:'relative'}}>
 

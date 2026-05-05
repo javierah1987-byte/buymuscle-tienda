@@ -48,6 +48,12 @@ function TiendaContent() {
   const [search, setSearch] = useState(q)
   const [sortBy, setSortBy] = useState('newest')
   const [showFilters, setShowFilters] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(function(){
+    function check(){ setIsMobile(window.innerWidth<=768) }
+    check(); window.addEventListener('resize',check)
+    return function(){ window.removeEventListener('resize',check) }
+  },[])
 
   useEffect(()=>{
     supabase.from('products').select('brand').eq('active',true).not('brand','is',null)
@@ -100,12 +106,12 @@ function TiendaContent() {
       </div>
 
       {/* t6 BOTÓN FILTRAR MÓVIL */}
-      <button onClick={()=>setShowFilters(function(f){return !f})} style={{display:'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
+      <button onClick={()=>setShowFilters(function(f){return !f})} style={{display:isMobile?'block':'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
         {showFilters ? 'Cerrar filtros' : 'Filtrar por categoria'}
       </button>
-      <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}} className="tienda-layout">
+      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
         {/* SIDEBAR */}
-        <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0}} className={showFilters?'sidebar-visible':'sidebar-hidden'} id="tienda-sidebar">
+        <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0,display:isMobile&&!showFilters?'none':'block'}}>
           {CAT_GROUPS.map(group=>(
             <SidebarSection key={group.label} title={group.label}>
               {group.cats.map(cat=>(
