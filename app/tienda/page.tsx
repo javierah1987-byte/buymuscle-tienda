@@ -107,7 +107,7 @@ function TiendaContent() {
 
       {/* t6 BOTÓN FILTRAR MÓVIL */}
       <button onClick={()=>setShowFilters(function(f){return !f})} style={{display:isMobile?'block':'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
-        {showFilters ? 'Cerrar filtros' : 'Filtrar por categoria'}
+        {showFilters ? '✕ Cerrar filtros' : '🔍 Filtrar categorías'}
       </button>
       <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
         {/* SIDEBAR */}
@@ -205,7 +205,7 @@ function TiendaContent() {
                   {p}
                 </Link>
               ))}
-              {pageParam<totalPages && <Link href={`/tienda?${new URLSearchParams({...Object.fromEntries(searchParams),page:String(pageParam+1)})}`} style={{padding:'8px 14px',border:'1px solid #ddd',background:'white',color:'#333',textDecoration:'none',fontSize:13}}>Siguiente →</Link>}
+              {pageParam<totalPages && <Link href={`/tienda?${new URLSearchParams({...Object.fromEntries(searchParams),page:String(pageParam+1)})}`} style={{padding:'8px 14px',border:'1px solid #ddd',background:'white',color:'#333',textDecoration:'none',fontSize:13}}>Ver más productos →</Link>}
             </div>
           )}
         </div>

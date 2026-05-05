@@ -34,8 +34,7 @@ const OBJETIVOS_ITEMS = [
 const NAV_DIRECT = [
   {l:'SPORT WEAR',h:'/sport-wear'},
   {l:'VEGANOS',h:'/veganos'},
-  {l:'LO MAS VENDIDO',h:'/tienda'},
-  {l:'PRE-PEDIDOS',h:'/tienda?cat=Pre-Pedidos'},
+  {l:'LO MÁS VENDIDO',h:'/tienda'},
   {l:'BLOG',h:'/blog'},
 ]
 
@@ -132,7 +131,7 @@ export default function Navbar(){
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     {count>0&&<span style={{position:'absolute',top:-6,right:-8,background:'var(--red)',color:'white',width:15,height:15,borderRadius:'50%',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>{count}</span>}
                   </div>
-                  Carrito
+                  {count > 0 ? `Carrito (${count})` : 'Carrito'}
                 </Link>
               </div>
             </div>

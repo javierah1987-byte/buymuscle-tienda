@@ -57,7 +57,7 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
           </div>
         )}
         <div style={{ display:'flex', alignItems:'baseline', gap:10 }}>
-          <span style={{ fontSize:32, fontWeight:900, color:'var(--red)' }}>{discountedPrice.toFixed(2)} €</span>
+          <span style={{ fontSize:38, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em', lineHeight:1 }}>{discountedPrice.toFixed(2)} €</span>
           {product.on_sale && product.sale_price && !isDistributor && (
             <span style={{ fontSize:16, color:'#bbb', textDecoration:'line-through' }}>{Number(product.price_incl_tax).toFixed(2)} €</span>
           )}
@@ -120,7 +120,7 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         disabled={!inStock || (hasVariants && !allTypesSelected)}
         style={{ width:'100%', padding:'14px', border:'none', fontFamily:'var(--font-body)', fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', cursor: inStock && allTypesSelected ? 'pointer' : 'not-allowed',
           background: added ? '#22c55e' : inStock && allTypesSelected ? 'var(--red)' : '#ccc', color:'white', transition:'background 0.2s' }}>
-        {added ? '✓ Añadido al carrito' : !inStock ? 'Sin stock' : !allTypesSelected ? 'Selecciona opciones' : '🛒 Añadir al carrito'}
+        {added ? '✓ Añadido al carrito' : !inStock ? 'Sin stock' : !allTypesSelected ? 'Selecciona opciones' : '🛒 AÑADIR AL CARRITO'}
       </button>
       <a href={'https://wa.me/?text='+encodeURIComponent('¡Mira este producto! '+product.name+' - buymuscle-tienda.vercel.app/producto/'+product.id)}
         target="_blank" rel="noopener noreferrer"

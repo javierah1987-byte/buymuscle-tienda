@@ -383,3 +383,87 @@ table { width: 100%; overflow-x: auto; display: block; }
     padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
   }
 }
+
+
+/* ═══════════════════════════════════
+   MEJORAS DE DISEÑO GENERALES
+═══════════════════════════════════ */
+
+/* ProductCard — hover más suave con sombra */
+.product-card-link {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.product-card-link:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+}
+
+/* Botón añadir al carrito — efecto al pulsar */
+.product-card-btn {
+  transition: opacity 0.15s, transform 0.1s !important;
+  border-radius: 4px !important;
+}
+.product-card-btn:hover:not(:disabled) {
+  opacity: 0.88 !important;
+}
+.product-card-btn:active:not(:disabled) {
+  transform: scale(0.97) !important;
+}
+
+/* Link del producto — sin decoración y cursor pointer */
+a[href^="/producto/"] {
+  cursor: pointer;
+}
+
+/* Ficha de producto — imagen con sombra suave */
+.imagen-galeria img {
+  transition: transform 0.3s ease !important;
+}
+
+/* Ficha — botón añadir al carrito grande */
+.addcart-btn {
+  transition: opacity 0.2s, transform 0.1s !important;
+}
+.addcart-btn:hover { opacity: 0.9 !important; }
+.addcart-btn:active { transform: scale(0.98) !important; }
+
+/* Home — social proof cards hover */
+.review-card {
+  transition: box-shadow 0.2s ease !important;
+}
+.review-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+}
+
+/* Scrollbar del carrusel — ocultar en todos los navegadores */
+::-webkit-scrollbar {
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+/* Pestañas de producto */
+.product-tab-btn {
+  transition: color 0.15s, border-color 0.15s !important;
+}
+.product-tab-btn:hover { color: #ff1e41 !important; }
+
+/* Focus visible accesible */
+button:focus-visible, a:focus-visible {
+  outline: 2px solid #ff1e41 !important;
+  outline-offset: 2px !important;
+}
+
+/* Animación de entrada suave */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.4s ease forwards;
+}

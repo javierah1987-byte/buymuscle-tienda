@@ -56,34 +56,34 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Info */}
-      <div style={{ padding:'0.75rem', flex:1, display:'flex', flexDirection:'column' }}>
-        {cat && <div style={{ fontSize:10, fontWeight:700, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:3 }}>{cat}</div>}
+      <div style={{ padding:'0.875rem', flex:1, display:'flex', flexDirection:'column' }}>
+        {cat && <div style={{ fontSize:10, fontWeight:800, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:3 }}>{cat}</div>}
         
-        <div className="product-card-name" style={{ fontSize:13, fontWeight:600, color:'#111', lineHeight:1.35, marginBottom:6, flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+        <div className="product-card-name" style={{ fontSize:13, fontWeight:700, color:'#111', lineHeight:1.35, marginBottom:6, flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
           {product.name}
         </div>
 
         {/* Rating t1 */}
         <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:6 }}>
           <div style={{ color:'#f59e0b', fontSize:11, letterSpacing:1 }}>★★★★★</div>
-          <span style={{ fontSize:10, color:'#aaa' }}>(Sé el primero)</span>
+          <span style={{ fontSize:10, color:'#ccc', fontStyle:'italic' }}>Sin reseñas aún</span>
         </div>
 
         {/* Precio t2 — precio tachado si hay oferta */}
         <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:'0.75rem' }}>
-          <span className="product-card-price" style={{ fontSize:19, fontWeight:900, color:'var(--red)', letterSpacing:'-0.02em' }}>{displayPrice.toFixed(2)} €</span>
+          <span className="product-card-price" style={{ fontSize:21, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em' }}>{displayPrice.toFixed(2)} €</span>
           {salePrice && <span style={{ fontSize:12, color:'#bbb', textDecoration:'line-through' }}>{price.toFixed(2)} €</span>}
         </div>
 
         {/* Botón t5 — diferenciado variantes */}
         {hasVariants ? (
-          <div className="product-card-btn" style={{ width:'100%', padding:'8px', border:'1px solid var(--red)', background:'transparent', color:'var(--red)', fontSize:12, fontWeight:700, textAlign:'center', borderRadius:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>
-            Elegir sabor
+          <div className="product-card-btn" style={{ width:'100%', padding:'9px 8px', border:'none', background:'var(--red)', color:'var(--red)', fontSize:12, fontWeight:700, textAlign:'center', borderRadius:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>
+            Ver opciones →
           </div>
         ) : (
           <button onClick={handleAdd} disabled={!hasStock}
-            style={{ width:'100%', padding:'8px', border: adding ? 'none' : '1px solid var(--red)', background: adding ? '#22c55e' : hasStock ? 'transparent' : '#f0f0f0', color: adding ? 'white' : hasStock ? 'var(--red)' : '#aaa', fontSize:12, fontWeight:700, cursor: hasStock ? 'pointer' : 'not-allowed', fontFamily:'var(--font-body)', textTransform:'uppercase', letterSpacing:'0.05em', transition:'all 0.15s', borderRadius:2 }}>
-            {adding ? '✓ Añadido' : !hasStock ? 'Sin stock' : '🛒 Añadir'}
+            style={{ width:'100%', padding:'9px 8px', border:'none', background: adding ? '#22c55e' : hasStock ? 'var(--red)' : '#f0f0f0', color: 'white', fontSize:12, fontWeight:700, cursor: hasStock ? 'pointer' : 'not-allowed', fontFamily:'var(--font-body)', textTransform:'uppercase', letterSpacing:'0.05em', transition:'all 0.15s', borderRadius:2 }}>
+            {adding ? '✓ Añadido' : !hasStock ? 'Sin stock' : '🛒 Al carrito'}
           </button>
         )}
       </div>

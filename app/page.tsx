@@ -55,7 +55,7 @@ export default async function Home() {
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120,flexWrap:'wrap'}} className="h2-banner">
           <div style={{flex:1,padding:'24px 0'}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>🏆 PRODUCTO ESTRELLA</div>
+            <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>⚡ OFERTA DE LA SEMANA</div>
             {novedades[0] && <>
               <div style={{fontSize:'clamp(18px,3vw,26px)',fontWeight:900,color:'white',lineHeight:1.1,marginBottom:8}}>
                 {novedades[0].name.slice(0,40)}{novedades[0].name.length>40?'...':''}
@@ -79,10 +79,10 @@ export default async function Home() {
       <section style={{background:'#111',padding:'12px 20px',borderBottom:'1px solid #222'}}>
         <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'clamp(16px,4vw,56px)',flexWrap:'wrap'}} className="propuesta-grid">
           {[
-            {icon:'🚀',t:'Envio 24-48h',s:'Canarias y Peninsula'},
-            {icon:'✅',t:'Marca oficial',s:'100% productos originales'},
-            {icon:'💰',t:'Precio garantizado',s:'Mejor precio o te lo igualamos'},
-            {icon:'🔄',t:'Devolucion 14 dias',s:'Sin preguntas'},
+            {icon:'🚀',t:'🚀 Envío 24-48h',s:'Canarias y Peninsula'},
+            {icon:'✅',t:'✅ Marca oficial',s:'100% productos originales'},
+            {icon:'💰',t:'💰 Precio mínimo',s:'Si lo encuentras más barato, igualamos el precio'},
+            {icon:'🔄',t:'🔄 Devolución 14 días',s:'Sin preguntas'},
           ].map(({icon,t,s})=>(
             <div key={t} style={{display:'flex',alignItems:'center',gap:8,color:'white'}}>
               <span style={{fontSize:20,lineHeight:1}}>{icon}</span>

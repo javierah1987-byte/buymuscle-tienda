@@ -5,6 +5,7 @@ import { cache } from 'react'
 import type { Metadata } from 'next'
 import WishlistBtn from '@/components/WishlistBtn'
 import ProductReviews from '@/components/ProductReviews'
+import ProductTabs from '@/components/ProductTabs'
 import AddToCartSection from '@/components/AddToCartSection'
 import ProductCard from '@/components/ProductCard'
 import ImageGallery from '@/components/ImageGallery'
@@ -91,6 +92,12 @@ export default async function ProductoPage({ params }) {
             </div>
             {product.brand&&<div style={{fontSize:13,color:'#888',marginBottom:16}}>Marca: <strong style={{color:'#555'}}>{product.brand}</strong></div>}
             {discount&&<div style={{display:'inline-block',background:'#ff1e41',color:'white',fontSize:12,fontWeight:700,padding:'3px 8px',marginBottom:8}}>-{discount}%</div>}
+            {product.stock > 0 && (
+              <div style={{display:'flex',alignItems:'center',gap:6,padding:'8px 12px',background:'#f0fff4',border:'1px solid #bbf7d0',borderRadius:4,marginBottom:8}}>
+                <span style={{fontSize:14}}>✅</span>
+                <span style={{fontSize:12,color:'#166534',fontWeight:600}}>En stock · Envío 24-48h a Canarias y Península</span>
+              </div>
+            )}
             {product.stock>0&&product.stock<=10&&<div style={{background:'#fff3cd',border:'1px solid #ffc107',padding:'8px 14px',marginBottom:12,fontSize:13,fontWeight:700,color:'#856404'}}>
               Solo quedan {product.stock} unidades!
             </div>}
