@@ -5,6 +5,7 @@ import StoreWrapper from '@/components/StoreWrapper'
 import { CartProvider } from '@/lib/cart'
 import { AuthProvider } from '@/lib/auth'
 import Script from 'next/script'
+import PWAInstallBanner from '@/components/PWAInstallBanner'
 
 const heebo = Heebo({ subsets: ['latin'], variable: '--font-heebo' })
 
@@ -15,6 +16,27 @@ export const metadata: Metadata = {
   authors: [{ name: 'BuyMuscle', url: 'https://buymuscle-tienda.vercel.app' }],
   creator: 'BuyMuscle',
   metadataBase: new URL('https://buymuscle-tienda.vercel.app'),
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'BuyMuscle',
+  },
+  formatDetection: { telephone: false },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+    themeColor: '#111111',
+  },
+  icons: {
+    apple: [
+      { url: '/icon?size=180', sizes: '180x180', type: 'image/png' },
+      { url: '/icon?size=152', sizes: '152x152', type: 'image/png' },
+    ],
+  },
   openGraph: {
     title: 'BUYMUSCLE | Suplementación Deportiva',
     description: 'Tu tienda de suplementación en Canarias',
@@ -58,6 +80,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</Script>
       )}
       <body className={heebo.className}>
+        {/* PWA: Registrar Service Worker */}
+        <script dangerouslySetInnerHTML={{__html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                console.log('SW registered:', reg.scope);
+              }).catch(function(err) {
+                console.log('SW error:', err);
+              });
+            });
+          }
+        `}} />
         <AuthProvider>
           <CartProvider>
             <StoreWrapper>{children}</StoreWrapper>

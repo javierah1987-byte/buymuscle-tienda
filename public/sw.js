@@ -1,88 +1,126 @@
-// BuyMuscle Service Worker v1
-const CACHE = 'bm-v1'
-const PRECACHE = ['/', '/tienda', '/carrito', '/offline']
+// BuyMuscle Service Worker v3 - PWA
+const CACHE_VERSION = 'bm-v3'
+const STATIC_CACHE = CACHE_VERSION + '-static'
+const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic'
 
-// Instalar y cachear páginas clave
-self.addEventListener('install', e => {
+// Archivos a cachear en install
+const PRECACHE_URLS = [
+  '/',
+  '/tienda',
+  '/carrito',
+  '/offline',
+  '/manifest.json',
+]
+
+// Install: precachear páginas clave
+self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE).catch(() => {}))
+    caches.open(STATIC_CACHE).then(function(cache) {
+      return cache.addAll(PRECACHE_URLS).catch(function(err) {
+        console.log('[SW] Precache error:', err)
+      })
+    })
   )
   self.skipWaiting()
 })
 
-// Activar y limpiar caches viejos
-self.addEventListener('activate', e => {
+// Activate: limpiar caches viejos
+self.addEventListener('activate', function(e) {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    caches.keys().then(function(keys) {
+      return Promise.all(
+        keys.filter(function(k) { return k !== STATIC_CACHE && k !== DYNAMIC_CACHE })
+            .map(function(k) { return caches.delete(k) })
+      )
+    })
   )
   self.clients.claim()
 })
 
-// Fetch: network first, cache fallback
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return
-  if (e.request.url.includes('supabase') || e.request.url.includes('api/')) return
+// Fetch: estrategia según tipo de recurso
+self.addEventListener('fetch', function(e) {
+  const url = new URL(e.request.url)
 
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res && res.status === 200 && res.type === 'basic') {
-          const clone = res.clone()
-          caches.open(CACHE).then(c => c.put(e.request, clone))
-        }
-        return res
+  // Ignorar: no GET, Supabase API, Analytics, extensiones
+  if (e.request.method !== 'GET') return
+  if (url.hostname.includes('supabase.co')) return
+  if (url.hostname.includes('google-analytics')) return
+  if (url.hostname.includes('facebook')) return
+  if (url.protocol === 'chrome-extension:') return
+  if (url.pathname.startsWith('/api/')) return
+  if (url.pathname.startsWith('/_next/webpack-hmr')) return
+
+  // Imágenes: cache first (hasta 30 días)
+  if (e.request.destination === 'image') {
+    e.respondWith(
+      caches.open(DYNAMIC_CACHE).then(function(cache) {
+        return cache.match(e.request).then(function(cached) {
+          if (cached) return cached
+          return fetch(e.request).then(function(res) {
+            if (res && res.status === 200) cache.put(e.request, res.clone())
+            return res
+          }).catch(function() { return cached || new Response('', { status: 404 }) })
+        })
       })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('/offline')))
-  )
+    )
+    return
+  }
+
+  // Next.js static assets (_next/static): cache first
+  if (url.pathname.startsWith('/_next/static/')) {
+    e.respondWith(
+      caches.open(STATIC_CACHE).then(function(cache) {
+        return cache.match(e.request).then(function(cached) {
+          if (cached) return cached
+          return fetch(e.request).then(function(res) {
+            if (res && res.status === 200) cache.put(e.request, res.clone())
+            return res
+          })
+        })
+      })
+    )
+    return
+  }
+
+  // Páginas HTML: network first, cache fallback, offline fallback
+  if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(function(res) {
+          if (res && res.status === 200) {
+            const resClone = res.clone()
+            caches.open(DYNAMIC_CACHE).then(function(cache) { cache.put(e.request, resClone) })
+          }
+          return res
+        })
+        .catch(function() {
+          return caches.match(e.request).then(function(cached) {
+            return cached || caches.match('/offline')
+          })
+        })
+    )
+    return
+  }
 })
 
 // Push notifications
-self.addEventListener('push', e => {
+self.addEventListener('push', function(e) {
   const data = e.data ? e.data.json() : {}
-  const title = data.title || 'BuyMuscle'
-  const options = {
-    body: data.body || 'Nueva oferta disponible en BuyMuscle',
-    icon: '/icon',
-    badge: '/icon',
-    image: data.image || undefined,
-    data: { url: data.url || '/' },
-    actions: [
-      { action: 'ver', title: 'Ver ahora' },
-      { action: 'cerrar', title: 'Cerrar' },
-    ],
-    vibrate: [200, 100, 200],
-    requireInteraction: false,
-    tag: data.tag || 'bm-notif',
-  }
-  e.waitUntil(self.registration.showNotification(title, options))
-})
-
-// Click en notificación
-self.addEventListener('notificationclick', e => {
-  e.notification.close()
-  if (e.action === 'cerrar') return
-  const url = e.notification.data?.url || '/'
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(ws => {
-      const match = ws.find(w => w.url === url && 'focus' in w)
-      if (match) return match.focus()
-      return clients.openWindow(url)
+    self.registration.showNotification(data.title || 'BuyMuscle', {
+      body: data.body || 'Nueva notificación',
+      icon: '/icon?size=192',
+      badge: '/icon?size=72',
+      data: { url: data.url || '/' },
+      vibrate: [100, 50, 100],
     })
   )
 })
 
-// Background sync (carritos abandonados)
-self.addEventListener('sync', e => {
-  if (e.tag === 'bm-abandoned') {
-    e.waitUntil(
-      self.registration.showNotification('Tienes productos en tu carrito', {
-        body: 'Completa tu compra y no pierdas tus productos.',
-        icon: '/icon',
-        data: { url: '/carrito' },
-        tag: 'bm-abandoned',
-      })
-    )
-  }
+// Click en notificación -> abrir URL
+self.addEventListener('notificationclick', function(e) {
+  e.notification.close()
+  e.waitUntil(
+    clients.openWindow(e.notification.data.url || '/')
+  )
 })
