@@ -59,7 +59,11 @@ export default function Navbar(){
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(function(){
-    function checkMobile(){ setIsMobile(window.innerWidth <= 768) }
+    function checkMobile(){
+      const mobile = window.innerWidth <= 768
+      setIsMobile(mobile)
+      if(!mobile) setMobileOpen(false) // cerrar menú al pasar a desktop
+    }
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return function(){ window.removeEventListener('resize', checkMobile) }
@@ -233,8 +237,8 @@ export default function Navbar(){
       </header>
     <SideCart open={cartOpen} onClose={()=>setCartOpen(false)}/>
 
-      {/* MENÚ MÓVIL */}
-      <div className={'nav-mobile-menu'+(mobileOpen?' open':'')} style={{paddingTop:0}}>
+      {/* MENÚ MÓVIL — solo cuando isMobile */}
+      {isMobile && <div className={'nav-mobile-menu'+(mobileOpen?' open':'')} style={{paddingTop:0}}>
         <div style={{background:'#000',padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:1}}>
           <span style={{color:'var(--red)',fontWeight:900,fontSize:20}}>BUYMUSCLE</span>
           <button onClick={()=>setMobileOpen(false)} style={{background:'none',border:'none',color:'white',cursor:'pointer',fontSize:28,lineHeight:1}}>✕</button>
@@ -271,7 +275,7 @@ export default function Navbar(){
             </Link>
           </div>
         </div>
-      </div>
+      </div>}
     </>
   )
 }
