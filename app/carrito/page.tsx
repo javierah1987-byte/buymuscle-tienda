@@ -151,7 +151,7 @@ export default function CarritoPage() {
         ))}
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 360px',gap:24,alignItems:'start'}}>
+      <div className="carrito-grid" style={{display:'grid',gridTemplateColumns:'1fr 360px',gap:24,alignItems:'start'}}>
         <div>
           {/* PASO 1 CARRITO */}
           {paso===1&&(
@@ -229,7 +229,7 @@ export default function CarritoPage() {
         </div>
 
         {/* RESUMEN LATERAL */}
-        <div style={{position:isMobile?'static':'sticky',top:20}}>
+        <div className="carrito-resumen" style={{position:'sticky',top:20}}>
           <div style={{background:'white',border:'1px solid #e8e8e8',borderRadius:8,padding:20}}>
             <h3 style={{fontSize:13,fontWeight:700,margin:'0 0 16px',textTransform:'uppercase',letterSpacing:'0.06em'}}>Resumen</h3>
             {paso===2&&items.map(i=>(

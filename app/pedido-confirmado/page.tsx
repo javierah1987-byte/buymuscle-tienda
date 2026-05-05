@@ -95,7 +95,7 @@ function Contenido() {
           </div>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 300px', gap:16, alignItems:'start' }}>
+        <div className="pedido-grid" style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:16, alignItems:'start' }}>
           <div>
             <div style={{ background:'white', border:'1px solid #e8e8e8', borderRadius:8, overflow:'hidden', marginBottom:16 }}>
               <div style={{ padding:'14px 20px', borderBottom:'1px solid #f0f0f0', fontWeight:700, fontSize:13, textTransform:'uppercase', color:'#111' }}>Productos</div>
@@ -141,7 +141,7 @@ function Contenido() {
             </div>
           </div>
 
-          <div style={{ position:isMobile?'static':'sticky', top:20 }}>
+          <div className="pedido-resumen" style={{ position:'sticky', top:20 }}>
             <div style={{ background:'white', border:'1px solid #e8e8e8', borderRadius:8, padding:20, marginBottom:12 }}>
               <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', marginBottom:14, color:'#111' }}>Resumen</div>
               <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:10, fontSize:13, color:'#555' }}>

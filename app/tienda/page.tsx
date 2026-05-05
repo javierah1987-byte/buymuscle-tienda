@@ -106,12 +106,12 @@ function TiendaContent() {
       </div>
 
       {/* t6 BOTÓN FILTRAR MÓVIL */}
-      <button onClick={()=>setShowFilters(function(f){return !f})} style={{display:isMobile?'block':'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
+      <button onClick={()=>setShowFilters(function(f){return !f})} className="btn-filter-mobile" style={{display:'none',width:'100%',padding:'10px',background:'white',border:'1px solid #e8e8e8',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:12,textAlign:'left'}} className="btn-filter-mobile">
         {showFilters ? '✕ Cerrar filtros' : '🔍 Filtrar categorías'}
       </button>
-      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
+      <div className="tienda-grid" style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:'1.25rem',alignItems:'start'}}>
         {/* SIDEBAR */}
-        <aside style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0,display:isMobile&&!showFilters?'none':'block'}}>
+        <aside className="tienda-sidebar" style={{background:'white',border:'1px solid #e8e8e8',position:'sticky',top:0}}>
           {CAT_GROUPS.map(group=>(
             <SidebarSection key={group.label} title={group.label}>
               {group.cats.map(cat=>(
