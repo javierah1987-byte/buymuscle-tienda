@@ -112,15 +112,7 @@ export default async function ProductoPage({ params }) {
             </div>
           </div>
         </ProductoGrid>
-        {desc&&<div style={{background:'white',marginBottom:24}}>
-          <div style={{borderBottom:'2px solid #f0f0f0',padding:'0 24px'}}>
-            <div style={{padding:'14px 0',borderBottom:'2px solid #ff1e41',display:'inline-block',fontSize:13,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.05em'}}>Descripcion</div>
-          </div>
-          <div style={{padding:'24px',fontSize:14,color:'#555',lineHeight:1.8,maxWidth:800}}>
-            {desc.split('\n').filter(l=>l.trim()).map((line,i)=><p key={i} style={{margin:'0 0 10px'}}>{line}</p>)}
-          </div>
-        </div>}
-        <ProductReviews productId={product.id} initialReviews={reviews}/>
+        <ProductTabs description={desc} reviews={reviews} productId={product.id}/>
         {related&&related.length>0&&<div style={{marginTop:24}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16,paddingBottom:10,borderBottom:'2px solid #ff1e41'}}>
             <span style={{fontSize:16}}>🔥</span>
