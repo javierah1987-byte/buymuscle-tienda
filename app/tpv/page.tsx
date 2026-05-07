@@ -288,23 +288,23 @@ export default function TPVPage() {
 
   // ── ESTILOS ────────────────────────────────────────────
   const ST = {
-    page: { display:'grid', gridTemplateColumns:'1fr 340px', height:'100vh', background:'#111', color:'white', fontFamily:'Heebo,Arial,sans-serif', position:'relative' },
-    left: { display:'flex', flexDirection:'column', overflow:'hidden', borderRight:'1px solid #222' },
-    header: { padding:'10px 14px', background:'#0a0a0a', borderBottom:'1px solid #222', display:'flex', alignItems:'center', gap:10 },
-    searchInput: { flex:1, background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:2, outline:'none' },
-    catBar: { display:'flex', gap:4, padding:'7px 14px', background:'#0d0d0d', borderBottom:'1px solid #222', overflowX:'auto', flexShrink:0, scrollbarWidth:'none' },
-    catBtn: (active) => ({ padding:'3px 10px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?'#ff1e41':'#1a1a1a', color:active?'white':'#666', borderRadius:2, whiteSpace:'nowrap', fontFamily:'inherit' }),
-    grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:1, background:'#222', alignContent:'start' },
-    card: { background:'#111', cursor:'pointer', display:'flex', flexDirection:'column', padding:'8px 6px', alignItems:'center', textAlign:'center', transition:'background 0.1s' },
-    right: { display:'flex', flexDirection:'column', background:'#0a0a0a' },
-    clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'#222', flexShrink:0 },
+    page: { display:'grid', gridTemplateColumns:'1fr 380px', height:'100vh', background:'#f1f5f9', color:'#111', fontFamily:'Heebo,Arial,sans-serif', position:'relative' },
+    left: { display:'flex', flexDirection:'column', overflow:'hidden', borderRight:'1px solid #e2e8f0', background:'#f8fafc' },
+    header: { padding:'10px 14px', background:'#111827', borderBottom:'1px solid #1f2937', display:'flex', alignItems:'center', gap:10 },
+    searchInput: { flex:1, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'8px 12px', fontSize:13, fontFamily:'inherit', borderRadius:6, outline:'none', boxShadow:'0 1px 2px rgba(0,0,0,0.05)' },
+    catBar: { display:'flex', gap:4, padding:'8px 14px', background:'white', borderBottom:'1px solid #e2e8f0', overflowX:'auto', flexShrink:0, scrollbarWidth:'none' },
+    catBtn: (active) => ({ padding:'4px 12px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?'#ff1e41':'rgba(255,255,255,0.08)', color:active?'white':'rgba(255,255,255,0.6)', borderRadius:12, whiteSpace:'nowrap', fontFamily:'inherit', transition:'all 0.15s' }),
+    grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, padding:10, background:'#0f172a', alignContent:'start' },
+    card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:0, alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.3)' },
+    right: { display:'flex', flexDirection:'column', background:'white', borderLeft:'1px solid #e2e8f0' },
+    clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'rgba(0,0,0,0.2)', flexShrink:0 },
     clientBtn: (active, type) => ({ padding:'7px 4px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?CLIENT_COLORS[type]:' #111', color:'white', fontFamily:'inherit' }),
-    ticket: { flex:1, overflowY:'auto', padding:'8px' },
-    lineRow: { display:'flex', alignItems:'center', gap:6, padding:'5px 0', borderBottom:'1px solid #1a1a1a' },
-    footer: { borderTop:'1px solid #222', padding:'10px' },
+    ticket: { flex:1, overflowY:'auto', padding:'12px', background:'#fafafa' },
+    lineRow: { display:'flex', alignItems:'center', gap:6, padding:'7px 0', borderBottom:'1px solid #f1f5f9',0.08)' },
+    footer: { borderTop:'1px solid rgba(255,255,255,0.1)', padding:'12px' },
     payRow: { display:'flex', gap:3, marginBottom:8 },
-    payBtn: (active) => ({ flex:1, padding:'6px 2px', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', background:active?'#ff1e41':'#1a1a1a', color:'white', fontFamily:'inherit', borderRadius:2 }),
-    cobraBtn: { width:'100%', padding:12, background:saving?'#555':'#ff1e41', color:'white', border:'none', fontWeight:900, fontSize:16, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', letterSpacing:1 },
+    payBtn: (active) => ({ flex:1, padding:'8px 2px', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', background:active?'#ff1e41':'rgba(255,255,255,0.1)', color:'white', fontFamily:'inherit', borderRadius:4, transition:'all 0.15s' }),
+    cobraBtn: { width:'100%', padding:14, background:saving?'#64748b':'#ff1e41', color:'white', border:'none', fontWeight:900, fontSize:16, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', letterSpacing:1, borderRadius:6, transition:'all 0.2s' },
   }
 
   // ── TICKET IMPRIMIBLE ───────────────────────────────────
@@ -326,37 +326,37 @@ export default function TPVPage() {
 
   // ── MODAL OVERLAY ───────────────────────────────────────
   const Modal = ({ onClose, children, titulo }) => (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
-      <div style={{ background:'#111', border:'1px solid #333', borderRadius:6, padding:0, width:'100%', maxWidth:480, maxHeight:'90vh', overflow:'auto' }}>
-        <div style={{ padding:'14px 18px', borderBottom:'1px solid #222', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontWeight:800, fontSize:15 }}>{titulo}</span>
-          <button onClick={onClose} style={{ background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:22, lineHeight:1 }}>✕</button>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:2000, backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+      <div style={{ background:'white', border:'none', borderRadius:12, boxShadow:'0 20px 60px rgba(0,0,0,0.3)', padding:0, width:'100%', maxWidth:480, maxHeight:'90vh', overflow:'auto' }}>
+        <div style={{ padding:'16px 20px', borderBottom:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center', background:'#f8fafc', borderRadius:'12px 12px 0 0' }}>
+          <span style={{ fontWeight:800, fontSize:15, color:'#111' }}>{titulo}</span>
+          <button onClick={onClose} style={{ background:'#f1f5f9', border:'none', color:'#6b7280', cursor:'pointer', fontSize:16, lineHeight:1, width:32, height:32, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
         </div>
         <div style={{ padding:'18px' }}>{children}</div>
       </div>
     </div>
   )
 
-  const inputSt = { width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'9px 12px', fontSize:13, fontFamily:'inherit', borderRadius:3, outline:'none', boxSizing:'border-box' }
+  const inputSt = { width:'100%', background:'white', border:'1px solid #d1d5db', color:'#111', padding:'10px 12px', fontSize:13, fontFamily:'inherit', borderRadius:6, outline:'none', boxSizing:'border-box', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }
   const btnRed = { background:'#ff1e41', color:'white', border:'none', padding:'10px 20px', fontWeight:700, fontSize:13, cursor:'pointer', borderRadius:3, fontFamily:'inherit', width:'100%' }
-  const btnGray = { background:'#222', color:'white', border:'1px solid #333', padding:'9px 18px', fontWeight:600, fontSize:13, cursor:'pointer', borderRadius:3, fontFamily:'inherit' }
+  const btnGray = { background:'white', color:'#374151', border:'1px solid #d1d5db', padding:'9px 18px', fontWeight:600, fontSize:13, cursor:'pointer', borderRadius:6, fontFamily:'inherit', boxShadow:'0 1px 2px rgba(0,0,0,0.04)' }
 
   // ── VISTA TICKET COMPLETADO ────────────────────────────
   if (ticket) return (
-    <div style={{ background:'#111', color:'white', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>
+    <div style={{ background:'#f8fafc', color:'#111', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>
       <div style={{ textAlign:'center', maxWidth:380, padding:32 }}>
         <div style={{ fontSize:72, marginBottom:12 }}>✅</div>
-        <h2 style={{ fontSize:24, fontWeight:900, margin:'0 0 6px', color:'#ff1e41' }}>¡Cobrado!</h2>
+        <h2 style={{ fontSize:28, fontWeight:900, margin:'0 0 6px', color:'#ff1e41' }}>¡Cobrado!</h2>
         <p style={{ color:'#888', margin:'0 0 4px' }}>Pedido <strong style={{ color:'white' }}>{ticket.num}</strong></p>
-        <div style={{ background:'#1a1a1a', border:'1px solid #222', padding:'16px', margin:'20px 0', borderRadius:4 }}>
+        <div style={{ background:'white', border:'1px solid #e2e8f0', padding:'20px', margin:'20px 0', borderRadius:12, boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
           {ticket.lines.map(l => (
-            <div key={l.key} style={{ display:'flex', justifyContent:'space-between', fontSize:13, padding:'3px 0', borderBottom:'1px solid #111' }}>
-              <span style={{ color:'#ccc' }}>{l.product.name} ×{l.qty}</span>
+            <div key={l.key} style={{ display:'flex', justifyContent:'space-between', fontSize:13, padding:'5px 0', borderBottom:'1px solid #f1f5f9' }}>
+              <span style={{ color:'#4b5563' }}>{l.product.name} ×{l.qty}</span>
               <span style={{ color:'white' }}>{(l.unitPrice*l.qty).toFixed(2)} €</span>
             </div>
           ))}
           {ticket.discount>0 && <div style={{ fontSize:12, color:'#f59e0b', marginTop:8 }}>Dto. {ticket.discount}% aplicado</div>}
-          <div style={{ borderTop:'1px solid #333', marginTop:10, paddingTop:10, display:'flex', justifyContent:'space-between', fontSize:20, fontWeight:900 }}>
+          <div style={{ borderTop:'2px solid #f1f5f9', marginTop:12, paddingTop:12, display:'flex', justifyContent:'space-between', fontSize:22, fontWeight:900, color:'#111' }}>
             <span>TOTAL</span><span style={{ color:'#ff1e41' }}>{ticket.total.toFixed(2)} €</span>
           </div>
           <div style={{ fontSize:12, color:'#555', marginTop:4, textAlign:'right' }}>IGIC incluido · {ticket.payMethod.toUpperCase()}</div>
@@ -370,7 +370,7 @@ export default function TPVPage() {
         {/* Mini stats del día */}
         <div style={{ marginTop:24, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
           {[{l:'Ventas hoy',v:ventasDia.total.toFixed(0)+' €'},{l:'Tickets',v:ventasDia.count},{l:'Efectivo',v:ventasDia.efectivo.toFixed(0)+' €'}].map(({l,v})=>(
-            <div key={l} style={{ background:'#0a0a0a', border:'1px solid #1a1a1a', padding:'8px 4px', borderRadius:4 }}>
+            <div key={l} style={{ background:'white', border:'1px solid #e2e8f0', padding:'10px 6px', borderRadius:8, boxShadow:'0 1px 4px rgba(0,0,0,0.06)' }}>
               <div style={{ fontSize:16, fontWeight:900, color:'#ff1e41' }}>{v}</div>
               <div style={{ fontSize:9, color:'#555', marginTop:2, textTransform:'uppercase' }}>{l}</div>
             </div>
@@ -400,7 +400,7 @@ export default function TPVPage() {
         <Modal titulo="🔴 Cierre de caja — Informe Z" onClose={()=>setShowCierre(false)}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:20 }}>
             {[{l:'Efectivo',v:ventasDia.efectivo},{l:'Tarjeta/Bizum',v:ventasDia.tarjeta+ventasDia.bizum},{l:'Total',v:ventasDia.total}].map(({l,v})=>(
-              <div key={l} style={{ background:'#1a1a1a', padding:'10px 8px', borderRadius:4, textAlign:'center' }}>
+              <div key={l} style={{ background:'#f8fafc', padding:'12px 8px', borderRadius:8, textAlign:'center', border:'1px solid #e2e8f0' }}>
                 <div style={{ fontSize:18, fontWeight:900, color:'#ff1e41' }}>{v.toFixed(2)} €</div>
                 <div style={{ fontSize:10, color:'#555', marginTop:3, textTransform:'uppercase' }}>{l}</div>
               </div>
@@ -411,7 +411,7 @@ export default function TPVPage() {
             onChange={e=>setEfectivoCierre(e.target.value)}
             style={{ ...inputSt, marginBottom:10 }} autoFocus/>
           {efectivoCierre!=='' && cajaAbierta && (
-            <div style={{ fontSize:13, marginBottom:12, padding:'8px 12px', background:'#1a1a1a', borderRadius:4 }}>
+            <div style={{ fontSize:13, marginBottom:12, padding:'10px 14px', background:'#f8fafc', borderRadius:8, border:'1px solid #e2e8f0' }}>
               Diferencia: <strong style={{ color: (Number(efectivoCierre)-Number(cajaAbierta.cash_open)-ventasDia.efectivo)>=0 ? '#22c55e' : '#ef4444' }}>
                 {((Number(efectivoCierre)-Number(cajaAbierta.cash_open)-ventasDia.efectivo)>=0?'+':'') + (Number(efectivoCierre)-Number(cajaAbierta.cash_open)-ventasDia.efectivo).toFixed(2)} €
               </strong>
@@ -444,9 +444,9 @@ export default function TPVPage() {
 
           {devOrder && !devDone && (
             <>
-              <div style={{ background:'#1a1a1a', padding:'10px 12px', borderRadius:4, marginBottom:14, fontSize:13 }}>
-                <div style={{ fontWeight:700, color:'white', marginBottom:2 }}>Pedido {devOrder.order_number}</div>
-                <div style={{ color:'#888' }}>{devOrder.customer_name} · {Number(devOrder.total).toFixed(2)} € · {devOrder.payment_method}</div>
+              <div style={{ background:'#f8fafc', padding:'12px 14px', borderRadius:8, marginBottom:14, fontSize:13, border:'1px solid #e2e8f0' }}>
+                <div style={{ fontWeight:700, color:'#111', marginBottom:2 }}>Pedido {devOrder.order_number}</div>
+                <div style={{ color:'#6b7280' }}>{devOrder.customer_name} · {Number(devOrder.total).toFixed(2)} € · {devOrder.payment_method}</div>
               </div>
 
               <div style={{ marginBottom:14 }}>
@@ -454,7 +454,7 @@ export default function TPVPage() {
                   <div key={l.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:'1px solid #1a1a1a' }}>
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:12, color:'white' }}>{l.product_name}</div>
-                      <div style={{ fontSize:11, color:'#555' }}>×{l.quantity} · {Number(l.unit_price).toFixed(2)} €/ud</div>
+                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)' }}>×{l.quantity} · {Number(l.unit_price).toFixed(2)} €/ud</div>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                       <button onClick={()=>setDevSelected(s=>({...s,[l.id]:Math.max(0,(s[l.id]||0)-1)}))}
@@ -527,17 +527,17 @@ export default function TPVPage() {
           <div style={{ display:'flex', gap:4 }}>
             {!cajaAbierta ? (
               <button onClick={()=>setShowApertura(true)} title="Abrir caja"
-                style={{ background:'#1a1a1a', border:'1px solid #22c55e', color:'#22c55e', padding:'4px 8px', fontSize:11, fontWeight:700, cursor:'pointer', borderRadius:3, whiteSpace:'nowrap', fontFamily:'inherit' }}>
+                style={{ background:'rgba(34,197,94,0.15)', border:'1px solid #22c55e', color:'#22c55e', padding:'5px 10px', fontSize:11, fontWeight:700, cursor:'pointer', borderRadius:3, whiteSpace:'nowrap', fontFamily:'inherit' }}>
                 🟢 Abrir
               </button>
             ) : (
               <button onClick={()=>setShowCierre(true)} title="Cierre de caja"
-                style={{ background:'#1a1a1a', border:'1px solid #dc2626', color:'#dc2626', padding:'4px 8px', fontSize:11, fontWeight:700, cursor:'pointer', borderRadius:3, whiteSpace:'nowrap', fontFamily:'inherit' }}>
+                style={{ background:'rgba(220,38,38,0.15)', border:'1px solid #dc2626', color:'#ef4444', padding:'5px 10px', fontSize:11, fontWeight:700, cursor:'pointer', borderRadius:3, whiteSpace:'nowrap', fontFamily:'inherit' }}>
                 🔴 Cierre Z
               </button>
             )}
             <button onClick={()=>setShowDevolucion(true)} title="Procesar devolución"
-              style={{ background:'#1a1a1a', border:'1px solid #f59e0b', color:'#f59e0b', padding:'4px 8px', fontSize:11, fontWeight:700, cursor:'pointer', borderRadius:3, whiteSpace:'nowrap', fontFamily:'inherit' }}>
+              style={{ background:'rgba(245,158,11,0.15)', border:'1px solid #f59e0b', color:'#f59e0b', padding:'5px 10px', fontSize:11, fontWeight:700, cursor:'pointer', borderRadius:3, whiteSpace:'nowrap', fontFamily:'inherit' }}>
               ↩️ Dev.
             </button>
           </div>
@@ -552,9 +552,9 @@ export default function TPVPage() {
             {l:'Tarjeta',v:(ventasDia.tarjeta+ventasDia.bizum).toFixed(0)+'€',c:'#3b82f6'},
             {l:'Caja',v:cajaAbierta?'ABIERTA':'CERRADA',c:cajaAbierta?'#22c55e':'#ef4444'},
           ].map(({l,v,c})=>(
-            <div key={l} style={{ flex:1, padding:'5px 4px', background:'#0a0a0a', textAlign:'center' }}>
-              <div style={{ fontSize:12, fontWeight:900, color:c }}>{v}</div>
-              <div style={{ fontSize:8, color:'#444', textTransform:'uppercase', marginTop:1 }}>{l}</div>
+            <div key={l} style={{ flex:1, padding:'6px 4px', background:'rgba(0,0,0,0.3)', textAlign:'center' }}>
+              <div style={{ fontSize:13, fontWeight:900, color:c }}>{v}</div>
+              <div style={{ fontSize:8, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', marginTop:2, letterSpacing:'0.05em' }}>{l}</div>
             </div>
           ))}
         </div>
@@ -577,14 +577,14 @@ export default function TPVPage() {
               return (
                 <div key={p.id} style={ST.card}
                   onClick={() => addLine(p)}
-                  onMouseEnter={e=>e.currentTarget.style.background='#1a1a1a'}
-                  onMouseLeave={e=>e.currentTarget.style.background='#111'}>
-                  <div style={{ width:'100%', aspectRatio:'1', background:'#0a0a0a', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4, overflow:'hidden' }}>
+                  onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 12px rgba(255,30,65,0.3)'}
+                  onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.3)'}>
+                  <div style={{ width:'100%', aspectRatio:'1', background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:0, overflow:'hidden', borderBottom:'1px solid #e2e8f0' }}>
                     {p.image_url ? <img src={p.image_url} alt="" loading="lazy" style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain' }}/> : <span style={{ fontSize:24, opacity:.3 }}>📦</span>}
                   </div>
-                  <div style={{ fontSize:10, color:'#888', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
-                  <div style={{ fontSize:13, fontWeight:900, color:'#ff1e41', marginTop:'auto' }}>{price.toFixed(2)}€</div>
-                  {p.stock <= 5 && <div style={{ fontSize:8, color:'#f59e0b', marginTop:1 }}>⚠️ Stock: {p.stock}</div>}
+                  <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
+                  <div style={{ fontSize:13, fontWeight:900, color:'#ff1e41', marginTop:'auto', padding:'4px 0 6px' }}>{price.toFixed(2)}€</div>
+                  {p.stock <= 5 && <div style={{ fontSize:8, color:'#f59e0b', marginTop:0, paddingBottom:4 }}>⚠️ Stock: {p.stock}</div>}
                 </div>
               )
             })}
@@ -607,35 +607,35 @@ export default function TPVPage() {
         {/* Nombre cliente + NIF en una fila */}
         <div style={{ padding:'6px 8px', background:'#0d0d0d', borderBottom:'1px solid #222', display:'flex', gap:4 }}>
           <input value={customerName} onChange={e=>setCustomerName(e.target.value)} placeholder="Nombre cliente"
-            style={{ flex:2, background:'#111', border:'1px solid #222', color:'white', padding:'5px 8px', fontSize:11, fontFamily:'inherit', outline:'none' }}/>
+            style={{ flex:2, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
           <input value={customerNif} onChange={e=>setCustomerNif(e.target.value)} placeholder="NIF/CIF"
-            style={{ flex:1, background:'#111', border:'1px solid #222', color:'white', padding:'5px 8px', fontSize:11, fontFamily:'inherit', outline:'none' }}/>
+            style={{ flex:1, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
         </div>
 
         {/* Líneas del ticket */}
         <div style={ST.ticket}>
           {lines.length === 0 ? (
-            <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'#333', gap:8 }}>
+            <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'rgba(255,255,255,0.2)', gap:8 }}>
               <span style={{ fontSize:48 }}>🛒</span>
               <span style={{ fontSize:12 }}>Haz click en un producto</span>
-              <span style={{ fontSize:10, color:'#252525' }}>Enter = cobrar · Esc = vaciar</span>
+              <span style={{ fontSize:10, color:'#d1d5db' }}>Enter = cobrar · Esc = vaciar</span>
             </div>
           ) : (
             lines.map(l => (
               <div key={l.key} style={ST.lineRow}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:11, color:'#ccc', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  <div style={{ fontSize:12, color:'white', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500 }}>
                     {l.product.name}{l.variantLabel?' – '+l.variantLabel:''}
                   </div>
-                  <div style={{ fontSize:10, color:'#555' }}>{l.unitPrice.toFixed(2)}€/ud</div>
+                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>{l.unitPrice.toFixed(2)}€/ud</div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
-                  <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:22, height:22, border:'1px solid #333', background:'#1a1a1a', color:'white', cursor:'pointer', fontSize:14, padding:0 }}>−</button>
+                  <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:26, height:26, border:'1px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.1)', color:'white', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
                   <span style={{ width:20, textAlign:'center', fontSize:13, fontWeight:700 }}>{l.qty}</span>
-                  <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:22, height:22, border:'1px solid #333', background:'#1a1a1a', color:'white', cursor:'pointer', fontSize:14, padding:0 }}>+</button>
+                  <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:26, height:26, border:'1px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.1)', color:'white', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
                 </div>
                 <span style={{ fontSize:13, fontWeight:700, color:'white', width:56, textAlign:'right', flexShrink:0 }}>{(l.unitPrice*l.qty).toFixed(2)}€</span>
-                <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'#333', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
+                <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.2)', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
               </div>
             ))
           )}
@@ -647,8 +647,8 @@ export default function TPVPage() {
           <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
             <span style={{ fontSize:10, color:'#555', textTransform:'uppercase', flexShrink:0 }}>Dto %</span>
             <input type="number" min="0" max="100" value={discManual||''} onChange={e=>setDiscManual(Number(e.target.value)||0)}
-              placeholder="0" style={{ width:50, background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'4px 6px', fontSize:12, textAlign:'center', fontFamily:'inherit', outline:'none', borderRadius:2 }}/>
-            <span style={{ fontSize:10, color:'#555' }}>activo: <strong style={{ color: discount>0?'#f59e0b':'#555' }}>{discount}%</strong></span>
+              placeholder="0" style={{ width:50, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'4px 6px', fontSize:12, textAlign:'center', fontFamily:'inherit', outline:'none', borderRadius:2 }}/>
+            <span style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>activo: <strong style={{ color: discount>0?'#f59e0b':'#555' }}>{discount}%</strong></span>
           </div>
 
           {/* Forma de pago */}
@@ -684,7 +684,7 @@ export default function TPVPage() {
 
           {/* Ventas resumen del día debajo del cobrar */}
           <div style={{ borderTop:'1px solid #1a1a1a', marginTop:10, paddingTop:8, display:'flex', justifyContent:'space-between' }}>
-            <span style={{ fontSize:10, color:'#333', textTransform:'uppercase' }}>Ventas hoy</span>
+            <span style={{ fontSize:10, color:'rgba(255,255,255,0.2)', textTransform:'uppercase' }}>Ventas hoy</span>
             <span style={{ fontSize:10, color:'#ff1e41', fontWeight:700 }}>{ventasDia.total.toFixed(2)} € · {ventasDia.count} tickets</span>
           </div>
         </div>
