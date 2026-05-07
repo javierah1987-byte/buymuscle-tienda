@@ -27,7 +27,7 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <Link href={'/producto/'+product.id} style={{ textDecoration:'none', color:'inherit', display:'flex', flexDirection:'column', background:'white', position:'relative', borderRadius:4, overflow:'hidden', border:'1px solid #f0f0f0', transition:'box-shadow 0.2s' }}
+    <Link href={'/producto/'+product.id} className="product-card-link" style={{ textDecoration:'none', color:'inherit', display:'flex', flexDirection:'column', background:'white', position:'relative', borderRadius:4, overflow:'hidden', border:'1px solid #f0f0f0', transition:'box-shadow 0.2s' }}
       onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'}
       onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
       

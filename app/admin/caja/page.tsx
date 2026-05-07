@@ -25,7 +25,7 @@ export default function AdminCaja(){
   async function abrirCaja(){
     const ef=parseFloat(efectivoInicial)||0
     await fetch(S+'/rest/v1/caja_sessions',{method:'POST',headers:{...h,'Prefer':'return=minimal'},
-      body:JSON.stringify({efectivo_inicial:ef,created_by:'admin'})})
+      body:JSON.stringify({cash_open:ef,operator:'admin'})})
     setMsg('Caja abierta con '+ef.toFixed(2)+' € de efectivo inicial')
     setEfectivoInicial('')
     load()
@@ -41,8 +41,8 @@ export default function AdminCaja(){
     const totalEf=(Array.isArray(orders)?orders:[]).filter(o=>o.payment_method==='efectivo').reduce((s,o)=>s+Number(o.total||0),0)
     const totalTarjeta=(Array.isArray(orders)?orders:[]).filter(o=>o.payment_method!=='efectivo').reduce((s,o)=>s+Number(o.total||0),0)
     await fetch(S+'/rest/v1/caja_sessions?id=eq.'+open.id,{method:'PATCH',headers:h,
-      body:JSON.stringify({closed_at:new Date().toISOString(),efectivo_final:ef,total_efectivo:totalEf,total_tarjeta:totalTarjeta,total_ventas:Array.isArray(orders)?orders.length:0})})
-    setMsg('Caja cerrada. Efectivo esperado: '+(open.efectivo_inicial+totalEf).toFixed(2)+' € · Real: '+ef.toFixed(2)+' €')
+      body:JSON.stringify({closed_at:new Date().toISOString(),cash_close:ef,total_efectivo:totalEf,total_tarjeta:totalTarjeta,num_tickets:Array.isArray(orders)?orders.length:0})})
+    setMsg('Caja cerrada. Efectivo esperado: '+(Number(open.cash_open||0)+totalEf).toFixed(2)+' € · Real: '+ef.toFixed(2)+' €')
     setEfectivoFinal('')
     load()
     setTimeout(()=>setMsg(''),5000)
@@ -67,7 +67,7 @@ export default function AdminCaja(){
               <div style={{width:12,height:12,borderRadius:'50%',background:open?'#22c55e':'#ef4444',flexShrink:0}}/>
               <div>
                 <div style={{fontWeight:700,fontSize:16}}>{open?'Caja abierta':'Caja cerrada'}</div>
-                {open&&<div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:2}}>Desde {fmt(open.opened_at)} · Inicial: {Number(open.efectivo_inicial||0).toFixed(2)} €</div>}
+                {open&&<div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginTop:2}}>Desde {fmt(open.opened_at)} · Inicial: {Number(open.cash_open||0).toFixed(2)} €</div>}
               </div>
             </div>
             {!open?(
@@ -112,14 +112,14 @@ export default function AdminCaja(){
             </tr></thead>
             <tbody>
               {sessions.map(s=>{
-                const esperado=Number(s.efectivo_inicial||0)+Number(s.total_efectivo||0)
-                const real=Number(s.efectivo_final||0)
+                const esperado=Number(s.cash_open||0)+Number(s.total_efectivo||0)
+                const real=Number(s.cash_close||0)
                 const descuadre=s.closed_at?real-esperado:null
                 return(
                   <tr key={s.id}>
                     <td style={TD}>{fmt(s.opened_at)}</td>
                     <td style={TD}>{s.closed_at?fmt(s.closed_at):<span style={{color:'#22c55e',fontSize:11}}>ABIERTA</span>}</td>
-                    <td style={TD}>{Number(s.efectivo_inicial||0).toFixed(2)} €</td>
+                    <td style={TD}>{Number(s.cash_open||0).toFixed(2)} €</td>
                     <td style={TD}>{Number(s.total_efectivo||0).toFixed(2)} €</td>
                     <td style={TD}>{Number(s.total_tarjeta||0).toFixed(2)} €</td>
                     <td style={{...TD,color:descuadre===null?'#888':Math.abs(descuadre||0)<0.01?'#22c55e':descuadre>0?'#22c55e':'#ef4444',fontWeight:700}}>
