@@ -1,12 +1,60 @@
 // @ts-nocheck
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const db = createClient(S, K)
 
+// Mini-cliente REST sin GoTrueClient (evita lock bug)
+const h = { apikey: K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json' }
+const db = {
+  from: function(table) {
+    return {
+      _t: table, _sel: '*', _filters: [], _ord: null, _lim: null, _asc: true,
+      select: function(s) { this._sel = s; return this },
+      eq: function(col, val) { this._filters.push(col+'=eq.'+encodeURIComponent(val)); return this },
+      is: function(col, val) { this._filters.push(col+'=is.'+val); return this },
+      gt: function(col, val) { this._filters.push(col+'=gt.'+val); return this },
+      gte: function(col, val) { this._filters.push(col+'=gte.'+encodeURIComponent(val)); return this },
+      order: function(col, opts) { this._ord = col; this._asc = opts ? !opts.ascending : true; return this },
+      limit: function(n) { this._lim = n; return this },
+      single: async function() {
+        const url = this._buildUrl()
+        const r = await fetch(url + '&limit=1', { headers: { ...h, 'Accept': 'application/vnd.pgrst.object+json' } })
+        const data = await r.json()
+        return { data, error: r.ok ? null : data }
+      },
+      _buildUrl: function() {
+        let url = S + '/rest/v1/' + this._t + '?select=' + encodeURIComponent(this._sel)
+        this._filters.forEach(f => { url += '&' + f })
+        if (this._ord) url += '&order=' + this._ord + (this._asc ? '.asc' : '.desc')
+        if (this._lim) url += '&limit=' + this._lim
+        return url
+      },
+      then: function() { return this._exec().then(...arguments) },
+      _exec: async function() {
+        const url = this._buildUrl()
+        const r = await fetch(url, { headers: h })
+        const data = await r.json()
+        return { data: Array.isArray(data) ? data : [], error: r.ok ? null : data }
+      },
+      insert: async function(payload) {
+        const r = await fetch(S + '/rest/v1/' + this._t, {
+          method: 'POST', headers: { ...h, 'Prefer': 'return=representation' },
+          body: JSON.stringify(payload)
+        })
+        const data = await r.json()
+        return { data: Array.isArray(data) ? data[0] : data, error: r.ok ? null : data }
+      },
+      update: async function(payload) {
+        let url = S + '/rest/v1/' + this._t + '?'
+        this._filters.forEach(f => { url += f + '&' })
+        const r = await fetch(url, { method: 'PATCH', headers: h, body: JSON.stringify(payload) })
+        const data = await r.json()
+        return { data, error: r.ok ? null : data }
+      }
+    }
+  }
+}
 const DISCOUNTS = { particular:0, bronze:10, silver:15, gold:20 }
 const CLIENT_COLORS = { particular:'#555', bronze:'#cd7f32', silver:'#aaa', gold:'#ffd700' }
 
