@@ -106,9 +106,11 @@ export default function TPVPage() {
   // Cargar productos, categorías y stats del día
   useEffect(() => {
     async function load() {
-      // Productos
-      const { data: prods } = await db.from('products').select('*, categories(name)').eq('active',true).gt('stock',0).order('name')
-      const p = prods || []
+      const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
+      // Productos con categorías
+      const rp = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/products?active=eq.true&stock=gt.0&order=name.asc&select=*,categories(name)', {headers:H})
+      const prods = await rp.json()
+      const p = Array.isArray(prods) ? prods : []
       setProducts(p)
       setFiltered(p)
       setCategories(['Todos', ...new Set(p.map(x => x.categories?.name).filter(Boolean).sort())])
@@ -116,16 +118,19 @@ export default function TPVPage() {
       // Stats del día
       await recargarVentas()
       // Ver si hay caja abierta
-      const { data: cajas } = await db.from('caja_sessions').select('*').is('closed_at', null).order('opened_at', {ascending:false}).limit(1)
-      if (cajas && cajas.length > 0) setCajaAbierta(cajas[0])
+      const rc = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/caja_sessions?closed_at=is.null&order=opened_at.desc&limit=1', {headers:H})
+      const cajas = await rc.json()
+      if (Array.isArray(cajas) && cajas.length > 0) setCajaAbierta(cajas[0])
     }
     load()
   }, [])
 
   async function recargarVentas() {
+    const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
     const today = new Date(); today.setHours(0,0,0,0)
-    const { data: orders } = await db.from('orders').select('total,payment_method').gte('created_at', today.toISOString()).eq('status','paid')
-    if (!orders) return
+    const rv = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/orders?status=eq.paid&created_at=gte.'+today.toISOString()+'&select=total,payment_method', {headers:H})
+    const orders = await rv.json()
+    if (!Array.isArray(orders)) return
     const stats = orders.reduce((acc, o) => {
       acc.total += Number(o.total)
       acc.count += 1
@@ -162,7 +167,9 @@ export default function TPVPage() {
   const discount = Math.max(DISCOUNTS[clientType] || 0, discManual || 0)
 
   const addLine = async (product) => {
-    const { data: variants } = await db.from('product_variants').select('*, attribute_values(value, attribute_types(name))').eq('product_id', product.id).eq('active',true).gt('stock',0)
+    const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
+    const rv2 = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/product_variants?product_id=eq.'+product.id+'&active=eq.true&stock=gt.0&select=*,attribute_values(value,attribute_types(name))', {headers:H})
+    const variants = await rv2.json()
     if (variants && variants.length > 0) { setVariantModal({ product, variants }); return }
     _addToLines(product, '')
   }
