@@ -634,8 +634,8 @@ export default function TPVPage() {
                   onClick={() => addLine(p)}
                   onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 12px rgba(255,30,65,0.3)'}
                   onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.3)'}>
-                  <div style={{ width:'100%', aspectRatio:'1', background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:0, overflow:'hidden', borderBottom:'1px solid #e2e8f0' }}>
-                    {p.image_url ? <img src={p.image_url} alt="" loading="lazy" style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain' }}/> : <span style={{ fontSize:24, opacity:.3 }}>📦</span>}
+                  <div style={{ width:'100%', height:140, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', borderBottom:'1px solid #e2e8f0' }}>
+                    {p.image_url ? <img src={p.image_url} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}/> : <span style={{ fontSize:24, opacity:.3 }}>📦</span>}
                   </div>
                   <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
                   <div style={{ fontSize:13, fontWeight:900, color:'#ff1e41', marginTop:'auto', padding:'4px 0 6px' }}>{price.toFixed(2)}€</div>
