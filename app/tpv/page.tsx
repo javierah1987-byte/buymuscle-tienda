@@ -294,7 +294,7 @@ export default function TPVPage() {
     searchInput: { flex:1, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'8px 12px', fontSize:13, fontFamily:'inherit', borderRadius:6, outline:'none', boxShadow:'0 1px 2px rgba(0,0,0,0.05)' },
     catBar: { display:'flex', gap:4, padding:'8px 14px', background:'white', borderBottom:'1px solid #e2e8f0', overflowX:'auto', flexShrink:0, scrollbarWidth:'none' },
     catBtn: (active) => ({ padding:'4px 12px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?'#ff1e41':'#f1f5f9', color:active?'white':'#374151', borderRadius:12, whiteSpace:'nowrap', fontFamily:'inherit', transition:'all 0.15s' }),
-    grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, padding:10, background:'#0f172a', alignContent:'start' },
+    grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, padding:8, background:'#e2e8f0', alignContent:'start' },
     card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:0, alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.3)' },
     right: { display:'flex', flexDirection:'column', background:'white', borderLeft:'1px solid #e2e8f0' },
     clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'#f1f5f9', flexShrink:0 },
@@ -544,15 +544,15 @@ export default function TPVPage() {
         </div>
 
         {/* Stats del día */}
-        <div style={{ display:'flex', gap:1, background:'#222', flexShrink:0 }}>
+        <div style={{ display:'flex', gap:0, background:'#e2e8f0', flexShrink:0, borderBottom:'1px solid #e2e8f0' }}>
           {[
             {l:'Hoy',v:ventasDia.total.toFixed(0)+'€',c:'#ff1e41'},
-            {l:'Tickets',v:ventasDia.count,c:'white'},
+            {l:'Tickets',v:ventasDia.count,c:'#111'},
             {l:'Efectivo',v:ventasDia.efectivo.toFixed(0)+'€',c:'#22c55e'},
             {l:'Tarjeta',v:(ventasDia.tarjeta+ventasDia.bizum).toFixed(0)+'€',c:'#3b82f6'},
             {l:'Caja',v:cajaAbierta?'ABIERTA':'CERRADA',c:cajaAbierta?'#22c55e':'#ef4444'},
           ].map(({l,v,c})=>(
-            <div key={l} style={{ flex:1, padding:'6px 4px', background:'rgba(0,0,0,0.3)', textAlign:'center' }}>
+            <div key={l} style={{ flex:1, padding:'6px 4px', background:'white', textAlign:'center', borderRight:'1px solid #e2e8f0' }}>
               <div style={{ fontSize:13, fontWeight:900, color:c }}>{v}</div>
               <div style={{ fontSize:8, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', marginTop:2, letterSpacing:'0.05em' }}>{l}</div>
             </div>
