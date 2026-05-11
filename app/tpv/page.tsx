@@ -293,15 +293,15 @@ export default function TPVPage() {
     header: { padding:'10px 14px', background:'#111827', borderBottom:'1px solid #1f2937', display:'flex', alignItems:'center', gap:10 },
     searchInput: { flex:1, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'8px 12px', fontSize:13, fontFamily:'inherit', borderRadius:6, outline:'none', boxShadow:'0 1px 2px rgba(0,0,0,0.05)' },
     catBar: { display:'flex', gap:4, padding:'8px 14px', background:'white', borderBottom:'1px solid #e2e8f0', overflowX:'auto', flexShrink:0, scrollbarWidth:'none' },
-    catBtn: (active) => ({ padding:'4px 12px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?'#ff1e41':'rgba(255,255,255,0.08)', color:active?'white':'rgba(255,255,255,0.6)', borderRadius:12, whiteSpace:'nowrap', fontFamily:'inherit', transition:'all 0.15s' }),
+    catBtn: (active) => ({ padding:'4px 12px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?'#ff1e41':'#f1f5f9', color:active?'white':'#374151', borderRadius:12, whiteSpace:'nowrap', fontFamily:'inherit', transition:'all 0.15s' }),
     grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8, padding:10, background:'#0f172a', alignContent:'start' },
     card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:0, alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.3)' },
     right: { display:'flex', flexDirection:'column', background:'white', borderLeft:'1px solid #e2e8f0' },
-    clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'rgba(0,0,0,0.2)', flexShrink:0 },
-    clientBtn: (active, type) => ({ padding:'7px 4px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?CLIENT_COLORS[type]:' #111', color:'white', fontFamily:'inherit' }),
+    clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'#f1f5f9', flexShrink:0 },
+    clientBtn: (active, type) => ({ padding:'7px 4px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?CLIENT_COLORS[type]:'#f8fafc', color:active?'white':'#374151', fontFamily:'inherit' }),
     ticket: { flex:1, overflowY:'auto', padding:'12px', background:'#fafafa' },
-    lineRow: { display:'flex', alignItems:'center', gap:6, padding:'7px 0', borderBottom:'1px solid #f1f5f9',0.08)' },
-    footer: { borderTop:'1px solid rgba(255,255,255,0.1)', padding:'12px' },
+    lineRow: { display:'flex', alignItems:'center', gap:6, padding:'7px 0', borderBottom:'1px solid #f1f5f9' },
+    footer: { borderTop:'1px solid #e2e8f0', padding:'12px', background:'white' },
     payRow: { display:'flex', gap:3, marginBottom:8 },
     payBtn: (active) => ({ flex:1, padding:'8px 2px', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', background:active?'#ff1e41':'rgba(255,255,255,0.1)', color:'white', fontFamily:'inherit', borderRadius:4, transition:'all 0.15s' }),
     cobraBtn: { width:'100%', padding:14, background:saving?'#64748b':'#ff1e41', color:'white', border:'none', fontWeight:900, fontSize:16, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', letterSpacing:1, borderRadius:6, transition:'all 0.2s' },
@@ -607,9 +607,9 @@ export default function TPVPage() {
         {/* Nombre cliente + NIF en una fila */}
         <div style={{ padding:'6px 8px', background:'#0d0d0d', borderBottom:'1px solid #222', display:'flex', gap:4 }}>
           <input value={customerName} onChange={e=>setCustomerName(e.target.value)} placeholder="Nombre cliente"
-            style={{ flex:2, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+            style={{ flex:2, background:'white', border:'1px solid #d1d5db', color:'#111a(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
           <input value={customerNif} onChange={e=>setCustomerNif(e.target.value)} placeholder="NIF/CIF"
-            style={{ flex:1, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+            style={{ flex:1, background:'white', border:'1px solid #d1d5db', color:'#111a(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
         </div>
 
         {/* Líneas del ticket */}
