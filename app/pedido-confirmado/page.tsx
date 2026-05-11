@@ -3,11 +3,9 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
 
 const S = 'https://awwlbepjxuoxaigztugh.supabase.co'
 const K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const db = createClient(S, K)
 
 function Contenido() {
   const params = useSearchParams()
@@ -25,15 +23,19 @@ function Contenido() {
 
   useEffect(() => {
     if (!num) { setLoading(false); return }
-    db.from('orders').select('*').eq('order_number', num).single().then(async ({ data }) => {
+    const _H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
+    ;(async () => {
+      const ro = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/orders?order_number=eq.'+encodeURIComponent(num)+'&select=*&limit=1', {headers:_H})
+      const rows = await ro.json()
+      const data = Array.isArray(rows) && rows.length > 0 ? rows[0] : null
       setOrder(data)
       if (data) {
-        const { data: l } = await db.from('order_lines').select('*').eq('order_id', data.id)
-        setLines(l || [])
-        const boughtIds = (l || []).map(function(x){ return x.product_id })
-        const { data: ups } = await db.from('products')
-          .select('id,name,price_incl_tax,sale_price,image_url')
-          .eq('active', true).gt('stock', 0).order('id', { ascending: false }).limit(12)
+        const rl = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/order_lines?order_id=eq.'+data.id+'&select=*', {headers:_H})
+        const l = await rl.json()
+        setLines(Array.isArray(l) ? l : [])
+        const boughtIds = (Array.isArray(l) ? l : []).map(function(x){ return x.product_id })
+        const ru = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/products?active=eq.true&stock=gt.0&order=id.desc&limit=12&select=id,name,price_incl_tax,sale_price,image_url', {headers:_H})
+        const ups = await ru.json()
         if (ups) setUpsell(ups.filter(function(p){ return boughtIds.indexOf(p.id) === -1 }).slice(0,4))
       }
       setLoading(false)
