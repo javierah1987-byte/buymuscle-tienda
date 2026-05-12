@@ -1,53 +1,7 @@
 // @ts-nocheck
 'use client'
-
-// Mini-cliente REST (sin GoTrueClient)
-const _db = (()=>{
-  const S='https://awwlbepjxuoxaigztugh.supabase.co', K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo', H={apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'}
-  const q = (t) => {
-    let sel='*', fil=[], ord=null, lim=null, asc=true
-    const self = {
-      select(s){sel=s;return self},
-      eq(c,v){fil.push(c+'=eq.'+encodeURIComponent(v));return self},
-      is(c,v){fil.push(c+'=is.'+v);return self},
-      gt(c,v){fil.push(c+'=gt.'+v);return self},
-      gte(c,v){fil.push(c+'=gte.'+encodeURIComponent(v));return self},
-      order(c,o){ord=c;asc=o?!o.ascending:true;return self},
-      limit(n){lim=n;return self},
-      _url(){
-        let u=S+'/rest/v1/'+t+'?select='+encodeURIComponent(sel)
-        fil.forEach(f=>{u+='&'+f})
-        if(ord)u+='&order='+ord+(asc?'.asc':'.desc')
-        if(lim)u+='&limit='+lim
-        return u
-      },
-      then(res,rej){
-        return fetch(self._url(),{headers:H}).then(r=>r.json()).then(data=>res({data:Array.isArray(data)?data:data.error?null:data,error:data.error||null})).catch(rej)
-      },
-      async single(){
-        const r=await fetch(self._url()+'&limit=1',{headers:{...H,'Accept':'application/vnd.pgrst.object+json'}})
-        const d=await r.json();return{data:d,error:r.ok?null:d}
-      },
-      async insert(p){
-        const r=await fetch(S+'/rest/v1/'+t,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(p)})
-        const d=await r.json();return{data:Array.isArray(d)?d[0]:d,error:r.ok?null:d}
-      },
-      async update(p){
-        let u=S+'/rest/v1/'+t+'?';fil.forEach(f=>{u+=f+'&'})
-        const r=await fetch(u,{method:'PATCH',headers:H,body:JSON.stringify(p)})
-        const d=await r.json();return{data:d,error:r.ok?null:d}
-      },
-      async delete(){
-        let u=S+'/rest/v1/'+t+'?';fil.forEach(f=>{u+=f+'&'})
-        const r=await fetch(u,{method:'DELETE',headers:H})
-        return{data:null,error:r.ok?null:await r.json()}
-      }
-    }
-    return self
-  }
-  return {from:(t)=>q(t)}
-})()
-const db = _db
+import { createClient } from '@supabase/supabase-js'
+const db = createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
 import { useEffect, useState, useRef, useCallback } from 'react'
 
 
