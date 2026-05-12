@@ -350,7 +350,7 @@ export default function TPVPage() {
     catBar: { display:'flex', gap:4, padding:'8px 14px', background:'white', borderBottom:'1px solid #e2e8f0', overflowX:'auto', flexShrink:0, scrollbarWidth:'none' },
     catBtn: (active) => ({ padding:'4px 12px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?'#ff1e41':'#f1f5f9', color:active?'white':'#374151', borderRadius:12, whiteSpace:'nowrap', fontFamily:'inherit', transition:'all 0.15s' }),
     grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, padding:8, background:'#e2e8f0', alignContent:'start' },
-    card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:0, alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.3)' },
+    card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:'8px 6px', alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, boxShadow:'0 2px 8px rgba(0,0,0,0.08)', border:'1px solid #e2e8f0' },
     right: { display:'flex', flexDirection:'column', background:'white', borderLeft:'1px solid #e2e8f0' },
     clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'#f1f5f9', flexShrink:0 },
     clientBtn: (active, type) => ({ padding:'7px 4px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?CLIENT_COLORS[type]:'#f8fafc', color:active?'white':'#374151', fontFamily:'inherit' }),
@@ -634,7 +634,7 @@ export default function TPVPage() {
                   onClick={() => addLine(p)}
                   onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 12px rgba(255,30,65,0.3)'}
                   onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.3)'}>
-                  <div style={{ width:'100%', height:140, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', borderBottom:'1px solid #e2e8f0' }}>
+                  <div style={{ width:'100%', height:130, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:4, marginBottom:6, overflow:'hidden' }}>
                     {p.image_url ? <img src={p.image_url} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}/> : <span style={{ fontSize:24, opacity:.3 }}>📦</span>}
                   </div>
                   <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
