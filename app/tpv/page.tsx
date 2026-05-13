@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import TicketTPV from '@/components/TicketTPV'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
@@ -761,6 +762,24 @@ export default function TPVPage() {
             })}
           </div>
         </Modal>
+      )}
+
+      {/* Modal ticket tras cobro */}
+      {ticket && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'}}
+          onClick={e=>{if(e.target===e.currentTarget)setTicket(null)}}>
+          <div style={{background:'white',borderRadius:12,padding:'1.5rem',maxWidth:340,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
+            <TicketTPV
+              ticketNumber={ticket.num}
+              lines={(ticket.lines||[]).map(l=>({name:l.product?.name||l.name||'',qty:l.qty,unit_price:l.price,subtotal:l.qty*l.price}))}
+              total={ticket.total}
+              paymentMethod={ticket.payMethod||'tarjeta'}
+              cashGiven={ticket.cashGiven}
+              cashChange={ticket.cashChange}
+              onClose={()=>setTicket(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   )
