@@ -4,8 +4,9 @@ import './globals.css'
 import StoreWrapper from '@/components/StoreWrapper'
 import { CartProvider } from '@/lib/cart'
 import { AuthProvider } from '@/lib/auth'
-import Script from 'next/script'
 import PWAInstallBanner from '@/components/PWAInstallBanner'
+import CookieBanner from '@/components/CookieBanner'
+import { CookieConsentManager } from '@/components/CookieConsentManager'
 
 const heebo = Heebo({ subsets: ['latin'], variable: '--font-heebo' })
 
@@ -13,82 +14,27 @@ export const metadata: Metadata = {
   title: { default: 'BUYMUSCLE | Tienda Online de Suplementación Deportiva', template: '%s | BuyMuscle' },
   description: 'Tienda de suplementación deportiva en Canarias. Proteínas, creatinas, pre-entrenos y más. Envío 24-48h · Precios garantizados · Marca oficial.',
   keywords: ['suplementación', 'proteínas', 'creatina', 'musculación', 'Canarias', 'Gran Canaria', 'suplementos deportivos', 'whey', 'pre-entreno', 'BCAA'],
-  authors: [{ name: 'BuyMuscle', url: 'https://buymuscle-tienda.vercel.app' }],
+  authors: [{ name: 'BuyMuscle', url: 'https://tienda.buymuscle.es' }],
   creator: 'BuyMuscle',
-  metadataBase: new URL('https://buymuscle-tienda.vercel.app'),
+  metadataBase: new URL('https://tienda.buymuscle.es'),
   manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'BuyMuscle',
-  },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'BuyMuscle' },
   formatDetection: { telephone: false },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover',
-    themeColor: '#111111',
-  },
-  icons: {
-    apple: [
-      { url: '/icon?size=180', sizes: '180x180', type: 'image/png' },
-      { url: '/icon?size=152', sizes: '152x152', type: 'image/png' },
-    ],
-  },
-  openGraph: {
-    title: 'BUYMUSCLE | Suplementación Deportiva',
-    description: 'Tu tienda de suplementación en Canarias',
-    locale: 'es_ES',
-    type: 'website',
-  },
+  viewport: { width: 'device-width', initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: 'cover', themeColor: '#111111' },
+  icons: { apple: [{ url: '/icon?size=180', sizes: '180x180', type: 'image/png' }, { url: '/icon?size=152', sizes: '152x152', type: 'image/png' }] },
+  openGraph: { title: 'BUYMUSCLE | Suplementación Deportiva', description: 'Tu tienda de suplementación en Canarias', locale: 'es_ES', type: 'website' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || ''
-  const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || ''
   const TAWK_ID = process.env.NEXT_PUBLIC_TAWK_ID || ''
 
   return (
     <html lang="es" className={heebo.variable}>
-      {META_PIXEL_ID && (
-        <Script id="meta-pixel" strategy="afterInteractive">{`
-          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-          n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-          document,'script','https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init','${META_PIXEL_ID}');fbq('track','PageView');
-        `}</Script>
-      )}
-      {GA4_ID && <>
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`} strategy="afterInteractive"/>
-        <Script id="ga4" strategy="afterInteractive">{`
-          window.dataLayer=window.dataLayer||[];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js',new Date());gtag('config','${GA4_ID}');
-        `}</Script>
-      </>}
-      {TAWK_ID && (
-        <Script id="tawk" strategy="afterInteractive">{`
-          var Tawk_API=Tawk_API||{},Tawk_LoadStart=new Date();
-          (function(){var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-          s1.async=true;s1.src='https://embed.tawk.to/${TAWK_ID}';
-          s1.charset='UTF-8';s1.setAttribute('crossorigin','*');
-          s0.parentNode.insertBefore(s1,s0);})();
-        `}</Script>
-      )}
       <body className={heebo.className}>
-        {/* PWA: Registrar Service Worker */}
         <script dangerouslySetInnerHTML={{__html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js').then(function(reg) {
-                console.log('SW registered:', reg.scope);
-              }).catch(function(err) {
-                console.log('SW error:', err);
-              });
+              navigator.serviceWorker.register('/sw.js').catch(function(err) { console.log('SW error:', err); });
             });
           }
         `}} />
@@ -97,6 +43,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <StoreWrapper>{children}</StoreWrapper>
           </CartProvider>
         </AuthProvider>
+        <CookieBanner />
+        <CookieConsentManager />
+        <PWAInstallBanner />
       </body>
     </html>
   )
