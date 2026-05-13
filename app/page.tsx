@@ -48,7 +48,8 @@ export default async function Home() {
   ])
 
   return (
-    <div style={{background:'#f5f5f5'}}>
+    <main style={{background:'#f5f5f5'}}>
+      <h1 style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
       <HeroSlider />
 
       {/* h2 BANNER OFERTA PRINCIPAL */}
@@ -296,6 +297,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-    </div>
+    </main>>
   )
 }
