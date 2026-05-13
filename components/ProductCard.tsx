@@ -5,6 +5,16 @@ import Image from 'next/image'
 import { useCart } from '@/lib/cart'
 import { useState } from 'react'
 
+// Helper: proxy para imágenes con hotlink protection
+function proxyImg(url: string | null | undefined): string {
+  if (!url) return '/placeholder.jpg'
+  if (url.includes('tienda.buymuscle.es')) {
+    return '/api/img?url=' + encodeURIComponent(url)
+  }
+  return url
+}
+
+
 export default function ProductCard({ product }) {
   const { add } = useCart()
   const [adding, setAdding] = useState(false)
@@ -42,7 +52,7 @@ export default function ProductCard({ product }) {
       <div style={{ background:'#f9f9f9', aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'1rem', position:'relative' }}>
         {product.image_url ? (
           <Image
-            src={product.image_url}
+            src={proxyImg(product.image_url)}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
