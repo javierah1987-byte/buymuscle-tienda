@@ -43,7 +43,7 @@ export default function Footer(){
                 {h:'https://www.tiktok.com/@buymuscle',icon:'🎵',l:'TikTok'},
                 {h:'https://wa.me/34828048310',icon:'💬',l:'WhatsApp'},
               ].map(r=>(
-                <a key={r.l} href={r.h} target="_blank" rel="noopener noreferrer"
+                <a key={r.l} href={r.h} target="_blank" rel="noopener noreferrer" aria-label={r.l}
                   style={{width:34,height:34,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,textDecoration:'none',transition:'background 0.2s'}}
                   onMouseEnter={e=>e.currentTarget.style.background='rgba(255,30,65,0.2)'}
                   onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.06)'}>
