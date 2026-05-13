@@ -22,10 +22,9 @@ export default function StoreWrapper({ children }) {
     <>
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
       <Navbar />
-      <main>
-        <div id="main-content">{children}</div>
+      <div id="main-content">{children}
         <ExitIntent />
-      </main>
+      </div>
       <Footer />
       <WhatsAppButton />
       <EmailPopup />
