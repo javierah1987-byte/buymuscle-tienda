@@ -33,8 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main-content" className="skip-to-content">Ir al contenido principal</a>
 
         {/* WCAG: H1 visible solo para lectores de pantalla en rutas sin h1 propio */}
-        <h1 className="sr-only">BuyMuscle — Tienda Online de Suplementación Deportiva en Canarias</h1>
-
         <script dangerouslySetInnerHTML={{__html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -46,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <CartProvider>
             {/* WCAG: landmark main para navegación por regiones */}
-            <div id="main-content" role="main">
+            <div id="main-content">
               <StoreWrapper>{children}</StoreWrapper>
             </div>
           </CartProvider>
