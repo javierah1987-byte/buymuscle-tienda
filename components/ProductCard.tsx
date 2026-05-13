@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/lib/cart'
 import { useState } from 'react'
 
@@ -14,7 +15,6 @@ export default function ProductCard({ product }) {
   const hasStock = product.stock > 0
   const lowStock = product.stock > 0 && product.stock <= 5
   const hasVariants = product.has_variants || false
-  // Calcular % descuento
   const discount = salePrice ? Math.round((1 - salePrice/price)*100) : 0
 
   const handleAdd = (e) => {
@@ -30,7 +30,7 @@ export default function ProductCard({ product }) {
     <Link href={'/producto/'+product.id} className="product-card-link" style={{ textDecoration:'none', color:'inherit', display:'flex', flexDirection:'column', background:'white', position:'relative', borderRadius:4, overflow:'hidden', border:'1px solid #f0f0f0', transition:'box-shadow 0.2s' }}
       onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'}
       onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
-      
+
       {/* Badges */}
       <div style={{ position:'absolute', top:8, left:8, zIndex:2, display:'flex', flexDirection:'column', gap:4 }}>
         {product.is_new && <span style={{ background:'#22c55e', color:'white', fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:2, textTransform:'uppercase' }}>NUEVO</span>}
@@ -38,16 +38,23 @@ export default function ProductCard({ product }) {
         {!hasStock && <span style={{ background:'#888', color:'white', fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:2, textTransform:'uppercase' }}>AGOTADO</span>}
       </div>
 
-      {/* Imagen */}
+      {/* Imagen optimizada con next/image */}
       <div style={{ background:'#f9f9f9', aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'1rem', position:'relative' }}>
-        {product.image_url
-          ? <img src={product.image_url} alt={product.name} loading='lazy' decoding='async' style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain', transition:'transform 0.3s' }}
-              onMouseEnter={e=>e.target.style.transform='scale(1.05)'}
-              onMouseLeave={e=>e.target.style.transform='scale(1)'}/>
-          : <div style={{ fontSize:48, opacity:0.3 }}>📦</div>}
-        {/* Alerta stock bajo t1 */}
+        {product.image_url ? (
+          <Image
+            src={product.image_url}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            style={{ objectFit:'contain', transition:'transform 0.3s', padding:'0.5rem' }}
+            onMouseEnter={e=>e.target.style.transform='scale(1.05)'}
+            onMouseLeave={e=>e.target.style.transform='scale(1)'}
+          />
+        ) : (
+          <div style={{ fontSize:48, opacity:0.3 }}>📦</div>
+        )}
         {lowStock && (
-          <div style={{ position:'absolute', bottom:6, left:0, right:0, textAlign:'center' }}>
+          <div style={{ position:'absolute', bottom:6, left:0, right:0, textAlign:'center', zIndex:3 }}>
             <span style={{ background:'rgba(239,68,68,0.9)', color:'white', fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:10 }}>
               ¡Solo {product.stock} uds!
             </span>
@@ -58,26 +65,19 @@ export default function ProductCard({ product }) {
       {/* Info */}
       <div style={{ padding:'0.875rem', flex:1, display:'flex', flexDirection:'column' }}>
         {cat && <div style={{ fontSize:10, fontWeight:800, color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:3 }}>{cat}</div>}
-        
         <div className="product-card-name" style={{ fontSize:13, fontWeight:700, color:'#111', lineHeight:1.35, marginBottom:6, flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
           {product.name}
         </div>
-
-        {/* Rating t1 */}
         <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:6 }}>
           <div style={{ color:'#f59e0b', fontSize:11, letterSpacing:1 }}>★★★★★</div>
           <span style={{ fontSize:10, color:'#ccc', fontStyle:'italic' }}>Sin reseñas aún</span>
         </div>
-
-        {/* Precio t2 — precio tachado si hay oferta */}
         <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:'0.75rem' }}>
           <span className="product-card-price" style={{ fontSize:21, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em' }}>{displayPrice.toFixed(2)} €</span>
           {salePrice && <span style={{ fontSize:12, color:'#bbb', textDecoration:'line-through' }}>{price.toFixed(2)} €</span>}
         </div>
-
-        {/* Botón t5 — diferenciado variantes */}
         {hasVariants ? (
-          <div className="product-card-btn" style={{ width:'100%', padding:'9px 8px', border:'none', background:'var(--red)', color:'var(--red)', fontSize:12, fontWeight:700, textAlign:'center', borderRadius:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>
+          <div className="product-card-btn" style={{ width:'100%', padding:'9px 8px', border:'none', background:'var(--red)', color:'white', fontSize:12, fontWeight:700, textAlign:'center', borderRadius:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>
             Ver opciones →
           </div>
         ) : (
