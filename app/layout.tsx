@@ -26,11 +26,15 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const TAWK_ID = process.env.NEXT_PUBLIC_TAWK_ID || ''
-
   return (
     <html lang="es" className={heebo.variable}>
       <body className={heebo.className}>
+        {/* WCAG: Skip link para navegación con teclado */}
+        <a href="#main-content" className="skip-to-content">Ir al contenido principal</a>
+
+        {/* WCAG: H1 visible solo para lectores de pantalla en rutas sin h1 propio */}
+        <h1 className="sr-only">BuyMuscle — Tienda Online de Suplementación Deportiva en Canarias</h1>
+
         <script dangerouslySetInnerHTML={{__html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -38,11 +42,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             });
           }
         `}} />
+
         <AuthProvider>
           <CartProvider>
-            <StoreWrapper>{children}</StoreWrapper>
+            {/* WCAG: landmark main para navegación por regiones */}
+            <div id="main-content" role="main">
+              <StoreWrapper>{children}</StoreWrapper>
+            </div>
           </CartProvider>
         </AuthProvider>
+
         <CookieBanner />
         <CookieConsentManager />
         <PWAInstallBanner />
