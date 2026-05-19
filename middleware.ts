@@ -23,9 +23,9 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
-  const isProtected = ['/admin', '/tpv'].some(p => path.startsWith(p))
 
-  if (isProtected && !user) {
+  // Solo /admin requiere login — /tpv tiene su propio sistema de sesión
+  if (path.startsWith('/admin') && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     loginUrl.searchParams.set('redirectTo', path)
@@ -36,5 +36,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/tpv/:path*', '/tpv'],
+  matcher: ['/admin/:path*'],
 }
