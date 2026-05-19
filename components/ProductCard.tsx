@@ -52,6 +52,7 @@ export default function ProductCard({ product }) {
       <div style={{ background:'#f9f9f9', aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'1rem', position:'relative' }}>
         {product.image_url ? (
           <Image
+            unoptimized
             src={proxyImg(product.image_url)}
             alt={product.name}
             fill
