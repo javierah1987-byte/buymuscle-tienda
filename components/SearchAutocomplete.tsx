@@ -20,12 +20,26 @@ export default function SearchAutocomplete({ placeholder = 'Buscar...' }) {
     if (term.length < 2) { setResults([]); setOpen(false); return }
     setLoading(true)
     try {
+      // Traemos coincidencias por substring (buena cobertura) y luego ordenamos
+      // por relevancia para que primero salgan los nombres que EMPIEZAN por el termino.
       const r = await fetch(
-        S+'/rest/v1/products?name=ilike.*'+encodeURIComponent(term)+'*&active=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand&order=name.asc&limit=8',
+        S+'/rest/v1/products?name=ilike.*'+encodeURIComponent(term)+'*&active=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand&order=name.asc&limit=30',
         { headers: { apikey: K, 'Authorization': 'Bearer '+K } }
       )
       const d = await r.json()
-      setResults(Array.isArray(d) ? d : [])
+      const list = Array.isArray(d) ? d : []
+      const norm = (s) => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+      const t = norm(term)
+      const tEsc = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const wordStart = new RegExp('(^|[^a-z0-9])' + tEsc)
+      const score = (name) => {
+        const n = norm(name)
+        if (n.startsWith(t)) return 0          // el nombre empieza por el termino (mas relevante)
+        if (wordStart.test(n)) return 1        // alguna palabra del nombre empieza por el termino
+        return 2                               // solo aparece en medio de una palabra
+      }
+      list.sort((a, b) => (score(a.name) - score(b.name)) || a.name.localeCompare(b.name))
+      setResults(list.slice(0, 8))
       setOpen(true)
     } catch(e) { setResults([]) }
     setLoading(false)
