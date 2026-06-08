@@ -5,11 +5,13 @@ import Image from 'next/image'
 import { useCart } from '@/lib/cart'
 import { useState } from 'react'
 
-// Helper: proxy para imágenes con hotlink protection
+// Helper: proxy para imágenes con hotlink protection.
+// Usa la Edge Function de Supabase (IPs de París) en lugar de /api/img,
+// cuyas IPs de Vercel a veces bloquea el LiteSpeed de tienda.buymuscle.es.
 function proxyImg(url: string | null | undefined): string {
   if (!url) return '/placeholder.jpg'
   if (url.includes('tienda.buymuscle.es')) {
-    return '/api/img?url=' + encodeURIComponent(url)
+    return 'https://awwlbepjxuoxaigztugh.supabase.co/functions/v1/image-proxy?url=' + encodeURIComponent(url)
   }
   return url
 }
