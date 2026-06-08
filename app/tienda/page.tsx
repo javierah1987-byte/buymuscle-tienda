@@ -9,6 +9,17 @@ import Link from 'next/link'
 
 const PER_PAGE = 24
 
+// Normaliza para comparar categorias sin que importe tilde/mayusculas/espacios.
+// Asi un enlace "Proteinas" casa con la categoria real "Proteínas" de la BD.
+const normCat = (s: string) =>
+  (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+
+// Categorias que el cliente percibe como una sola y deben mostrarse juntas
+// (mismo concepto, distinto nombre en la BD). Valores ya normalizados.
+const CAT_ALIAS_GROUPS: string[][] = [
+  ['creatina', 'creatinas', 'creatinas monohidratos'],
+]
+
 const CAT_GROUPS = [
   { label:'Nutricion Deportiva', cats:['Proteinas','Proteina Whey','Proteina Isolatada','Proteina Vegetal','Caseinas','Ganadores de Peso','Barritas Proteicas','Snacks Proteicos','Creatinas Monohidratos','Pre-entrenos','Recuperadores','BCAA','Aminoacidos','Glutaminas','L-Carnitina','Termogenicos'] },
   { label:'Vitaminas y Salud', cats:['Vitaminas','Minerales','Omega 3','Colageno','Sistema Inmunologico'] },
@@ -69,8 +80,19 @@ function TiendaContent() {
     setLoading(true)
     let query = supabase.from('products').select('*, categories(name)',{count:'exact'}).eq('active',true).gt('stock',0)
     if(catParam){
-      const {data:cd} = await supabase.from('categories').select('id').eq('name',catParam).single()
-      if(cd) query = query.eq('category_id',cd.id)
+      // Resolvemos la categoria de forma tolerante a tildes/mayusculas y aceptamos
+      // duplicados con el mismo nombre normalizado (p.ej. "Accesorios" y "ACCESORIOS").
+      const {data:cats} = await supabase.from('categories').select('id,name')
+      const target = normCat(catParam)
+      const group = CAT_ALIAS_GROUPS.find(g=>g.includes(target))
+      const targets = group || [target]
+      const ids = (cats||[]).filter(c=>targets.includes(normCat(c.name))).map(c=>c.id)
+      if(ids.length>0){
+        query = query.in('category_id',ids)
+      } else {
+        // Categoria inexistente: mostramos "sin resultados" en vez de TODO el catalogo.
+        setProducts([]); setTotal(0); setLoading(false); return
+      }
     }
     if(filtroMarcas.length>0) query = query.in('brand',filtroMarcas)
     if(maxPrice<200) query = query.lte('price_incl_tax',maxPrice)
