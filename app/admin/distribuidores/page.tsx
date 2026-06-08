@@ -2,8 +2,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { authHeaders } from '@/lib/supabaseBrowser'
 
-const S = 'https://awwlbepjxuoxaigztugh.supabase.co'
+const S ='https://awwlbepjxuoxaigztugh.supabase.co'
 const K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
 const LEVEL_COLORS = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
@@ -55,7 +56,7 @@ export default function AdminDistribuidoresPage() {
     setDistOrders([])
     // Cargar pedidos del distribuidor por email
     const h = {apikey: K, 'Authorization': 'Bearer ' + K}
-    const r = await fetch(S + '/rest/v1/orders?customer_email=eq.' + encodeURIComponent(d.email) + '&order=created_at.desc&limit=20', {headers: h})
+    const r = await fetch(S + '/rest/v1/orders?customer_email=eq.' + encodeURIComponent(d.email) + '&order=created_at.desc&limit=20', {headers: await authHeaders()})
     const data = await r.json()
     setDistOrders(Array.isArray(data) ? data : [])
   }

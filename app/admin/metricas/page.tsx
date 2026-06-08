@@ -2,6 +2,7 @@
 'use client'
 import{useState,useEffect}from 'react'
 import Link from 'next/link'
+import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 const h={apikey:K,'Authorization':'Bearer '+K}
@@ -14,8 +15,8 @@ export default function Metricas(){
     setLoading(true)
     const since=new Date(Date.now()-period*86400000).toISOString()
     const[r1,r2,r3,r4]=await Promise.all([
-      fetch(S+'/rest/v1/orders?created_at=gte.'+since+'&order=created_at.asc',{headers:h}),
-      fetch(S+'/rest/v1/order_lines?select=product_name,quantity,unit_price',{headers:h}),
+      fetch(S+'/rest/v1/orders?created_at=gte.'+since+'&order=created_at.asc',{headers:await authHeaders()}),
+      fetch(S+'/rest/v1/order_lines?select=product_name,quantity,unit_price',{headers:await authHeaders()}),
       fetch(S+'/rest/v1/products?active=eq.true&select=id,name,stock,price_incl_tax,brand,category_id,categories(name)',{headers:h}),
       fetch(S+'/rest/v1/email_subscribers?select=count',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
     ])

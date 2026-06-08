@@ -17,18 +17,14 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
   async function callAI(b64, mediaType, textContent) {
     setStep('loading'); setLoadingMsg('Analizando con IA...')
     try {
-      const content = b64
-        ? [{ type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
-           { type: 'text', text: 'Eres asistente de una tienda de suplementacion deportiva en España. Analiza esta factura y extrae productos con cantidades. Devuelve SOLO JSON valido: {"productos":[{"nombre":"nombre","cantidad":50}]}' }]
-        : [{ type: 'text', text: 'Extrae productos y cantidades de este albaran. Devuelve SOLO JSON: {"productos":[{"nombre":"nombre","cantidad":50}]}\n\n' + textContent }]
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      // La API key de Anthropic vive en servidor: /api/ai-extract (solo admin)
+      const resp = await fetch('/api/ai-extract', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content }] })
+        body: JSON.stringify({ b64, mediaType, textContent })
       })
       const data = await resp.json()
-      const text = data.content?.[0]?.text || '{}'
-      const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
-      matchProducts(parsed.productos || [])
+      if(!resp.ok || !data.ok) throw new Error(data.error || 'No se pudo analizar la factura')
+      matchProducts(data.productos || [])
     } catch(e) { alert('Error: ' + e.message); setStep('upload') }
   }
 

@@ -2,6 +2,7 @@
 'use client'
 import{useState,useEffect}from 'react'
 import Link from 'next/link'
+import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 const h={apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'}
@@ -36,7 +37,7 @@ export default function AdminCaja(){
     const ef=parseFloat(efectivoFinal)||0
     // Calcular totales del dia en orders
     const hoy=open.opened_at.split('T')[0]
-    const r=await fetch(S+'/rest/v1/orders?created_at=gte.'+hoy+'T00:00:00&channel=eq.tpv_retail&select=total,payment_method',{headers:h})
+    const r=await fetch(S+'/rest/v1/orders?created_at=gte.'+hoy+'T00:00:00&channel=eq.tpv_retail&select=total,payment_method',{headers:await authHeaders({'Content-Type':'application/json'})})
     const orders=await r.json()
     const totalEf=(Array.isArray(orders)?orders:[]).filter(o=>o.payment_method==='efectivo').reduce((s,o)=>s+Number(o.total||0),0)
     const totalTarjeta=(Array.isArray(orders)?orders:[]).filter(o=>o.payment_method!=='efectivo').reduce((s,o)=>s+Number(o.total||0),0)

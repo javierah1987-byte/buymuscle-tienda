@@ -2,6 +2,7 @@
 'use client'
 import{useState}from 'react'
 import Link from 'next/link'
+import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 const h={apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'}
@@ -16,12 +17,12 @@ export default function Devoluciones(){
   async function buscar(){
     if(!num.trim())return
     setLoading(true);setOrder(null);setLines([]);setSelected({});setDone(false)
-    const r=await fetch(S+'/rest/v1/orders?order_number=eq.'+num.trim().toUpperCase()+'&select=*',{headers:h})
+    const r=await fetch(S+'/rest/v1/orders?order_number=eq.'+num.trim().toUpperCase()+'&select=*',{headers:await authHeaders({'Content-Type':'application/json'})})
     const d=await r.json()
     const o=Array.isArray(d)&&d.length>0?d[0]:null
     if(!o){setMsg('Pedido no encontrado');setLoading(false);return}
     setOrder(o)
-    const lr=await fetch(S+'/rest/v1/order_lines?order_id=eq.'+o.id+'&select=*',{headers:h})
+    const lr=await fetch(S+'/rest/v1/order_lines?order_id=eq.'+o.id+'&select=*',{headers:await authHeaders({'Content-Type':'application/json'})})
     const ls=await lr.json()
     setLines(Array.isArray(ls)?ls:[])
     const sel={}
@@ -57,7 +58,7 @@ export default function Devoluciones(){
       })
     }).catch(()=>{})
     // Marcar pedido como devuelto parcialmente
-    await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:h,
+    await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:await authHeaders({'Content-Type':'application/json'}),
       body:JSON.stringify({status:'returned',notes:'Devolucion: '+itemsADevolver.map(l=>l.product_name+'('+selected[l.id]+')').join(', ')})})
     setMsg('Devolucion procesada. Stock repuesto. Total a reembolsar: '+totalDev.toFixed(2)+' €')
     setDone(true);setLoading(false)

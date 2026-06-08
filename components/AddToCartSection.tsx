@@ -39,6 +39,7 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
       price: discountedPrice,
       image: product.image_url,
       variant: variantLabel,
+      variantId: selectedVariant ? selectedVariant.variantId : null,
       qty,
     })
     setAdded(true)

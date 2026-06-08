@@ -3,6 +3,7 @@
 import { useCart } from '@/lib/cart'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import PayPalButton from '@/components/PayPalButton'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
@@ -43,7 +44,7 @@ function RecomendadosVacio() {
 }
 
 export default function CarritoPage() {
-  const { items, update, remove, clear } = useCart()
+  const { items, updateQty, remove, clear } = useCart()
   const [paso, setPaso] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   useEffect(function(){
@@ -76,37 +77,71 @@ export default function CarritoPage() {
   }
 
   async function doOrder(method) {
+    if(!form.name||!form.email){ alert('Por favor indica tu nombre y email para continuar'); return }
+    if(!items.length){ return }
     setOrdering(true)
-    const orderNum = 'ORD-'+Date.now().toString().slice(-8)
-    const r = await fetch(S+'/rest/v1/orders',{method:'POST',headers:{apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({order_number:orderNum,customer_email:form.email,customer_name:form.name,customer_phone:form.phone,shipping_address:form.address+', '+form.city+' '+form.postal_code,nif:form.nif,notes:form.notes,subtotal,discount:discountAmt,shipping,total,status:'pending',payment_method:method||'card',channel:'web'})
-    })
-    const order = await r.json()
-    const orderId = Array.isArray(order)?order[0]?.id:order?.id
-    if(orderId) {
-      // a3: CRM - upsert del cliente
-      if(form.email) {
-        fetch(S+'/rest/v1/customers',{method:'POST',headers:{apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-          body:JSON.stringify({email:form.email,name:form.name,phone:form.phone||'',last_order_date:new Date().toISOString(),orders_count:1,total_spent:total})
-        }).catch(function(){})
-      }
-      await fetch(S+'/rest/v1/order_lines',{method:'POST',headers:{apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'},
-        body:JSON.stringify(items.map(i=>({order_id:orderId,product_id:i.id,product_name:i.name,qty:i.qty,price:i.price,variant:i.variant||''})))
+    try {
+      const r = await fetch('/api/create-order', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          customer: {
+            name: form.name, email: form.email, phone: form.phone,
+            address: form.address, city: form.city, postal_code: form.postal_code,
+            province: form.province, nif: form.nif, notes: form.notes,
+          },
+          items: items.map(i => ({
+            product_id: i.id,
+            variant_id: i.variantId || null,
+            name: i.name,
+            qty: i.qty,
+            variant: i.variant || '',
+          })),
+          payment_method: method || 'card',
+          discount_code: discount > 0 ? coupon.trim() : '',
+          channel: 'web',
+        })
       })
-      // Cargar upsell
-      fetch(S+'/rest/v1/products?active=eq.true&stock=gt.0&order=id.desc&limit=4&select=id,name,price_incl_tax,image_url',{headers:{apikey:K,'Authorization':'Bearer '+K}})
-        .then(r2=>r2.json()).then(d=>Array.isArray(d)&&setUpsellProds(d)).catch(()=>{})
+      const data = await r.json()
+      if(!r.ok || !data.ok){
+        if(data.error === 'sin_stock') alert('Lo sentimos, uno de los productos se ha quedado sin stock.')
+        else alert('No se pudo procesar el pedido. Inténtalo de nuevo o llámanos al 828 048 310.')
+        setOrdering(false)
+        return
+      }
+      const orderNum = data.order_number
       clear()
-      // Redirigir a página de confirmación
       if(typeof window !== 'undefined') window.location.href = '/pedido-confirmado?n='+orderNum
+    } catch(e) {
+      alert('Error de conexión al procesar el pedido. Inténtalo de nuevo.')
     }
     setOrdering(false)
   }
 
-  async function doPayPal(){
-    if(!form.name||!form.email){alert('Por favor indica tu nombre y email para continuar');return}
-    window.open('https://www.paypal.com/paypalme/buymuscle/'+total.toFixed(2)+'EUR','_blank')
-    await doOrder('paypal')
+  // Datos del carrito para el flujo PayPal (importe se recalcula en servidor)
+  function orderPayload(){
+    return {
+      customer: {
+        name: form.name, email: form.email, phone: form.phone,
+        address: form.address, city: form.city, postal_code: form.postal_code,
+        province: form.province, nif: form.nif, notes: form.notes,
+      },
+      items: items.map(i => ({
+        product_id: i.id, variant_id: i.variantId || null,
+        name: i.name, qty: i.qty, variant: i.variant || '',
+      })),
+      discount_code: discount > 0 ? coupon.trim() : '',
+      channel: 'web',
+    }
+  }
+  function paypalValidate(){
+    if(!form.name||!form.email){ alert('Por favor indica tu nombre y email para continuar'); return false }
+    if(!items.length) return false
+    return true
+  }
+  function onPaypalSuccess(orderNum){
+    clear()
+    if(typeof window !== 'undefined') window.location.href = '/pedido-confirmado?n='+orderNum
   }
 
   // PASO 3 — Confirmación c5
@@ -182,9 +217,9 @@ export default function CarritoPage() {
                       <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
                         <button onClick={()=>remove(item.id,item.variant)} style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:18,lineHeight:1}}>✕</button>
                         <div style={{display:'flex',alignItems:'center',border:'1px solid #e8e8e8',borderRadius:4}}>
-                          <button onClick={()=>update(item.id,item.variant,Math.max(1,item.qty-1))} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>−</button>
+                          <button onClick={()=>updateQty(item.id,item.variant,Math.max(1,item.qty-1))} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>−</button>
                           <span style={{width:32,textAlign:'center',fontSize:13,fontWeight:600}}>{item.qty}</span>
-                          <button onClick={()=>update(item.id,item.variant,item.qty+1)} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>+</button>
+                          <button onClick={()=>updateQty(item.id,item.variant,item.qty+1)} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>+</button>
                         </div>
                         <span style={{fontSize:13,fontWeight:700,color:'#111'}}>{(item.price*item.qty).toFixed(2)} €</span>
                       </div>
@@ -275,11 +310,19 @@ export default function CarritoPage() {
                   style={{width:'100%',padding:'13px',background:ordering?'#ccc':'#ff1e41',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',borderRadius:4,opacity:(!form.name||!form.email||!form.address)?0.6:1}}>
                   {ordering?'Procesando...':'✓ CONFIRMAR Y PAGAR '+total.toFixed(2)+' €'}
                 </button>
-                <div style={{textAlign:'center',margin:'10px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
-                <button onClick={doPayPal} disabled={ordering}
-                  style={{width:'100%',background:'#ffc439',border:'none',borderRadius:4,cursor:'pointer',padding:'11px',fontWeight:800,fontSize:14,color:'#111',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:8}}>
-                  🅿️ Pagar con PayPal
-                </button>
+                {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
+                  <>
+                    <div style={{textAlign:'center',margin:'10px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
+                    <div style={{marginBottom:8}}>
+                      <PayPalButton
+                        getPayload={orderPayload}
+                        validate={paypalValidate}
+                        onSuccess={onPaypalSuccess}
+                        onError={(e)=>alert(e?.message||'No se pudo completar el pago con PayPal')}
+                      />
+                    </div>
+                  </>
+                )}
                 <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:10}}>
                   {['🔒 SSL','💳 Tarjeta','📱 Bizum'].map(t=><span key={t} style={{fontSize:11,color:'#888'}}>{t}</span>)}
                 </div>

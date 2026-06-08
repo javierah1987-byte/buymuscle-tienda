@@ -19,13 +19,14 @@ export default function MiCuenta(){
   async function loadData(e){
     setLoading(true)
     const[ordRes,revRes]=await Promise.all([
-      fetch(S+'/rest/v1/orders?customer_email=eq.'+encodeURIComponent(e)+'&order=created_at.desc&limit=20',{headers:h}),
+      fetch('/api/my-orders?email='+encodeURIComponent(e)),
       fetch(S+'/rest/v1/product_reviews?customer_email=eq.'+encodeURIComponent(e)+'&order=created_at.desc',{headers:h})
     ])
-    const ords=await ordRes.json();const revs=await revRes.json()
-    setOrders(Array.isArray(ords)?ords:[])
+    const ordJson=await ordRes.json();const revs=await revRes.json()
+    const ords=ordJson&&ordJson.ok&&Array.isArray(ordJson.orders)?ordJson.orders:[]
+    setOrders(ords)
     setReviews(Array.isArray(revs)?revs:[])
-    const totalPts=(Array.isArray(ords)?ords:[]).filter(o=>o.status==='delivered').reduce((s,o)=>s+Math.floor(Number(o.total||0)),0)
+    const totalPts=ords.filter(o=>o.status==='delivered').reduce((s,o)=>s+Math.floor(Number(o.total||0)),0)
     setPoints(totalPts)
     setLoading(false);setStep('dashboard')
   }

@@ -104,8 +104,36 @@ export default function TPVPage() {
   const [devSaving, setDevSaving] = useState(false)
   const [devDone, setDevDone] = useState(null)
 
+  // ── Sesión TPV (PIN) ──────────────────────────────────
+  const [tpvAuth, setTpvAuth] = useState(null) // null=comprobando, false=bloqueado, true=ok
+  const [pinInput, setPinInput] = useState('')
+  const [pinErr, setPinErr] = useState('')
+  const [pinLoading, setPinLoading] = useState(false)
+
+  // Comprobar si ya hay sesión TPV al cargar
+  useEffect(() => {
+    fetch('/api/tpv-auth').then(r=>r.json()).then(d=>setTpvAuth(!!(d&&d.authorized))).catch(()=>setTpvAuth(false))
+  }, [])
+
+  async function entrarTpv() {
+    setPinErr(''); setPinLoading(true)
+    try {
+      const r = await fetch('/api/tpv-auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin: pinInput }) })
+      const d = await r.json()
+      if (d && d.ok) { setTpvAuth(true); setPinInput('') }
+      else setPinErr(d?.error==='pin_invalido' ? 'PIN incorrecto' : 'No se pudo iniciar sesión')
+    } catch { setPinErr('Error de conexión') }
+    setPinLoading(false)
+  }
+
+  async function salirTpv() {
+    try { await fetch('/api/tpv-auth', { method:'DELETE' }) } catch {}
+    setTpvAuth(false)
+  }
+
   // Cargar productos, categorías y stats del día
   useEffect(() => {
+    if (tpvAuth !== true) return
     async function load() {
       const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
       // Productos con categorías
@@ -116,32 +144,24 @@ export default function TPVPage() {
       setFiltered(p)
       setCategories(['Todos', ...new Set(p.map(x => x.categories?.name).filter(Boolean).sort())])
       setLoading(false)
-      // Stats del día
-      await recargarVentas()
-      // Ver si hay caja abierta
+      // Ver si hay caja abierta primero, para acotar el arqueo al turno
       const rc = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/caja_sessions?closed_at=is.null&order=opened_at.desc&limit=1', {headers:H})
       const cajas = await rc.json()
-      if (Array.isArray(cajas) && cajas.length > 0) setCajaAbierta(cajas[0])
+      const caja = (Array.isArray(cajas) && cajas.length > 0) ? cajas[0] : null
+      if (caja) setCajaAbierta(caja)
+      // Stats: si hay turno abierto, desde su apertura; si no, del día
+      await recargarVentas(caja?.opened_at)
     }
     load()
-  }, [])
+  }, [tpvAuth])
 
-  async function recargarVentas() {
-    const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
-    const today = new Date(); today.setHours(0,0,0,0)
-    const rv = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/orders?status=eq.paid&created_at=gte.'+today.toISOString()+'&select=total,payment_method', {headers:H})
-    const orders = await rv.json()
-    if (!Array.isArray(orders)) return
-    const stats = orders.reduce((acc, o) => {
-      acc.total += Number(o.total)
-      acc.count += 1
-      const m = o.payment_method || 'tarjeta'
-      if (m.includes('efectivo')) acc.efectivo += Number(o.total)
-      else if (m.includes('bizum')) acc.bizum += Number(o.total)
-      else acc.tarjeta += Number(o.total)
-      return acc
-    }, {total:0,count:0,efectivo:0,tarjeta:0,bizum:0})
-    setVentasDia(stats)
+  async function recargarVentas(since) {
+    try {
+      const qs = since ? ('?since=' + encodeURIComponent(since)) : ''
+      const r = await fetch('/api/tpv-stats' + qs)
+      const data = await r.json()
+      if (data && data.ok && data.stats) setVentasDia(data.stats)
+    } catch {}
   }
 
   // Filtrar
@@ -175,14 +195,14 @@ export default function TPVPage() {
     _addToLines(product, '')
   }
 
-  const _addToLines = (product, variantLabel) => {
+  const _addToLines = (product, variantLabel, variantId = null) => {
     const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price_incl_tax)
     const unitPrice = basePrice * (1 - discount / 100)
     setLines(prev => {
       const key = product.id + '|' + variantLabel
       const ex = prev.find(l => l.key === key)
       if (ex) return prev.map(l => l.key === key ? { ...l, qty: l.qty + 1 } : l)
-      return [...prev, { key, product, qty: 1, unitPrice, variantLabel }]
+      return [...prev, { key, product, qty: 1, unitPrice, variantLabel, variantId }]
     })
     setVariantModal(null)
   }
@@ -192,46 +212,43 @@ export default function TPVPage() {
     else setLines(prev => prev.map(l => l.key === key ? { ...l, qty } : l))
   }
 
-  const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0)
-  const igic = subtotal * 0.07
-  const total = subtotal + igic
+  // Los precios (unitPrice) llevan el IGIC INCLUIDO (PVP). Desglosamos hacia dentro:
+  const total = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+  const subtotal = total / 1.07
+  const igic = total - subtotal
 
   // ── COBRAR ─────────────────────────────────────────────
   const cobrar = async () => {
     if (!lines.length) return
     setSaving(true)
     try {
-      const num = 'BM-TPV-' + Date.now().toString().slice(-8)
-      const { data: order, error } = await db.from('orders').insert({
-        order_number: num,
-        channel: clientType !== 'particular' ? 'tpv_distributor' : 'tpv_retail',
-        customer_name: customerName || 'Venta directa',
-        customer_nif: customerNif || null,
-        customer_email: 'tpv@buymuscle.es',
-        subtotal, tax_amount: igic, shipping_cost: 0, total,
-        discount_pct: discount, payment_method: payMethod,
-        status: 'paid',
-        notes: 'TPV · ' + payMethod + (customerName ? ' · ' + customerName : '')
-      }).select().single()
-      if (error) throw error
-
-      await db.from('order_lines').insert(lines.map(l => ({
-        order_id: order.id,
-        product_id: l.product.id,
-        product_name: l.product.name + (l.variantLabel ? ' – ' + l.variantLabel : ''),
-        quantity: l.qty, unit_price: l.unitPrice, tax_rate: 7,
-        line_total: l.unitPrice * l.qty
-      })))
-
-      // Descontar stock
-      for (const l of lines) {
-        const { data: p } = await db.from('products').select('stock').eq('id', l.product.id).single()
-        if (p) await db.from('products').update({ stock: Math.max(0, p.stock - l.qty) }).eq('id', l.product.id)
+      // Toda la venta se procesa en el servidor (precios autoritativos,
+      // stock atómico vía RPC y factura Holded con IGIC 7%).
+      const res = await fetch('/api/tpv-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: lines.map(l => ({
+            product_id: l.product.id,
+            variant_id: l.variantId || null,
+            qty: l.qty,
+            variant: l.variantLabel || '',
+          })),
+          discount_pct: discount,
+          payment_method: payMethod,
+          channel: clientType !== 'particular' ? 'tpv_distributor' : 'tpv_retail',
+          customer: { name: customerName || '', nif: customerNif || '' },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        if (data.error === 'sin_stock') throw new Error('Sin stock suficiente para completar la venta')
+        throw new Error(data.error || 'Error al procesar la venta')
       }
 
-      setTicket({ num, lines: [...lines], total, subtotal, igic, payMethod, clientType, customerName, discount })
+      setTicket({ num: data.order_number, lines: [...lines], total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
       setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0)
-      await recargarVentas()
+      await recargarVentas(cajaAbierta?.opened_at)
     } catch (e) { alert('Error al cobrar: ' + e.message) }
     setSaving(false)
   }
@@ -296,12 +313,15 @@ export default function TPVPage() {
   const buscarPedidoDev = async () => {
     if (!devOrderNum.trim()) return
     setDevLoading(true)
-    const { data: ord } = await db.from('orders').select('*').eq('order_number', devOrderNum.trim().toUpperCase()).single()
-    if (!ord) { alert('Pedido no encontrado'); setDevLoading(false); return }
-    const { data: ls } = await db.from('order_lines').select('*').eq('order_id', ord.id)
-    setDevOrder(ord)
-    setDevLines(ls || [])
-    setDevSelected(Object.fromEntries((ls||[]).map(l => [l.id, 0])))
+    try {
+      const r = await fetch('/api/order-lookup?n=' + encodeURIComponent(devOrderNum.trim()))
+      const data = await r.json()
+      if (!data || !data.ok || !data.order) { alert('Pedido no encontrado'); setDevLoading(false); return }
+      const ls = data.lines || []
+      setDevOrder(data.order)
+      setDevLines(ls)
+      setDevSelected(Object.fromEntries(ls.map(l => [l.id, 0])))
+    } catch { alert('Error al buscar el pedido') }
     setDevLoading(false)
   }
 
@@ -312,26 +332,22 @@ export default function TPVPage() {
       importe: l.unit_price * devSelected[l.id]
     }))
     if (!itemsDev.length) { alert('Selecciona al menos un producto para devolver'); return }
-    const totalDev = itemsDev.reduce((s,i) => s + i.importe, 0)
     setDevSaving(true)
     try {
-      // Guardar devolución
-      await db.from('devoluciones').insert({
-        order_number: devOrder.order_number,
-        order_id: devOrder.id,
-        items: itemsDev,
-        total_devuelto: totalDev,
-        method: devMethod,
-        motivo: devMotivo,
-        operator: 'TPV',
-        created_at: new Date().toISOString()
+      // La devolución se procesa en el servidor (registro + reposición de stock)
+      const r = await fetch('/api/tpv-return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_number: devOrder.order_number,
+          items: itemsDev,
+          method: devMethod,
+          motivo: devMotivo,
+        }),
       })
-      // Reponer stock
-      for (const item of itemsDev) {
-        const { data: p } = await db.from('products').select('stock').eq('id', item.product_id).single()
-        if (p) await db.from('products').update({ stock: p.stock + item.qty_dev }).eq('id', item.product_id)
-      }
-      setDevDone({ total: totalDev, method: devMethod, items: itemsDev })
+      const data = await r.json()
+      if (!r.ok || !data.ok) throw new Error(data.error || 'No se pudo procesar la devolución')
+      setDevDone({ total: data.total, method: data.method, items: data.items })
     } catch (e) { alert('Error: ' + e.message) }
     setDevSaving(false)
   }
@@ -433,6 +449,30 @@ export default function TPVPage() {
           ))}
         </div>
       </div>
+    </div>
+  )
+
+  // ── Pantalla de bloqueo del TPV (PIN) ──────────────────
+  if (tpvAuth !== true) return (
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#111', fontFamily:'Arial,sans-serif' }}>
+      {tpvAuth === null ? (
+        <div style={{ color:'#888', fontSize:15 }}>Cargando TPV…</div>
+      ) : (
+        <div style={{ width:'100%', maxWidth:360, background:'#1b1b1b', padding:36, borderRadius:8, textAlign:'center' }}>
+          <div style={{ fontSize:26, fontWeight:900, fontStyle:'italic', color:'#ff1e41', marginBottom:6 }}>BUYMUSCLE</div>
+          <div style={{ color:'#888', fontSize:13, marginBottom:24 }}>Terminal de punto de venta</div>
+          {pinErr && <div style={{ background:'#3a1111', color:'#ff8080', fontSize:13, padding:'8px 12px', borderRadius:4, marginBottom:14 }}>{pinErr}</div>}
+          <input type="password" inputMode="numeric" value={pinInput} autoFocus
+            onChange={e=>setPinInput(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&pinInput&&!pinLoading&&entrarTpv()}
+            placeholder="PIN de acceso"
+            style={{ width:'100%', padding:'14px', fontSize:22, textAlign:'center', letterSpacing:6, border:'1px solid #333', background:'#111', color:'white', borderRadius:6, boxSizing:'border-box', marginBottom:16 }}/>
+          <button onClick={entrarTpv} disabled={pinLoading||!pinInput}
+            style={{ width:'100%', background:'#ff1e41', color:'white', border:'none', padding:'14px', fontSize:15, fontWeight:700, borderRadius:6, cursor:'pointer', opacity:(pinLoading||!pinInput)?0.6:1 }}>
+            {pinLoading?'Comprobando…':'Entrar'}
+          </button>
+        </div>
+      )}
     </div>
   )
 
@@ -754,7 +794,7 @@ export default function TPVPage() {
               const attrs = v.attribute_values || []
               const label = attrs.map(a => (a.attribute_types?.name ? a.attribute_types.name+': ' : '') + a.value).join(' · ')
               return (
-                <button key={v.id} onClick={()=>_addToLines(variantModal.product, label)}
+                <button key={v.id} onClick={()=>_addToLines(variantModal.product, label, v.id)}
                   style={{ padding:'8px 16px', background:'#1a1a1a', border:'1px solid #333', color:'white', cursor:'pointer', fontSize:12, fontFamily:'inherit', borderRadius:3 }}>
                   {label}<div style={{ fontSize:9, color:'#555', marginTop:2 }}>Stock: {v.stock}</div>
                 </button>
@@ -771,7 +811,7 @@ export default function TPVPage() {
           <div style={{background:'white',borderRadius:12,padding:'1.5rem',maxWidth:340,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
             <TicketTPV
               ticketNumber={ticket.num}
-              lines={(ticket.lines||[]).map(l=>({name:l.product?.name||l.name||'',qty:l.qty,unit_price:l.price,subtotal:l.qty*l.price}))}
+              lines={(ticket.lines||[]).map(l=>({name:l.product?.name||l.name||'',qty:l.qty,unit_price:l.unitPrice,subtotal:l.qty*l.unitPrice}))}
               total={ticket.total}
               paymentMethod={ticket.payMethod||'tarjeta'}
               cashGiven={ticket.cashGiven}

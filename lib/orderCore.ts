@@ -1,0 +1,232 @@
+// @ts-nocheck
+// Núcleo de creación de pedidos compartido por /api/create-order (checkout web)
+// y /api/paypal/capture (pago verificado). Centraliza precios autoritativos,
+// desglose de IGIC, descuento de stock atómico, cupones, CRM y notificaciones.
+import { createClient } from '@supabase/supabase-js'
+
+export const IGIC = 0.07           // Canarias: IGIC general 7%
+export const SHIP_FREE_FROM = 50
+export const SHIP_COST = 4.90
+
+export function genId(prefix = 'BM'){ return prefix + '-' + Math.random().toString(36).slice(2,10).toUpperCase() }
+export function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
+
+export function adminDb(){
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth:{ autoRefreshToken:false, persistSession:false } }
+  )
+}
+
+// ── EMAIL (Resend) ───────────────────────────────────────
+async function sendEmail(order, lines){
+  const key = process.env.RESEND_API_KEY
+  if(!key || !order.customer_email) return
+  const rows = lines.map(l => '<tr><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0">'+(l.product_name||'Producto')+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:center">'+(l.qty||1)+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right">'+round2(l.unit_price).toFixed(2)+' €</td></tr>').join('')
+  const html = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto"><div style="background:#ff1e41;padding:24px 32px;text-align:center"><h1 style="color:white;margin:0;font-size:28px;font-weight:900;font-style:italic">BUYMUSCLE</h1></div><div style="padding:32px"><h2>Pedido confirmado ✔️</h2><p>Hola <strong>'+(order.customer_name||'cliente')+'</strong>, gracias por tu pedido.</p><div style="background:#f8f8f8;padding:16px;margin:20px 0"><p style="margin:0;font-size:18px;font-weight:700">Número: <span style="color:#ff1e41">'+order.order_number+'</span></p></div><table style="width:100%;border-collapse:collapse;margin:16px 0"><thead><tr style="background:#f0f0f0"><th style="padding:10px 12px;text-align:left">Producto</th><th style="padding:10px 12px;text-align:center">Cant.</th><th style="padding:10px 12px;text-align:right">Precio</th></tr></thead><tbody>'+rows+'</tbody></table><div style="border-top:2px solid #ff1e41;padding-top:16px;text-align:right"><p style="margin:4px 0;font-size:18px;font-weight:700">Total: '+round2(order.total).toFixed(2)+' €</p><p style="margin:4px 0;color:#888;font-size:13px">IGIC incluido · Envío estimado 24-48h</p></div><div style="margin:24px 0;padding:16px;background:#f8f8f8"><p style="margin:0;font-size:13px;color:#666">📍 <strong>Dirección:</strong> '+(order.shipping_address||'')+', '+(order.shipping_city||'')+' '+(order.shipping_postal_code||'')+'</p></div><p style="color:#666;font-size:13px">Dudas: <strong>+34 828 048 310</strong> o <a href="mailto:tienda@buymuscle.es" style="color:#ff1e41">tienda@buymuscle.es</a></p><a href="https://buymuscle-tienda.vercel.app/mi-cuenta" style="display:inline-block;margin-top:16px;background:#ff1e41;color:white;padding:12px 24px;text-decoration:none;font-weight:700">Ver mi cuenta</a></div><div style="background:#111;padding:16px 32px;text-align:center"><p style="color:#666;font-size:12px;margin:0">&copy; 2025 BuyMuscle · Alcalde Manuel Amador Rodríguez 23, Telde</p></div></body></html>'
+  await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({from:'BUYMUSCLE <pedidos@pruebasgrupoaxen.com>',to:order.customer_email,subject:'Pedido '+order.order_number+' confirmado ✔️',html})}).catch(console.error)
+}
+
+// ── WHATSAPP (360dialog) ─────────────────────────────────
+async function notifyWhatsApp(order){
+  const phone = process.env.WHATSAPP_ADMIN_PHONE
+  const wkey = process.env.WHATSAPP_360DIALOG_KEY
+  if(!phone || !wkey) return
+  const NL = String.fromCharCode(10)
+  const msg = '*Nuevo pedido BuyMuscle*'+NL+'*Nº:* '+order.order_number+NL+'*Cliente:* '+(order.customer_name||'-')+NL+'*Total:* '+round2(order.total).toFixed(2)+' €'+NL+'*Canal:* '+(order.channel||'web')
+  await fetch('https://waba.360dialog.io/v1/messages',{method:'POST',headers:{'D360-API-KEY':wkey,'Content-Type':'application/json'},body:JSON.stringify({messaging_product:'whatsapp',to:phone,type:'text',text:{body:msg}})}).catch(console.error)
+}
+
+// ── HOLDED (factura, IGIC 7%) ────────────────────────────
+async function createHoldedInvoice(order, lines){
+  const key = process.env.HOLDED_API_KEY
+  if(!key) return null
+  try{
+    const isDistrib = (order.channel||'').includes('distributor')
+    const serie = isDistrib ? process.env.HOLDED_SERIE_DIST_ID : process.env.HOLDED_SERIE_T_ID
+    const cRes = await fetch('https://api.holded.com/api/invoicing/v1/contacts?email='+encodeURIComponent(order.customer_email||''),{headers:{key}})
+    const contacts = await cRes.json()
+    let contactId = contacts?.[0]?.id
+    if(!contactId){
+      const nc = await fetch('https://api.holded.com/api/invoicing/v1/contacts',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify({name:order.customer_name||order.customer_email,email:order.customer_email,type:'client'})}).then(r=>r.json())
+      contactId = nc?.id
+    }
+    const inv = {
+      contactId,
+      date: Math.floor(Date.now()/1000),
+      notes: 'Pedido '+order.order_number,
+      // Holded espera precio SIN impuesto; nuestros precios llevan IGIC incluido → desglosamos
+      items: lines.map(l => ({ name: l.product_name||'Producto', units: l.qty||1, subtotal: round2(Number(l.unit_price)/(1+IGIC)), tax: 7 })),
+      ...(serie && { numSerieId: serie })
+    }
+    const invRes = await fetch('https://api.holded.com/api/invoicing/v1/documents/invoice',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify(inv)}).then(r=>r.json())
+    return invRes?.id || null
+  }catch(e){ console.error('holded error:', e); return null }
+}
+
+// Calcula líneas y totales autoritativos a partir del carrito del cliente.
+// No persiste nada: sirve también para crear la orden de PayPal por el importe correcto.
+// Devuelve { ok:false, error } o { ok:true, lines, totals, couponRow, discountPct }.
+export async function quoteOrder(db, { items = [], discount_code = '' }){
+  if(!Array.isArray(items) || items.length === 0)
+    return { ok:false, error:'empty_cart', status:400 }
+
+  const productIds = [...new Set(items.map(i => Number(i.product_id ?? i.id)).filter(Boolean))]
+  const { data: prods } = await db.from('products')
+    .select('id,name,price_incl_tax,sale_price,on_sale,active').in('id', productIds)
+  const prodMap = new Map((prods||[]).map(p => [p.id, p]))
+
+  const variantIds = [...new Set(items.map(i => Number(i.variant_id)).filter(Boolean))]
+  let varMap = new Map()
+  if(variantIds.length){
+    const { data: vars } = await db.from('product_variants')
+      .select('id,product_id,price_modifier,active').in('id', variantIds)
+    varMap = new Map((vars||[]).map(v => [v.id, v]))
+  }
+
+  const lines = []
+  for(const it of items){
+    const pid = Number(it.product_id ?? it.id)
+    const p = prodMap.get(pid)
+    if(!p || p.active === false)
+      return { ok:false, error:'product_unavailable:'+pid, status:400 }
+    const qty = Math.max(1, parseInt(it.qty ?? it.quantity ?? 1))
+    let unit = (p.on_sale && p.sale_price) ? Number(p.sale_price) : Number(p.price_incl_tax)
+    const vid = Number(it.variant_id) || null
+    if(vid && varMap.has(vid)) unit += Number(varMap.get(vid).price_modifier || 0)
+    unit = round2(unit)
+    lines.push({
+      product_id: pid,
+      variant_id: vid,
+      product_name: p.name + (it.variant ? ' – ' + it.variant : ''),
+      qty,
+      unit_price: unit,
+      line_total: round2(unit * qty),
+    })
+  }
+
+  const subtotalGross = round2(lines.reduce((s, l) => s + l.line_total, 0))
+
+  let discountPct = 0, discountAmt = 0, couponRow = null
+  if(discount_code){
+    const { data: dc } = await db.from('discount_codes')
+      .select('*').eq('code', discount_code).eq('active', true).maybeSingle()
+    if(dc){
+      const notExpired = !dc.expires_at || new Date(dc.expires_at) > new Date()
+      const underMax = !dc.max_uses || (dc.uses || 0) < dc.max_uses
+      const meetsMin = !dc.min_order || subtotalGross >= Number(dc.min_order)
+      if(notExpired && underMax && meetsMin){
+        couponRow = dc
+        if(dc.type === 'percent' || dc.type === 'percentage'){
+          discountPct = Number(dc.value)
+          discountAmt = round2(subtotalGross * (discountPct / 100))
+        } else {
+          discountAmt = round2(Math.min(Number(dc.value), subtotalGross))
+        }
+      }
+    }
+  }
+
+  const afterDiscount = Math.max(0, round2(subtotalGross - discountAmt))
+  const shipping = afterDiscount >= SHIP_FREE_FROM ? 0 : SHIP_COST
+  const totalGross = round2(afterDiscount + shipping)
+  const base = round2(totalGross / (1 + IGIC))
+  const taxAmount = round2(totalGross - base)
+
+  return {
+    ok:true, lines, couponRow, discountPct,
+    totals: { subtotalGross, discountAmt, shipping, totalGross, base, taxAmount },
+  }
+}
+
+// Persiste el pedido (orders + order_lines), descuenta stock atómicamente,
+// actualiza cupón/CRM y dispara notificaciones. Devuelve { ok, order_number, total }
+// o { ok:false, error, status }.
+// opts: { status='pending', payment_method, paypal_capture_id, channel, customer }
+export async function persistOrder(db, body, opts = {}){
+  const quote = await quoteOrder(db, body)
+  if(!quote.ok) return quote
+
+  const { lines, couponRow, discountPct, totals } = quote
+  const customer = opts.customer || body.customer || {}
+  const status = opts.status || 'pending'
+  const payment_method = opts.payment_method || body.payment_method || 'card'
+  const channel = opts.channel || body.channel || 'web'
+
+  const order_number = genId()
+  const { data: orderRow, error: orderErr } = await db.from('orders').insert({
+    order_number,
+    channel,
+    customer_name: customer.name || null,
+    customer_email: customer.email || null,
+    customer_phone: customer.phone || null,
+    customer_nif: customer.nif || null,
+    shipping_address: customer.address || null,
+    shipping_city: customer.city || null,
+    shipping_postal_code: customer.postal_code || null,
+    shipping_province: customer.province || null,
+    subtotal: totals.base,
+    tax_amount: totals.taxAmount,
+    shipping_cost: totals.shipping,
+    total: totals.totalGross,
+    discount_pct: discountPct || 0,
+    payment_method,
+    status,
+    paypal_capture_id: opts.paypal_capture_id || null,
+    notes: customer.notes || null,
+  }).select().single()
+  if(orderErr) throw orderErr
+  const orderId = orderRow.id
+
+  const { error: linesErr } = await db.from('order_lines').insert(
+    lines.map(l => ({
+      order_id: orderId,
+      product_id: l.product_id,
+      product_name: l.product_name,
+      quantity: l.qty,
+      unit_price: l.unit_price,
+      tax_rate: 7,
+      line_total: l.line_total,
+    }))
+  )
+  if(linesErr){
+    await db.from('orders').delete().eq('id', orderId)
+    throw linesErr
+  }
+
+  const { error: stockErr } = await db.rpc('process_order_stock', {
+    p_lines: lines.map(l => ({ product_id: l.product_id, variant_id: l.variant_id, qty: l.qty })),
+  })
+  if(stockErr){
+    await db.from('order_lines').delete().eq('order_id', orderId)
+    await db.from('orders').delete().eq('id', orderId)
+    const msg = String(stockErr.message || stockErr)
+    if(msg.includes('INSUFFICIENT_STOCK'))
+      return { ok:false, error:'sin_stock', status:409 }
+    throw stockErr
+  }
+
+  if(couponRow){
+    await db.from('discount_codes').update({ uses: (couponRow.uses || 0) + 1 }).eq('id', couponRow.id).catch(()=>{})
+  }
+
+  if(customer.email){
+    await db.from('customers').upsert({
+      email: customer.email,
+      name: customer.name || '',
+      phone: customer.phone || '',
+      last_order_date: new Date().toISOString(),
+    }, { onConflict: 'email' }).catch(()=>{})
+  }
+
+  const orderObj = { ...orderRow }
+  const linesForNotif = lines
+  sendEmail(orderObj, linesForNotif)
+  notifyWhatsApp(orderObj)
+  createHoldedInvoice(orderObj, linesForNotif).then(hid => {
+    if(hid) db.from('orders').update({ holded_invoice_id: hid, holded_synced_at: new Date().toISOString() }).eq('id', orderId)
+  }).catch(console.error)
+
+  return { ok:true, order_number, total: totals.totalGross }
+}

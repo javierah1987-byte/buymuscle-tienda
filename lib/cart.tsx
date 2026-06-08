@@ -10,6 +10,7 @@ export type CartItem = {
   image: string | null
   qty: number
   variant: string
+  variantId?: number | null
 }
 
 type CartCtx = {

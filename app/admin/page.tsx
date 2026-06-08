@@ -2,6 +2,7 @@
 'use client'
 import{useEffect,useState}from 'react'
 import Link from 'next/link'
+import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 const h={apikey:K,'Authorization':'Bearer '+K}
@@ -54,11 +55,11 @@ export default function AdminDashboard(){
   async function load(){
     try{
       const [r1,r2,r3,r4,r5]=await Promise.all([
-        fetch(S+'/rest/v1/orders?select=id,total,status,created_at,customer_name,customer_email&order=created_at.desc&limit=15',{headers:h}),
-        fetch(S+'/rest/v1/orders?select=total,status',{headers:h}),
+        fetch(S+'/rest/v1/orders?select=id,total,status,created_at,customer_name,customer_email&order=created_at.desc&limit=15',{headers:await authHeaders()}),
+        fetch(S+'/rest/v1/orders?select=total,status',{headers:await authHeaders()}),
         fetch(S+'/rest/v1/products?select=count&active=eq.true',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
         fetch(S+'/rest/v1/products?select=count&stock=lte.10&active=eq.true',{headers:{...h,'Prefer':'count=exact','Range':'0-0'}}),
-        fetch(S+'/rest/v1/orders?select=total,created_at&status=neq.cancelled',{headers:h}),
+        fetch(S+'/rest/v1/orders?select=total,created_at&status=neq.cancelled',{headers:await authHeaders()}),
       ])
       const os=await r1.json()
       const all=await r2.json()
@@ -85,8 +86,9 @@ export default function AdminDashboard(){
   async function bulkUpdate(){
     if(!selected.length)return
     setSaving(true)
+    const hdr=await authHeaders({'Content-Type':'application/json'})
     await Promise.all(selected.map(id=>
-      fetch(S+'/rest/v1/orders?id=eq.'+id,{method:'PATCH',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({status:bulkStatus})})
+      fetch(S+'/rest/v1/orders?id=eq.'+id,{method:'PATCH',headers:hdr,body:JSON.stringify({status:bulkStatus})})
     ))
     setOrders(o=>o.map(x=>selected.includes(x.id)?{...x,status:bulkStatus}:x))
     setSelected([]);setSaving(false);setMsg('Estado actualizado')

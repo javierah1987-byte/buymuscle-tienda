@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { getAdminUser } from '@/lib/adminAuth'
 
 export async function POST(req: Request) {
+  // Guard: solo un admin de la allowlist puede crear distribuidores (crea usuario Auth).
+  const admin = await getAdminUser()
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
   const { email, password, company_name, level_id } = await req.json()
 
   const supabaseAdmin = createClient(

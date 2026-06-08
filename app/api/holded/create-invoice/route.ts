@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAdminUser } from '@/lib/adminAuth'
+
+export const dynamic = 'force-dynamic'
 
 const HOLDED_API = 'https://api.holded.com/api/invoicing/v1'
 const HOLDED_KEY = process.env.HOLDED_API_KEY || ''
+const IGIC = 0.07 // Canarias: IGIC general 7%
 
-// Usa anon key — RLS ya tiene políticas abiertas para SELECT/UPDATE en orders
-const supabase = createClient(
+// Service role: RLS de orders está bloqueada salvo admin/cliente/servicio.
+// Se crea dentro del handler para no instanciar en build sin env.
+const adminDb = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
 )
+const round2 = (n: number) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
 
 async function holdedFetch(path: string, method = 'GET', body?: object) {
   const res = await fetch(`${HOLDED_API}${path}`, {
@@ -41,9 +48,14 @@ async function findOrCreateContact(email: string, name: string, phone?: string) 
 
 export async function POST(req: Request) {
   try {
+    const admin = await getAdminUser()
+    if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
     const { orderId } = await req.json()
     if (!orderId) throw new Error('orderId requerido')
     if (!HOLDED_KEY) throw new Error('HOLDED_API_KEY no configurada')
+
+    const supabase = adminDb()
 
     // Cargar pedido
     const { data: order, error: orderErr } = await supabase
@@ -68,17 +80,18 @@ export async function POST(req: Request) {
     )
     if (!contactId) throw new Error('No se pudo crear contacto en Holded')
 
-    // Preparar líneas de factura
+    // Preparar líneas de factura. Nuestros precios llevan IGIC incluido →
+    // Holded espera el precio SIN impuesto, así que desglosamos (÷1.07) y tax 7%.
     const items = (lines || []).map((line: any) => ({
       name: line.product_name,
       units: line.quantity,
-      subtotal: Number(line.unit_price) * line.quantity,
-      tax: 21,
+      subtotal: round2(Number(line.unit_price) / (1 + IGIC)),
+      tax: 7,
     }))
 
     // Añadir envío si aplica
     if (Number(order.shipping_cost) > 0) {
-      items.push({ name: 'Gastos de envío', units: 1, subtotal: Number(order.shipping_cost), tax: 21 })
+      items.push({ name: 'Gastos de envío', units: 1, subtotal: round2(Number(order.shipping_cost) / (1 + IGIC)), tax: 7 })
     }
 
     // Serie B2C o B2B

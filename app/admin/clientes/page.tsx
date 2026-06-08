@@ -2,6 +2,7 @@
 'use client'
 import{useState,useEffect}from 'react'
 import Link from 'next/link'
+import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 const h={apikey:K,'Authorization':'Bearer '+K}
@@ -12,7 +13,8 @@ export default function AdminClientes(){
   const[orders,setOrders]=useState([])
   const[loading,setLoading]=useState(true)
   useEffect(()=>{
-    fetch(S+'/rest/v1/orders?select=customer_email,customer_name,customer_phone,total,status,created_at,channel&order=created_at.desc',{headers:h})
+    (async()=>{
+    fetch(S+'/rest/v1/orders?select=customer_email,customer_name,customer_phone,total,status,created_at,channel&order=created_at.desc',{headers:await authHeaders()})
       .then(r=>r.json()).then(rows=>{
         if(!Array.isArray(rows)){setLoading(false);return}
         const map={}
@@ -26,10 +28,11 @@ export default function AdminClientes(){
         setClientes(Object.values(map).sort((a,b)=>b.total-a.total))
         setLoading(false)
       })
+    })()
   },[])
   async function verDetalle(c){
     setSel(c);setOrders([])
-    const r=await fetch(S+'/rest/v1/orders?customer_email=eq.'+encodeURIComponent(c.email)+'&order=created_at.desc',{headers:h})
+    const r=await fetch(S+'/rest/v1/orders?customer_email=eq.'+encodeURIComponent(c.email)+'&order=created_at.desc',{headers:await authHeaders()})
     const d=await r.json()
     setOrders(Array.isArray(d)?d:[])
   }

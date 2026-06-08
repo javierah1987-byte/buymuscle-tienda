@@ -12,11 +12,12 @@ export default function MisPedidos(){
   const[open,setOpen]=useState(null)
   async function buscar(e){
     e.preventDefault();if(!email)return;setLoading(true)
-    const r=await fetch(S+'/rest/v1/orders?customer_email=eq.'+encodeURIComponent(email.toLowerCase())+'&order=created_at.desc&select=*,order_lines(*)',{
-      headers:{'apikey':K,'Authorization':'Bearer '+K}
-    })
-    const d=await r.json()
-    setOrders(Array.isArray(d)?d:[]);setLoading(false)
+    try{
+      const r=await fetch('/api/my-orders?email='+encodeURIComponent(email.toLowerCase()))
+      const d=await r.json()
+      setOrders(d&&d.ok&&Array.isArray(d.orders)?d.orders:[])
+    }catch{setOrders([])}
+    setLoading(false)
   }
   const fmt=(d:string)=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})
   return(

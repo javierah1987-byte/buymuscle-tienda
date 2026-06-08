@@ -5,7 +5,7 @@ import Link from'next/link'
 export default function SideCart({open,onClose}){
   const{items,remove,updateQty}=useCart()
   const sub=items.reduce((s,i)=>s+i.price*i.qty,0)
-  const ship=sub>=50?0:4.90,total=sub*1.21+ship
+  const ship=sub>=50?0:4.90,total=sub+ship
   const rem=Math.max(0,50-sub),pct=Math.min(100,sub/50*100)
   return(<>
     {open&&<div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000}}/>}
@@ -50,7 +50,7 @@ export default function SideCart({open,onClose}){
       </div>
       {items.length>0&&(
         <div style={{padding:'16px 20px',borderTop:'2px solid #f0f0f0'}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:13,color:'#666'}}><span>Subtotal (IVA)</span><span>{(sub*1.21).toFixed(2)} €</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6,fontSize:13,color:'#666'}}><span>Subtotal (IGIC incl.)</span><span>{sub.toFixed(2)} €</span></div>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:12,fontSize:13,color:'#666'}}><span>Envío</span><span style={{color:ship===0?'#22c55e':'inherit'}}>{ship===0?'GRATIS':ship.toFixed(2)+' €'}</span></div>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:16,fontSize:18,fontWeight:900}}><span>TOTAL</span><span style={{color:'#ff1e41'}}>{total.toFixed(2)} €</span></div>
           <Link href="/carrito" onClick={onClose} style={{display:'block',background:'#ff1e41',color:'white',textAlign:'center',padding:'14px',fontWeight:900,fontSize:14,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.05em'}}>Finalizar pedido →</Link>

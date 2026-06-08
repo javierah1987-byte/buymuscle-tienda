@@ -5,6 +5,9 @@ import ProductCarousel from '@/components/ProductCarousel'
 import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
 
+// ISR: la home se regenera cada 5 min (catálogo, no sensible al stock en tiempo real)
+export const revalidate = 300
+
 const BG_VIDEO_3 = 'https://tienda.buymuscle.es/img/cms/bg-video-BM-3.mp4'
 const BASE_BLOG = 'https://tienda.buymuscle.es'
 

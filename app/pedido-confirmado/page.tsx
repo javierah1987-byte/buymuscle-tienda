@@ -23,23 +23,18 @@ function Contenido() {
 
   useEffect(() => {
     if (!num) { setLoading(false); return }
-    const _H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
     ;(async () => {
-      const ro = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/orders?order_number=eq.'+encodeURIComponent(num)+'&select=*&limit=1', {headers:_H})
-      const rows = await ro.json()
-      const data = Array.isArray(rows) && rows.length > 0 ? rows[0] : null
-      setOrder(data)
-      if (data) {
-        const rl = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/order_lines?order_id=eq.'+data.id+'&select=*', {headers:_H})
-        const l = await rl.json()
-        setLines(Array.isArray(l) ? l : [])
-        const boughtIds = (Array.isArray(l) ? l : []).map(function(x){ return x.product_id })
-        const ru = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/products?active=eq.true&stock=gt.0&order=id.desc&limit=12&select=id,name,price_incl_tax,sale_price,image_url', {headers:_H})
-        const ups = await ru.json()
-        if (ups) setUpsell(ups.filter(function(p){ return boughtIds.indexOf(p.id) === -1 }).slice(0,4))
-      }
+      try {
+        const r = await fetch('/api/order-lookup?upsell=1&n=' + encodeURIComponent(num))
+        const data = await r.json()
+        if (data && data.ok && data.order) {
+          setOrder(data.order)
+          setLines(Array.isArray(data.lines) ? data.lines : [])
+          setUpsell(Array.isArray(data.upsell) ? data.upsell : [])
+        }
+      } catch {}
       setLoading(false)
-    })
+    })()
   }, [num])
 
   if (loading) return (

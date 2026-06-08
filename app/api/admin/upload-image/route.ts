@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getAdminUser } from '@/lib/adminAuth'
 
 const BUCKET = 'product-images'
 const MAX_BYTES = 8 * 1024 * 1024
@@ -13,15 +12,9 @@ const EXT_BY_TYPE: Record<string, string> = {
 }
 
 export async function POST(req: Request) {
-  // Guard: only an authenticated admin (same notion as the /admin middleware) may upload.
-  const cookieStore = cookies()
-  const auth = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
-  )
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user) {
+  // Guard: solo un admin de la allowlist (mismo criterio que is_admin()) puede subir.
+  const admin = await getAdminUser()
+  if (!admin) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
