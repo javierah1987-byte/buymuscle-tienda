@@ -15,6 +15,7 @@ const MODULOS=[
   {icon:'📱',t:'RRSS',d:'Publicaciones sociales',href:'/admin/rrss',c:'#E1306C'},
   {icon:'🏷️',t:'Descuentos',d:'Codigos y cupones',href:'/admin/descuentos',c:'#f59e0b'},
   {icon:'📦',t:'Productos',d:'Editar precio y stock inline',href:'/admin/productos',c:'#22c55e'},
+  {icon:'🖼️',t:'Imágenes pendientes',d:'Subir imágenes que faltan',href:'/admin/imagenes',c:'#8b5cf6'},
   {icon:'📊',t:'Suscriptores',d:'Emails captados',href:'/admin/suscriptores',c:'#3b82f6'},
   {icon:'🛒',t:'Carritos Abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
   {icon:'📧',t:'Newsletter',d:'Enviar emails a suscriptores',href:'/admin/newsletter',c:'#3b82f6'},
