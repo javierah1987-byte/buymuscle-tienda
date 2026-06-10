@@ -20,8 +20,10 @@ export async function GET(req){
 
     const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth:{ autoRefreshToken:false, persistSession:false } })
 
+    // Solo campos no sensibles: el email es un identificador adivinable, así
+    // que nunca devolvemos dirección, teléfono, NIF ni notas por aquí.
     const { data: orders } = await db.from('orders')
-      .select('*, order_lines(*)')
+      .select('id, order_number, created_at, status, total, payment_method, tracking_number, holded_invoice_id, order_lines(product_name, quantity, unit_price, line_total)')
       .eq('customer_email', email)
       .order('created_at', { ascending:false })
       .limit(50)

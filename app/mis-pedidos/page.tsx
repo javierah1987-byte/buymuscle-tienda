@@ -65,10 +65,9 @@ export default function MisPedidos(){
                     <span style={{fontWeight:600}}>{Number(l.line_total ?? l.unit_price*l.quantity).toFixed(2)} €</span>
                   </div>
                 ))}
-                <div style={{marginTop:12,padding:'10px',background:'#f9f9f9',fontSize:12,color:'#666'}}>
-                  {o.shipping_address&&<p style={{margin:'0 0 4px'}}><strong>Envío:</strong> {o.shipping_address}</p>}
-                  {o.tracking_number&&<p style={{margin:0}}><strong>Seguimiento:</strong> {o.tracking_number}</p>}
-                </div>
+                {o.tracking_number&&<div style={{marginTop:12,padding:'10px',background:'#f9f9f9',fontSize:12,color:'#666'}}>
+                  <p style={{margin:0}}><strong>Seguimiento:</strong> {o.tracking_number}</p>
+                </div>}
                 <div style={{display:'flex',gap:10,marginTop:12,flexWrap:'wrap'}}>
                   <Link href="/tienda" style={{display:'inline-block',background:'#111',color:'white',padding:'8px 16px',textDecoration:'none',fontSize:12,fontWeight:700}}>
                     Volver a comprar →

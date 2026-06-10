@@ -8,7 +8,7 @@ const FAQS=[
     ['¿Puedo hacer seguimiento?','Sí. Recibirás el número de seguimiento por email en cuanto salga tu pedido.'],
   ]},
   {c:'💳 Pagos',q:[
-    ['¿Qué métodos de pago aceptan?','Tarjeta (Visa/Mastercard), transferencia bancaria y contra reembolso. Todos 100% seguros.'],
+    ['¿Qué métodos de pago aceptan?','PayPal y transferencia bancaria (tarjeta y Bizum próximamente). Todos 100% seguros.'],
     ['¿Los precios incluyen impuestos?','Sí, todos los precios incluyen el IGIC canario (7%). Sin sorpresas en el checkout.'],
     ['¿Es seguro comprar aquí?','Completamente. Certificado SSL, cumplimiento RGPD. Nunca guardamos datos de tu tarjeta.'],
   ]},

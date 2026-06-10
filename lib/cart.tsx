@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { trackAddToCart } from './analytics'
 
 const STORAGE_KEY = 'bm-cart-v2'
 
@@ -56,6 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, loaded])
 
   const add = useCallback((item: Omit<CartItem,'qty'> & { qty?: number }) => {
+    trackAddToCart({ id: item.id, name: item.name, price: item.price, qty: item.qty || 1 })
     setItems(prev => {
       const key = String(item.id) + (item.variant || '')
       const existing = prev.find(i => String(i.id) + (i.variant || '') === key)

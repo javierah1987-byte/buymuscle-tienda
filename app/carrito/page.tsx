@@ -4,6 +4,7 @@ import { useCart } from '@/lib/cart'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import PayPalButton from '@/components/PayPalButton'
+import { trackBeginCheckout } from '@/lib/analytics'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
@@ -54,26 +55,74 @@ export default function CarritoPage() {
   },[])
   const [form, setForm] = useState({name:'',email:'',phone:'',address:'',city:'',postal_code:'',province:'',nif:'',notes:''})
   const [coupon, setCoupon] = useState('')
-  const [discount, setDiscount] = useState(0)
+  const [discountInfo, setDiscountInfo] = useState(null) // { type:'percent'|'fixed', value, discountAmt }
   const [discountMsg, setDiscountMsg] = useState('')
   const [ordering, setOrdering] = useState(false)
   const [orderDone, setOrderDone] = useState(null)
   const [upsellProds, setUpsellProds] = useState([])
 
+  // Analítica: begin_checkout al entrar en el paso de datos
+  useEffect(()=>{
+    if(paso===2) trackBeginCheckout(total)
+  },[paso]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Captura de carrito abandonado: cuando el cliente ya dio su email en el
+  // checkout, registramos el carrito (RLS permite INSERT público). Una vez por
+  // email y sesión; si completa la compra, el servidor lo marca recuperado.
+  useEffect(()=>{
+    if(paso!==2||items.length===0) return
+    const email=(form.email||'').trim().toLowerCase()
+    if(!email.includes('@')||!email.includes('.')) return
+    const flag='bm_abandoned_'+email
+    if(sessionStorage.getItem(flag)) return
+    const t=setTimeout(()=>{
+      sessionStorage.setItem(flag,'1')
+      fetch(S+'/rest/v1/abandoned_carts',{method:'POST',
+        headers:{apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({email,cart_data:items.map(i=>({name:i.name,price:i.price,qty:i.qty})),total})
+      }).catch(()=>{})
+    },2000)
+    return ()=>clearTimeout(t)
+  },[paso,form.email,items]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const subtotal = items.reduce((s,i)=>s+i.price*i.qty,0)
   const shippingFree = subtotal >= 50
   const shipping = shippingFree ? 0 : 4.90
-  const discountAmt = discount > 0 ? subtotal*(discount/100) : 0
+  // Se recalcula en cliente por si el carrito cambia tras aplicar el cupón
+  // (misma aritmética que el servidor: % sobre subtotal o importe fijo capado).
+  const discountAmt = discountInfo
+    ? (discountInfo.type === 'percent'
+        ? subtotal * (Number(discountInfo.value) / 100)
+        : Math.min(Number(discountInfo.value), subtotal))
+    : 0
   const total = subtotal - discountAmt + shipping
 
+  // Validación informativa vía servidor (RLS impide leer discount_codes como
+  // invitado). /api/create-order revalida el cupón de forma autoritativa.
   async function applyCoupon() {
-    if(!coupon.trim()) return
-    const r = await fetch(S+'/rest/v1/discount_codes?code=eq.'+encodeURIComponent(coupon.trim())+'&active=eq.true',{headers:{apikey:K,'Authorization':'Bearer '+K}})
-    const d = await r.json()
-    if(d&&d[0]) {
-      setDiscount(Number(d[0].value))
-      setDiscountMsg('Descuento '+d[0].value+'% aplicado')
-    } else setDiscountMsg('Codigo no valido o caducado')
+    const code = coupon.trim()
+    if(!code) return
+    try {
+      const r = await fetch('/api/validate-coupon', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ code, subtotal })
+      })
+      if(r.status === 429){ setDiscountInfo(null); setDiscountMsg('Demasiados intentos. Espera unos minutos y vuelve a probar.'); return }
+      const d = await r.json()
+      if(d && d.ok && d.valid) {
+        setDiscountInfo({ type: d.type, value: Number(d.value), discountAmt: Number(d.discountAmt) })
+        setDiscountMsg(d.type === 'percent'
+          ? 'Descuento del '+d.value+'% aplicado'
+          : 'Descuento de '+Number(d.discountAmt).toFixed(2)+' € aplicado')
+      } else {
+        setDiscountInfo(null)
+        setDiscountMsg('Código no válido o caducado')
+      }
+    } catch {
+      setDiscountInfo(null)
+      setDiscountMsg('No se pudo comprobar el código. Inténtalo de nuevo.')
+    }
   }
 
   async function doOrder(method) {
@@ -97,8 +146,8 @@ export default function CarritoPage() {
             qty: i.qty,
             variant: i.variant || '',
           })),
-          payment_method: method || 'card',
-          discount_code: discount > 0 ? coupon.trim() : '',
+          payment_method: method || 'transfer',
+          discount_code: discountInfo ? coupon.trim() : '',
           channel: 'web',
         })
       })
@@ -111,7 +160,7 @@ export default function CarritoPage() {
       }
       const orderNum = data.order_number
       clear()
-      if(typeof window !== 'undefined') window.location.href = '/pedido-confirmado?n='+orderNum
+      if(typeof window !== 'undefined') window.location.href = '/pedido-confirmado?n='+orderNum+(method==='transfer'?'&pm=transfer':'')
     } catch(e) {
       alert('Error de conexión al procesar el pedido. Inténtalo de nuevo.')
     }
@@ -130,7 +179,7 @@ export default function CarritoPage() {
         product_id: i.id, variant_id: i.variantId || null,
         name: i.name, qty: i.qty, variant: i.variant || '',
       })),
-      discount_code: discount > 0 ? coupon.trim() : '',
+      discount_code: discountInfo ? coupon.trim() : '',
       channel: 'web',
     }
   }
@@ -275,7 +324,7 @@ export default function CarritoPage() {
             ))}
             <div style={{borderTop:'1px solid #f0f0f0',paddingTop:12,marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#555'}}><span>Subtotal</span><span>{subtotal.toFixed(2)} €</span></div>
-              {discountAmt>0&&<div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#22c55e'}}><span>Descuento -{discount}%</span><span>-{discountAmt.toFixed(2)} €</span></div>}
+              {discountAmt>0&&<div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#22c55e'}}><span>Descuento{discountInfo?.type==='percent'?' -'+discountInfo.value+'%':''}</span><span>-{discountAmt.toFixed(2)} €</span></div>}
               <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:shippingFree?'#22c55e':'#555'}}>
                 <span>Envio</span><span>{shippingFree?'🎉 GRATIS':shipping.toFixed(2)+' €'}</span>
               </div>
@@ -292,7 +341,7 @@ export default function CarritoPage() {
                   <input value={coupon} onChange={e=>setCoupon(e.target.value)} onKeyDown={e=>e.key==='Enter'&&applyCoupon()} placeholder="Codigo descuento" style={{flex:1,padding:'8px 10px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:12,outline:'none'}}/>
                   <button onClick={applyCoupon} style={{padding:'8px 12px',background:'#111',color:'white',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:700}}>OK</button>
                 </div>
-                {discountMsg&&<p style={{fontSize:11,color:discount>0?'#22c55e':'#ef4444',marginTop:4}}>{discountMsg}</p>}
+                {discountMsg&&<p style={{fontSize:11,color:discountInfo?'#22c55e':'#ef4444',marginTop:4}}>{discountMsg}</p>}
               </div>
             )}
 
@@ -306,10 +355,11 @@ export default function CarritoPage() {
             {/* c3 BOTÓN CON PRECIO */}
             {paso===2&&(
               <div style={{marginTop:16}}>
-                <button onClick={()=>doOrder('card')} disabled={ordering||!form.name||!form.email}
+                <button onClick={()=>doOrder('transfer')} disabled={ordering||!form.name||!form.email}
                   style={{width:'100%',padding:'13px',background:ordering?'#ccc':'#ff1e41',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',borderRadius:4,opacity:(!form.name||!form.email||!form.address)?0.6:1}}>
-                  {ordering?'Procesando...':'✓ CONFIRMAR Y PAGAR '+total.toFixed(2)+' €'}
+                  {ordering?'Procesando...':'📦 PEDIDO POR TRANSFERENCIA — '+total.toFixed(2)+' €'}
                 </button>
+                <p style={{fontSize:11,color:'#888',margin:'6px 0 0',textAlign:'center'}}>Te enviaremos los datos bancarios. El pedido se prepara al recibir el pago.</p>
                 {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
                   <>
                     <div style={{textAlign:'center',margin:'10px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
@@ -324,7 +374,7 @@ export default function CarritoPage() {
                   </>
                 )}
                 <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:10}}>
-                  {['🔒 SSL','💳 Tarjeta','📱 Bizum'].map(t=><span key={t} style={{fontSize:11,color:'#888'}}>{t}</span>)}
+                  {['🔒 SSL','PayPal','Transferencia bancaria'].map(t=><span key={t} style={{fontSize:11,color:'#888'}}>{t}</span>)}
                 </div>
               </div>
             )}

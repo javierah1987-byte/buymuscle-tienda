@@ -4,6 +4,7 @@
 // desglose de IGIC, descuento de stock atómico, cupones, CRM y notificaciones.
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { SITE_URL } from './site'
 
 export const IGIC = 0.07           // Canarias: IGIC general 7%
 export const SHIP_FREE_FROM = 50
@@ -30,8 +31,18 @@ async function sendEmail(order, lines){
   const key = process.env.RESEND_API_KEY
   if(!key || !order.customer_email) return
   const rows = lines.map(l => '<tr><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0">'+(l.product_name||'Producto')+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:center">'+(l.qty||1)+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right">'+round2(l.unit_price).toFixed(2)+' €</td></tr>').join('')
-  const html = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto"><div style="background:#ff1e41;padding:24px 32px;text-align:center"><h1 style="color:white;margin:0;font-size:28px;font-weight:900;font-style:italic">BUYMUSCLE</h1></div><div style="padding:32px"><h2>Pedido confirmado ✔️</h2><p>Hola <strong>'+(order.customer_name||'cliente')+'</strong>, gracias por tu pedido.</p><div style="background:#f8f8f8;padding:16px;margin:20px 0"><p style="margin:0;font-size:18px;font-weight:700">Número: <span style="color:#ff1e41">'+order.order_number+'</span></p></div><table style="width:100%;border-collapse:collapse;margin:16px 0"><thead><tr style="background:#f0f0f0"><th style="padding:10px 12px;text-align:left">Producto</th><th style="padding:10px 12px;text-align:center">Cant.</th><th style="padding:10px 12px;text-align:right">Precio</th></tr></thead><tbody>'+rows+'</tbody></table><div style="border-top:2px solid #ff1e41;padding-top:16px;text-align:right"><p style="margin:4px 0;font-size:18px;font-weight:700">Total: '+round2(order.total).toFixed(2)+' €</p><p style="margin:4px 0;color:#888;font-size:13px">IGIC incluido · Envío estimado 24-48h</p></div><div style="margin:24px 0;padding:16px;background:#f8f8f8"><p style="margin:0;font-size:13px;color:#666">📍 <strong>Dirección:</strong> '+(order.shipping_address||'')+', '+(order.shipping_city||'')+' '+(order.shipping_postal_code||'')+'</p></div><p style="color:#666;font-size:13px">Dudas: <strong>+34 828 048 310</strong> o <a href="mailto:tienda@buymuscle.es" style="color:#ff1e41">tienda@buymuscle.es</a></p><a href="https://buymuscle-tienda.vercel.app/mi-cuenta" style="display:inline-block;margin-top:16px;background:#ff1e41;color:white;padding:12px 24px;text-decoration:none;font-weight:700">Ver mi cuenta</a></div><div style="background:#111;padding:16px 32px;text-align:center"><p style="color:#666;font-size:12px;margin:0">&copy; 2025 BuyMuscle · Alcalde Manuel Amador Rodríguez 23, Telde</p></div></body></html>'
-  await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({from:'BUYMUSCLE <pedidos@pruebasgrupoaxen.com>',to:order.customer_email,subject:'Pedido '+order.order_number+' confirmado ✔️',html})}).catch(console.error)
+  // Los pedidos 'pending' (transferencia/efectivo) aún no están pagados:
+  // el email no debe decir "confirmado" hasta que el pago se verifique.
+  const paid = order.status === 'paid'
+  const subject = paid
+    ? 'Pedido '+order.order_number+' confirmado ✔️'
+    : 'Pedido '+order.order_number+' recibido — pendiente de pago'
+  const heading = paid ? 'Pedido confirmado ✔️' : 'Pedido recibido — pendiente de pago'
+  const intro = paid
+    ? 'gracias por tu pedido.'
+    : 'hemos recibido tu pedido. Está <strong>pendiente de pago</strong>: en breve recibirás las instrucciones para completar la transferencia.'
+  const html = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto"><div style="background:#ff1e41;padding:24px 32px;text-align:center"><h1 style="color:white;margin:0;font-size:28px;font-weight:900;font-style:italic">BUYMUSCLE</h1></div><div style="padding:32px"><h2>'+heading+'</h2><p>Hola <strong>'+(order.customer_name||'cliente')+'</strong>, '+intro+'</p><div style="background:#f8f8f8;padding:16px;margin:20px 0"><p style="margin:0;font-size:18px;font-weight:700">Número: <span style="color:#ff1e41">'+order.order_number+'</span></p></div><table style="width:100%;border-collapse:collapse;margin:16px 0"><thead><tr style="background:#f0f0f0"><th style="padding:10px 12px;text-align:left">Producto</th><th style="padding:10px 12px;text-align:center">Cant.</th><th style="padding:10px 12px;text-align:right">Precio</th></tr></thead><tbody>'+rows+'</tbody></table><div style="border-top:2px solid #ff1e41;padding-top:16px;text-align:right"><p style="margin:4px 0;font-size:18px;font-weight:700">Total: '+round2(order.total).toFixed(2)+' €</p><p style="margin:4px 0;color:#888;font-size:13px">IGIC incluido · Envío estimado 24-48h</p></div><div style="margin:24px 0;padding:16px;background:#f8f8f8"><p style="margin:0;font-size:13px;color:#666">📍 <strong>Dirección:</strong> '+(order.shipping_address||'')+', '+(order.shipping_city||'')+' '+(order.shipping_postal_code||'')+'</p></div><p style="color:#666;font-size:13px">Dudas: <strong>+34 828 048 310</strong> o <a href="mailto:tienda@buymuscle.es" style="color:#ff1e41">tienda@buymuscle.es</a></p><a href="'+SITE_URL+'/mi-cuenta" style="display:inline-block;margin-top:16px;background:#ff1e41;color:white;padding:12px 24px;text-decoration:none;font-weight:700">Ver mi cuenta</a></div><div style="background:#111;padding:16px 32px;text-align:center"><p style="color:#666;font-size:12px;margin:0">&copy; 2025 BuyMuscle · Alcalde Manuel Amador Rodríguez 23, Telde</p></div></body></html>'
+  await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({from:'BUYMUSCLE <pedidos@buymuscle.es>',to:order.customer_email,subject,html})}).catch(console.error)
 }
 
 // ── WHATSAPP (360dialog) ─────────────────────────────────
@@ -239,6 +250,13 @@ export async function persistOrder(db, body, opts = {}){
       phone: customer.phone || '',
       last_order_date: new Date().toISOString(),
     }, { onConflict: 'email' }).catch(()=>{})
+    // Si dejó un carrito abandonado registrado, marcarlo recuperado para que
+    // el cron no le mande el email de "olvidaste tu carrito" tras comprar.
+    await db.from('abandoned_carts')
+      .update({ recovered: true })
+      .eq('email', String(customer.email).toLowerCase())
+      .eq('recovered', false)
+      .catch(()=>{})
   }
 
   const orderObj = { ...orderRow }

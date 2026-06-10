@@ -3,9 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-
-const S = 'https://awwlbepjxuoxaigztugh.supabase.co'
-const K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+import { trackPurchase } from '@/lib/analytics'
 
 function Contenido() {
   const params = useSearchParams()
@@ -37,6 +35,22 @@ function Contenido() {
     })()
   }, [num])
 
+  // Analítica: evento de compra una sola vez por pedido (flag en sessionStorage
+  // para que recargar la página no duplique el evento).
+  useEffect(() => {
+    if (!order) return
+    try {
+      const flag = 'bm_purchase_' + order.order_number
+      if (sessionStorage.getItem(flag)) return
+      sessionStorage.setItem(flag, '1')
+    } catch {}
+    trackPurchase({
+      order_number: order.order_number,
+      total: order.total,
+      items: lines.map(function(l){ return { id: l.product_id, name: l.product_name, price: l.unit_price, qty: l.quantity } }),
+    })
+  }, [order])
+
   if (loading) return (
     <div style={{ minHeight:'60vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f8f8f8' }}>
       <div style={{ textAlign:'center' }}>
@@ -59,13 +73,15 @@ function Contenido() {
 
   const firstName = order.customer_name ? order.customer_name.split(' ')[0] : 'cliente'
   const fecha = new Date(order.created_at).toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' })
+  const isTransfer = params.get('pm') === 'transfer' || order.payment_method === 'transfer'
+  const iban = process.env.NEXT_PUBLIC_BANK_IBAN
 
   return (
     <div style={{ background:'#f8f8f8', minHeight:'60vh', fontFamily:'Heebo, Arial, sans-serif' }}>
       <div style={{ background:'linear-gradient(135deg,#111 0%,#1a0808 100%)', padding:'48px 20px', textAlign:'center' }}>
-        <div style={{ fontSize:64, marginBottom:12 }}>🎉</div>
-        <h1 style={{ fontSize:'clamp(22px,4vw,32px)', fontWeight:900, color:'white', margin:'0 0 8px', textTransform:'uppercase' }}>¡Pedido confirmado!</h1>
-        <p style={{ color:'rgba(255,255,255,0.6)', fontSize:15, margin:'0 0 20px' }}>Gracias <strong style={{ color:'white' }}>{firstName}</strong> — lo estamos preparando.</p>
+        <div style={{ fontSize:64, marginBottom:12 }}>{isTransfer ? '📦' : '🎉'}</div>
+        <h1 style={{ fontSize:'clamp(22px,4vw,32px)', fontWeight:900, color:'white', margin:'0 0 8px', textTransform:'uppercase' }}>{isTransfer ? '¡Pedido recibido!' : '¡Pedido confirmado!'}</h1>
+        <p style={{ color:'rgba(255,255,255,0.6)', fontSize:15, margin:'0 0 20px' }}>Gracias <strong style={{ color:'white' }}>{firstName}</strong>{isTransfer ? ' — quedará confirmado al recibir el pago.' : ' — lo estamos preparando.'}</p>
         <div style={{ display:'inline-block', background:'rgba(255,30,65,0.15)', border:'1px solid #ff1e41', padding:'12px 28px', borderRadius:4 }}>
           <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:4 }}>Número de pedido</div>
           <div style={{ fontSize:28, fontWeight:900, color:'#ff1e41', letterSpacing:3 }}>{order.order_number}</div>
@@ -74,6 +90,20 @@ function Contenido() {
       </div>
 
       <div style={{ maxWidth:860, margin:'0 auto', padding:'32px 20px' }}>
+        {isTransfer&&(
+          <div style={{ background:'#fffbeb', border:'2px solid #f59e0b', borderRadius:8, padding:'20px 24px', marginBottom:20 }}>
+            <div style={{ fontSize:14, fontWeight:800, color:'#92400e', marginBottom:8 }}>⚠️ Pedido RECIBIDO — pendiente de pago</div>
+            <p style={{ fontSize:13, color:'#78350f', margin:'0 0 12px', lineHeight:1.6 }}>Realiza la transferencia para confirmarlo:</p>
+            <div style={{ background:'white', border:'1px solid #fcd34d', borderRadius:6, padding:'14px 16px', fontSize:13, color:'#333', lineHeight:2 }}>
+              {iban
+                ? <div><strong>IBAN:</strong> <span style={{ fontFamily:'monospace', fontWeight:700 }}>{iban}</span></div>
+                : <div>Te enviaremos los datos de pago por email/WhatsApp en breve.</div>}
+              <div><strong>Importe:</strong> <span style={{ fontWeight:700, color:'#ff1e41' }}>{Number(order.total).toFixed(2)} €</span></div>
+              <div><strong>Concepto:</strong> <span style={{ fontFamily:'monospace', fontWeight:700 }}>{order.order_number}</span></div>
+            </div>
+            <p style={{ fontSize:12, color:'#92400e', margin:'12px 0 0' }}>En cuanto recibamos el pago, prepararemos tu pedido. ¿Dudas? WhatsApp 828 048 310.</p>
+          </div>
+        )}
         <div style={{ background:'white', border:'1px solid #e8e8e8', borderRadius:8, padding:'24px 28px', marginBottom:20 }}>
           <div style={{ fontSize:12, fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:20 }}>Estado del pedido</div>
           <div style={{ display:'flex', alignItems:'flex-start', position:'relative' }}>
