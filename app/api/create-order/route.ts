@@ -14,10 +14,12 @@ export async function POST(req){
     const db = adminDb()
     const body = await req.json()
 
+    // El canal NO se acepta del cliente (evitar autofacturarse en serie B2B
+    // de distribuidor). La web pública es siempre 'web'.
     const res = await persistOrder(db, body, {
       status: 'pending',
       payment_method: body.payment_method || 'card',
-      channel: body.channel || 'web',
+      channel: 'web',
     })
     if(!res.ok) return NextResponse.json(res, { status: res.status || 400 })
     return NextResponse.json({ ok:true, order_number: res.order_number, total: res.total })

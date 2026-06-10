@@ -37,15 +37,28 @@ export async function POST(req){
     const paid = Number(capture?.amount?.value || 0)
     const captureId = capture?.id || null
 
-    // 3. Verificar importe (tolerancia 1 céntimo). Si pagó MENOS, no creamos pedido.
+    // 3. Idempotencia: si ya existe un pedido con esta captura, devolverlo sin
+    // volver a crear (evita pedido/stock/factura duplicados si el cliente
+    // reintenta la captura). Respaldado por índice único en paypal_capture_id.
+    if(captureId){
+      const { data: existing } = await db.from('orders')
+        .select('order_number,total').eq('paypal_capture_id', captureId).maybeSingle()
+      if(existing)
+        return NextResponse.json({ ok:true, order_number: existing.order_number, total: existing.total, idempotent:true })
+    }
+
+    // 4. Verificar importe (tolerancia 1 céntimo). Si pagó MENOS, no creamos pedido.
     if(round2(paid) + 0.01 < round2(expected))
       return NextResponse.json({ ok:false, error:'importe_no_coincide', paid, expected }, { status:409 })
 
-    // 4. Crear pedido como pagado
+    // 5. Crear pedido como pagado. El canal NO se toma del cliente (evita que un
+    // comprador retail se autofacture en serie B2B de distribuidor); la web pública
+    // siempre es 'web'. El canal de distribuidor se derivará de la sesión cuando
+    // exista ese flujo autenticado.
     const res = await persistOrder(db, body, {
       status: 'paid',
       payment_method: 'paypal',
-      channel: body.channel || 'web',
+      channel: 'web',
       paypal_capture_id: captureId,
     })
     if(!res.ok) return NextResponse.json(res, { status: res.status || 400 })
