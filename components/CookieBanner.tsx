@@ -6,7 +6,8 @@ import Link from 'next/link'
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false)
   const [detail, setDetail] = useState(false)
-  const [prefs, setPrefs] = useState({ analytics: true, marketing: true })
+  // AEPD: las cookies no técnicas deben estar desactivadas por defecto (opt-in)
+  const [prefs, setPrefs] = useState({ analytics: false, marketing: false })
 
   useEffect(() => {
     const saved = localStorage.getItem('bm_cookie_consent')

@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
-const BASE = 'https://buymuscle-tienda.vercel.app'
+const BASE = SITE_URL
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const db = createClient(S, K)

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { getAdminUser } from '@/lib/adminAuth'
+import { SITE_URL } from '@/lib/site'
 export const dynamic='force-dynamic'
 
 export async function POST(req:Request){
@@ -78,7 +79,7 @@ export async function POST(req:Request){
         </div>
         <!-- Footer -->
         <div style="text-align:center;padding:20px;font-size:11px;color:#aaa">
-          <p style="margin:0">BUYMUSCLE · Las Palmas de Gran Canaria · <a href="https://buymuscle-tienda.vercel.app" style="color:#ff1e41">tienda.buymuscle.es</a></p>
+          <p style="margin:0">BUYMUSCLE · Las Palmas de Gran Canaria · <a href="${SITE_URL}" style="color:#ff1e41">tienda.buymuscle.es</a></p>
         </div>
       </div>
     </body></html>

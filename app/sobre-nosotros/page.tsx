@@ -36,7 +36,7 @@ export default function SobreNosotros(){
           <p style={{color:'rgba(255,255,255,0.85)',fontSize:14,margin:'0 0 24px'}}>Nuestro equipo está disponible para asesorarte sin compromiso.</p>
           <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
             <a href="https://wa.me/34828048310" style={{background:'#25D366',color:'white',padding:'12px 24px',textDecoration:'none',fontWeight:700,fontSize:13}}>WhatsApp 828 048 310</a>
-            <a href="mailto:info@buymuscle.es" style={{background:'white',color:'#ff1e41',padding:'12px 24px',textDecoration:'none',fontWeight:700,fontSize:13}}>info@buymuscle.es</a>
+            <a href="mailto:tienda@buymuscle.es" style={{background:'white',color:'#ff1e41',padding:'12px 24px',textDecoration:'none',fontWeight:700,fontSize:13}}>tienda@buymuscle.es</a>
           </div>
         </div>
       </div>

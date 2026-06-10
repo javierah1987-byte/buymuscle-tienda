@@ -56,7 +56,7 @@ export default function PoliticaEnvios() {
       <h2 style={{fontSize:20,fontWeight:800,color:'#ff1e41',marginBottom:12}}>4. Incidencias en el envío</h2>
       <p style={{marginBottom:12}}>Si tu pedido llegó dañado, incompleto o con error, contacta con nosotros en las <strong>48 horas siguientes</strong> a la recepción:</p>
       <ul style={{paddingLeft:24,marginBottom:24,color:'#555'}}>
-        <li style={{marginBottom:8}}>Email: <a href="mailto:info@buymuscle.es" style={{color:'#ff1e41'}}>info@buymuscle.es</a></li>
+        <li style={{marginBottom:8}}>Email: <a href="mailto:tienda@buymuscle.es" style={{color:'#ff1e41'}}>tienda@buymuscle.es</a></li>
         <li style={{marginBottom:8}}>WhatsApp: <a href="https://wa.me/34828048310" style={{color:'#ff1e41'}}>828 048 310</a></li>
       </ul>
       <p style={{marginBottom:24}}>Adjunta fotos del estado del paquete y el producto para acelerar la resolución. Nos comprometemos a responder en menos de 24h laborables.</p>

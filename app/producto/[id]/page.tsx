@@ -11,6 +11,7 @@ import ProductCard from '@/components/ProductCard'
 import ImageGallery from '@/components/ImageGallery'
 import ProductoGrid from '@/components/ProductoGrid'
 import Script from 'next/script'
+import { SITE_URL } from '@/lib/site'
 
 const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
 // ISR: la página se regenera cada 60 s. El stock mostrado puede tener hasta 1 min
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
     : p.name + ' — ' + (p.brand ? 'Marca ' + p.brand + '. ' : '') + 'Disponible en BuyMuscle Canarias. Envío 24-48h · IVA incluido · Precio: ' + price.toFixed(2) + '€.'
   return {
     title: p.name,
-    alternates: { canonical: 'https://buymuscle-tienda.vercel.app/producto/' + params.id },
+    alternates: { canonical: SITE_URL + '/producto/' + params.id },
     description: (p.description||'').slice(0,160)||'Suplementacion deportiva BuyMuscle',
     openGraph: { images: p.image_url ? [{ url: p.image_url }] : [] }
   }
@@ -70,7 +71,7 @@ export default async function ProductoPage({ params }) {
     '@context':'https://schema.org','@type':'Product',
     name:product.name, description:desc.slice(0,300)||product.name, image:images[0]||'',
     brand:{'@type':'Brand',name:product.brand||'BuyMuscle'},
-    offers:{'@type':'Offer',url:'https://buymuscle-tienda.vercel.app/producto/'+params.id,priceCurrency:'EUR',price:displayPrice.toFixed(2),availability:product.stock>0?'https://schema.org/InStock':'https://schema.org/OutOfStock',seller:{'@type':'Organization',name:'BuyMuscle'}},
+    offers:{'@type':'Offer',url:SITE_URL+'/producto/'+params.id,priceCurrency:'EUR',price:displayPrice.toFixed(2),availability:product.stock>0?'https://schema.org/InStock':'https://schema.org/OutOfStock',seller:{'@type':'Organization',name:'BuyMuscle'}},
     ...(avgRating&&reviews.length>=1?{aggregateRating:{'@type':'AggregateRating',ratingValue:avgRating,reviewCount:reviews.length}}:{})
   }
   return (

@@ -23,7 +23,7 @@ export async function POST(req){
       await Promise.allSettled(batch.map(email =>
         fetch('https://api.resend.com/emails',{method:'POST',
           headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-          body:JSON.stringify({from:'BUYMUSCLE <newsletter@pruebasgrupoaxen.com>',to:email,subject,
+          body:JSON.stringify({from:'BUYMUSCLE <newsletter@buymuscle.es>',to:email,subject,
             html:body+'<br><br><p style="font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:8px">Para darte de baja escribe a tienda@buymuscle.es · BUYMUSCLE, Telde, Las Palmas</p>'})})
       ))
       sent += batch.length

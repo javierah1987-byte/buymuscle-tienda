@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin', '/tpv', '/api', '/pedido-confirmado', '/mis-pedidos', '/mi-cuenta'],
       },
     ],
-    sitemap: 'https://buymuscle-tienda.vercel.app/sitemap.xml',
-    host: 'https://buymuscle-tienda.vercel.app',
+    sitemap: SITE_URL + '/sitemap.xml',
+    host: SITE_URL,
   }
 }

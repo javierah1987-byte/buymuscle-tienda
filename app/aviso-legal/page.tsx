@@ -14,13 +14,17 @@ export default function AvisoLegal() {
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: '#ff1e41' }}>1. Datos identificativos</h2>
         <p>En cumplimiento con el deber de información recogido en artículo 10 de la Ley 34/2002, del 11 de julio, de Servicios de la Sociedad de la Información y del Comercio Electrónico, a continuación se reflejan los siguientes datos:</p>
-        <ul style={{ marginTop: 12, paddingLeft: 20, lineHeight: 2 }}>
-          <li><strong>Empresa:</strong> BuyMuscle</li>
-          <li><strong>Domicilio:</strong> Gran Canaria, España</li>
-          <li><strong>Email:</strong> info@buymuscle.es</li>
-          <li><strong>Teléfono:</strong> +34 828 048 310</li>
-          <li><strong>Actividad:</strong> Venta online de suplementación deportiva</li>
-        </ul>
+        <div style={{ marginTop: 12, padding: '16px 20px', background: '#f8f8f8', border: '1px solid #e5e5e5', borderRadius: 8 }}>
+          <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
+            <li><strong>Nombre comercial:</strong> BUYMUSCLE</li>
+            <li><strong>Razón social:</strong> [PENDIENTE — completar]</li>
+            <li><strong>NIF/CIF:</strong> [PENDIENTE — completar]</li>
+            <li><strong>Dirección:</strong> Alcalde Manuel Amador Rodríguez 23, Telde, Las Palmas</li>
+            <li><strong>Email:</strong> tienda@buymuscle.es</li>
+            <li><strong>Teléfono / WhatsApp:</strong> 828 048 310</li>
+            <li><strong>Actividad:</strong> Venta online de suplementación deportiva</li>
+          </ul>
+        </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>

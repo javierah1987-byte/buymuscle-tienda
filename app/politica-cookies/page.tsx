@@ -61,8 +61,8 @@ export default function PoliticaCookies() {
       <p style={{marginBottom:24}}>Ten en cuenta que bloquear todas las cookies puede afectar a la funcionalidad del carrito y el proceso de compra.</p>
 
       <h2 style={{fontSize:20,fontWeight:800,color:'#ff1e41',marginBottom:12}}>6. Más información</h2>
-      <p style={{marginBottom:8}}>Para cualquier consulta sobre nuestra política de cookies, puedes contactarnos en <a href="mailto:info@buymuscle.es" style={{color:'#ff1e41'}}>info@buymuscle.es</a>.</p>
-      <p style={{color:'#888',fontSize:13}}>Esta política se aplica exclusivamente al dominio buymuscle-tienda.vercel.app y tienda.buymuscle.es.</p>
+      <p style={{marginBottom:8}}>Para cualquier consulta sobre nuestra política de cookies, puedes contactarnos en <a href="mailto:tienda@buymuscle.es" style={{color:'#ff1e41'}}>tienda@buymuscle.es</a>.</p>
+      <p style={{color:'#888',fontSize:13}}>Esta política se aplica exclusivamente al dominio tienda.buymuscle.es.</p>
     </div>
   )
 }

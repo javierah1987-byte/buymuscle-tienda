@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
+import { SITE_URL } from '@/lib/site'
 
 type Variant = { id:number; value:string; hex?:string; variantId:number; stock:number; priceModifier:number }
 
@@ -123,7 +124,7 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
           background: added ? '#22c55e' : inStock && allTypesSelected ? 'var(--red)' : '#ccc', color:'white', transition:'background 0.2s' }}>
         {added ? '✓ Añadido al carrito' : !inStock ? 'Sin stock' : !allTypesSelected ? 'Selecciona opciones' : '🛒 AÑADIR AL CARRITO'}
       </button>
-      <a href={'https://wa.me/?text='+encodeURIComponent('¡Mira este producto! '+product.name+' - buymuscle-tienda.vercel.app/producto/'+product.id)}
+      <a href={'https://wa.me/?text='+encodeURIComponent('¡Mira este producto! '+product.name+' - '+SITE_URL+'/producto/'+product.id)}
         target="_blank" rel="noopener noreferrer"
         style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,width:'100%',padding:'10px',border:'1px solid #25d366',borderRadius:4,background:'white',color:'#25d366',fontSize:13,fontWeight:700,textDecoration:'none',marginTop:8}}>
         📱 Compartir en WhatsApp

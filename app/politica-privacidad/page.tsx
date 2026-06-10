@@ -13,7 +13,17 @@ export default function PoliticaPrivacidad() {
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: '#ff1e41' }}>1. Responsable del tratamiento</h2>
-        <p>BuyMuscle, con domicilio en Gran Canaria, España. Email de contacto: info@buymuscle.es</p>
+        <p>El responsable del tratamiento de tus datos personales es:</p>
+        <div style={{ marginTop: 12, padding: '16px 20px', background: '#f8f8f8', border: '1px solid #e5e5e5', borderRadius: 8 }}>
+          <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
+            <li><strong>Nombre comercial:</strong> BUYMUSCLE</li>
+            <li><strong>Razón social:</strong> [PENDIENTE — completar]</li>
+            <li><strong>NIF/CIF:</strong> [PENDIENTE — completar]</li>
+            <li><strong>Dirección:</strong> Alcalde Manuel Amador Rodríguez 23, Telde, Las Palmas</li>
+            <li><strong>Email:</strong> tienda@buymuscle.es</li>
+            <li><strong>Teléfono / WhatsApp:</strong> 828 048 310</li>
+          </ul>
+        </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
@@ -52,7 +62,7 @@ export default function PoliticaPrivacidad() {
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: '#ff1e41' }}>6. Tus derechos</h2>
-        <p>Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, portabilidad y limitación del tratamiento enviando un email a info@buymuscle.es con asunto "Protección de datos".</p>
+        <p>Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, portabilidad y limitación del tratamiento enviando un email a tienda@buymuscle.es con asunto "Protección de datos".</p>
       </section>
 
       <section style={{ marginBottom: 32 }}>
@@ -62,7 +72,7 @@ export default function PoliticaPrivacidad() {
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: '#ff1e41' }}>8. Contacto</h2>
-        <p>Para cualquier consulta sobre privacidad: <a href="mailto:info@buymuscle.es" style={{ color: '#ff1e41' }}>info@buymuscle.es</a></p>
+        <p>Para cualquier consulta sobre privacidad: <a href="mailto:tienda@buymuscle.es" style={{ color: '#ff1e41' }}>tienda@buymuscle.es</a></p>
       </section>
     </div>
   )

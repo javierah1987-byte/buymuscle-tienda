@@ -2,60 +2,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import TicketTPV from '@/components/TicketTPV'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
-// Mini-cliente REST sin GoTrueClient (evita lock bug)
-const h = { apikey: K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json' }
-const db = {
-  from: function(table) {
-    return {
-      _t: table, _sel: '*', _filters: [], _ord: null, _lim: null, _asc: true,
-      select: function(s) { this._sel = s; return this },
-      eq: function(col, val) { this._filters.push(col+'=eq.'+encodeURIComponent(val)); return this },
-      is: function(col, val) { this._filters.push(col+'=is.'+val); return this },
-      gt: function(col, val) { this._filters.push(col+'=gt.'+val); return this },
-      gte: function(col, val) { this._filters.push(col+'=gte.'+encodeURIComponent(val)); return this },
-      order: function(col, opts) { this._ord = col; this._asc = opts ? !opts.ascending : true; return this },
-      limit: function(n) { this._lim = n; return this },
-      single: async function() {
-        const url = this._buildUrl()
-        const r = await fetch(url + '&limit=1', { headers: { ...h, 'Accept': 'application/vnd.pgrst.object+json' } })
-        const data = await r.json()
-        return { data, error: r.ok ? null : data }
-      },
-      _buildUrl: function() {
-        let url = S + '/rest/v1/' + this._t + '?select=' + encodeURIComponent(this._sel)
-        this._filters.forEach(f => { url += '&' + f })
-        if (this._ord) url += '&order=' + this._ord + (this._asc ? '.asc' : '.desc')
-        if (this._lim) url += '&limit=' + this._lim
-        return url
-      },
-      then: function() { return this._exec().then(...arguments) },
-      _exec: async function() {
-        const url = this._buildUrl()
-        const r = await fetch(url, { headers: h })
-        const data = await r.json()
-        return { data: Array.isArray(data) ? data : [], error: r.ok ? null : data }
-      },
-      insert: async function(payload) {
-        const r = await fetch(S + '/rest/v1/' + this._t, {
-          method: 'POST', headers: { ...h, 'Prefer': 'return=representation' },
-          body: JSON.stringify(payload)
-        })
-        const data = await r.json()
-        return { data: Array.isArray(data) ? data[0] : data, error: r.ok ? null : data }
-      },
-      update: async function(payload) {
-        let url = S + '/rest/v1/' + this._t + '?'
-        this._filters.forEach(f => { url += f + '&' })
-        const r = await fetch(url, { method: 'PATCH', headers: h, body: JSON.stringify(payload) })
-        const data = await r.json()
-        return { data, error: r.ok ? null : data }
-      }
-    }
-  }
-}
 const DISCOUNTS = { particular:0, bronze:10, silver:15, gold:20 }
 const CLIENT_COLORS = { particular:'#555', bronze:'#cd7f32', silver:'#aaa', gold:'#ffd700' }
 
@@ -382,7 +329,7 @@ export default function TPVPage() {
     lineRow: { display:'flex', alignItems:'center', gap:6, padding:'7px 0', borderBottom:'1px solid #f1f5f9' },
     footer: { borderTop:'1px solid #e2e8f0', padding:'12px', background:'white' },
     payRow: { display:'flex', gap:3, marginBottom:8 },
-    payBtn: (active) => ({ flex:1, padding:'8px 2px', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', background:active?'#ff1e41':'rgba(255,255,255,0.1)', color:'white', fontFamily:'inherit', borderRadius:4, transition:'all 0.15s' }),
+    payBtn: (active) => ({ flex:1, padding:'8px 2px', fontSize:11, fontWeight:700, border:'none', cursor:'pointer', background:active?'#ff1e41':'#f1f5f9', color:active?'white':'#374151', fontFamily:'inherit', borderRadius:4, transition:'all 0.15s' }),
     cobraBtn: { width:'100%', padding:14, background:saving?'#64748b':'#ff1e41', color:'white', border:'none', fontWeight:900, fontSize:16, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', letterSpacing:1, borderRadius:6, transition:'all 0.2s' },
   }
 
@@ -426,12 +373,12 @@ export default function TPVPage() {
       <div style={{ textAlign:'center', maxWidth:380, padding:32 }}>
         <div style={{ fontSize:72, marginBottom:12 }}>✅</div>
         <h2 style={{ fontSize:28, fontWeight:900, margin:'0 0 6px', color:'#ff1e41' }}>¡Cobrado!</h2>
-        <p style={{ color:'#888', margin:'0 0 4px' }}>Pedido <strong style={{ color:'white' }}>{ticket.num}</strong></p>
+        <p style={{ color:'#888', margin:'0 0 4px' }}>Pedido <strong style={{ color:'#111' }}>{ticket.num}</strong></p>
         <div style={{ background:'white', border:'1px solid #e2e8f0', padding:'20px', margin:'20px 0', borderRadius:12, boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
           {ticket.lines.map(l => (
             <div key={l.key} style={{ display:'flex', justifyContent:'space-between', fontSize:13, padding:'5px 0', borderBottom:'1px solid #f1f5f9' }}>
               <span style={{ color:'#4b5563' }}>{l.product.name} ×{l.qty}</span>
-              <span style={{ color:'white' }}>{(l.unitPrice*l.qty).toFixed(2)} €</span>
+              <span style={{ color:'#111' }}>{(l.unitPrice*l.qty).toFixed(2)} €</span>
             </div>
           ))}
           {ticket.discount>0 && <div style={{ fontSize:12, color:'#f59e0b', marginTop:8 }}>Dto. {ticket.discount}% aplicado</div>}
@@ -554,17 +501,17 @@ export default function TPVPage() {
 
               <div style={{ marginBottom:14 }}>
                 {devLines.map(l => (
-                  <div key={l.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:'1px solid #1a1a1a' }}>
+                  <div key={l.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom:'1px solid #f1f5f9' }}>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:12, color:'white' }}>{l.product_name}</div>
-                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.5)' }}>×{l.quantity} · {Number(l.unit_price).toFixed(2)} €/ud</div>
+                      <div style={{ fontSize:12, color:'#111' }}>{l.product_name}</div>
+                      <div style={{ fontSize:11, color:'#6b7280' }}>×{l.quantity} · {Number(l.unit_price).toFixed(2)} €/ud</div>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                       <button onClick={()=>setDevSelected(s=>({...s,[l.id]:Math.max(0,(s[l.id]||0)-1)}))}
-                        style={{ width:28, height:28, border:'1px solid #333', background:'#1a1a1a', color:'white', cursor:'pointer', fontSize:16 }}>−</button>
+                        style={{ width:28, height:28, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:16, borderRadius:4 }}>−</button>
                       <span style={{ width:24, textAlign:'center', fontSize:13, fontWeight:700 }}>{devSelected[l.id]||0}</span>
                       <button onClick={()=>setDevSelected(s=>({...s,[l.id]:Math.min(l.quantity,(s[l.id]||0)+1)}))}
-                        style={{ width:28, height:28, border:'1px solid #333', background:'#1a1a1a', color:'white', cursor:'pointer', fontSize:16 }}>+</button>
+                        style={{ width:28, height:28, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:16, borderRadius:4 }}>+</button>
                     </div>
                     <div style={{ fontSize:13, fontWeight:700, width:64, textAlign:'right', color:'#ff1e41' }}>
                       {((devSelected[l.id]||0)*Number(l.unit_price)).toFixed(2)} €
@@ -578,7 +525,7 @@ export default function TPVPage() {
                 <div style={{ display:'flex', gap:4 }}>
                   {['efectivo','tarjeta','vale'].map(m=>(
                     <button key={m} onClick={()=>setDevMethod(m)}
-                      style={{ ...btnGray, flex:1, background:devMethod===m?'#ff1e41':'#1a1a1a', borderColor:devMethod===m?'#ff1e41':'#333', borderRadius:3 }}>
+                      style={{ ...btnGray, flex:1, background:devMethod===m?'#ff1e41':'white', color:devMethod===m?'white':'#374151', borderColor:devMethod===m?'#ff1e41':'#d1d5db', borderRadius:3 }}>
                       {m==='efectivo'?'💵':m==='tarjeta'?'💳':'🎟️'} {m}
                     </button>
                   ))}
@@ -609,7 +556,7 @@ export default function TPVPage() {
               <div style={{ fontSize:48, marginBottom:12 }}>✅</div>
               <h3 style={{ margin:'0 0 8px', color:'#22c55e', fontSize:18 }}>Devolución procesada</h3>
               <p style={{ color:'#888', fontSize:14, margin:'0 0 16px' }}>
-                Se han devuelto <strong style={{ color:'white' }}>{devDone.total.toFixed(2)} €</strong> en {devDone.method}
+                Se han devuelto <strong style={{ color:'#111' }}>{devDone.total.toFixed(2)} €</strong> en {devDone.method}
                 <br/>y el stock ha sido repuesto.
               </p>
               <button onClick={resetDev} style={btnRed}>Cerrar</button>
@@ -657,7 +604,7 @@ export default function TPVPage() {
           ].map(({l,v,c})=>(
             <div key={l} style={{ flex:1, padding:'6px 4px', background:'white', textAlign:'center', borderRight:'1px solid #e2e8f0' }}>
               <div style={{ fontSize:13, fontWeight:900, color:c }}>{v}</div>
-              <div style={{ fontSize:8, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', marginTop:2, letterSpacing:'0.05em' }}>{l}</div>
+              <div style={{ fontSize:8, color:'#94a3b8', textTransform:'uppercase', marginTop:2, letterSpacing:'0.05em' }}>{l}</div>
             </div>
           ))}
         </div>
@@ -708,37 +655,37 @@ export default function TPVPage() {
         </div>
 
         {/* Nombre cliente + NIF en una fila */}
-        <div style={{ padding:'6px 8px', background:'#0d0d0d', borderBottom:'1px solid #222', display:'flex', gap:4 }}>
+        <div style={{ padding:'6px 8px', background:'#f8fafc', borderBottom:'1px solid #e2e8f0', display:'flex', gap:4 }}>
           <input value={customerName} onChange={e=>setCustomerName(e.target.value)} placeholder="Nombre cliente"
-            style={{ flex:2, background:'white', border:'1px solid #d1d5db', color:'#111a(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+            style={{ flex:2, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
           <input value={customerNif} onChange={e=>setCustomerNif(e.target.value)} placeholder="NIF/CIF"
-            style={{ flex:1, background:'white', border:'1px solid #d1d5db', color:'#111a(255,255,255,0.15)', color:'white', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+            style={{ flex:1, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 10px', fontSize:12, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
         </div>
 
         {/* Líneas del ticket */}
         <div style={ST.ticket}>
           {lines.length === 0 ? (
-            <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'rgba(255,255,255,0.2)', gap:8 }}>
+            <div style={{ height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'#94a3b8', gap:8 }}>
               <span style={{ fontSize:48 }}>🛒</span>
               <span style={{ fontSize:12 }}>Haz click en un producto</span>
-              <span style={{ fontSize:10, color:'#d1d5db' }}>Enter = cobrar · Esc = vaciar</span>
+              <span style={{ fontSize:10, color:'#9ca3af' }}>Enter = cobrar · Esc = vaciar</span>
             </div>
           ) : (
             lines.map(l => (
               <div key={l.key} style={ST.lineRow}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, color:'white', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500 }}>
+                  <div style={{ fontSize:12, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500 }}>
                     {l.product.name}{l.variantLabel?' – '+l.variantLabel:''}
                   </div>
-                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>{l.unitPrice.toFixed(2)}€/ud</div>
+                  <div style={{ fontSize:10, color:'#6b7280' }}>{l.unitPrice.toFixed(2)}€/ud</div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
-                  <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:26, height:26, border:'1px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.1)', color:'white', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
-                  <span style={{ width:20, textAlign:'center', fontSize:13, fontWeight:700 }}>{l.qty}</span>
-                  <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:26, height:26, border:'1px solid rgba(255,255,255,0.2)', background:'rgba(255,255,255,0.1)', color:'white', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
+                  <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
+                  <span style={{ width:20, textAlign:'center', fontSize:13, fontWeight:700, color:'#111' }}>{l.qty}</span>
+                  <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
                 </div>
-                <span style={{ fontSize:13, fontWeight:700, color:'white', width:56, textAlign:'right', flexShrink:0 }}>{(l.unitPrice*l.qty).toFixed(2)}€</span>
-                <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.2)', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
+                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:56, textAlign:'right', flexShrink:0 }}>{(l.unitPrice*l.qty).toFixed(2)}€</span>
+                <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'#9ca3af', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
               </div>
             ))
           )}
@@ -751,7 +698,7 @@ export default function TPVPage() {
             <span style={{ fontSize:10, color:'#555', textTransform:'uppercase', flexShrink:0 }}>Dto %</span>
             <input type="number" min="0" max="100" value={discManual||''} onChange={e=>setDiscManual(Number(e.target.value)||0)}
               placeholder="0" style={{ width:50, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'4px 6px', fontSize:12, textAlign:'center', fontFamily:'inherit', outline:'none', borderRadius:2 }}/>
-            <span style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>activo: <strong style={{ color: discount>0?'#f59e0b':'#555' }}>{discount}%</strong></span>
+            <span style={{ fontSize:10, color:'#6b7280' }}>activo: <strong style={{ color: discount>0?'#f59e0b':'#555' }}>{discount}%</strong></span>
           </div>
 
           {/* Forma de pago */}
@@ -786,8 +733,8 @@ export default function TPVPage() {
           </button>
 
           {/* Ventas resumen del día debajo del cobrar */}
-          <div style={{ borderTop:'1px solid #1a1a1a', marginTop:10, paddingTop:8, display:'flex', justifyContent:'space-between' }}>
-            <span style={{ fontSize:10, color:'rgba(255,255,255,0.2)', textTransform:'uppercase' }}>Ventas hoy</span>
+          <div style={{ borderTop:'1px solid #e2e8f0', marginTop:10, paddingTop:8, display:'flex', justifyContent:'space-between' }}>
+            <span style={{ fontSize:10, color:'#9ca3af', textTransform:'uppercase' }}>Ventas hoy</span>
             <span style={{ fontSize:10, color:'#ff1e41', fontWeight:700 }}>{ventasDia.total.toFixed(2)} € · {ventasDia.count} tickets</span>
           </div>
         </div>
@@ -802,8 +749,8 @@ export default function TPVPage() {
               const label = attrs.map(a => (a.attribute_types?.name ? a.attribute_types.name+': ' : '') + a.value).join(' · ')
               return (
                 <button key={v.id} onClick={()=>_addToLines(variantModal.product, label, v.id)}
-                  style={{ padding:'8px 16px', background:'#1a1a1a', border:'1px solid #333', color:'white', cursor:'pointer', fontSize:12, fontFamily:'inherit', borderRadius:3 }}>
-                  {label}<div style={{ fontSize:9, color:'#555', marginTop:2 }}>Stock: {v.stock}</div>
+                  style={{ padding:'8px 16px', background:'white', border:'1px solid #d1d5db', color:'#111', cursor:'pointer', fontSize:12, fontFamily:'inherit', borderRadius:3 }}>
+                  {label}<div style={{ fontSize:9, color:'#888', marginTop:2 }}>Stock: {v.stock}</div>
                 </button>
               )
             })}

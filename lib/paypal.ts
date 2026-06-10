@@ -1,7 +1,9 @@
 // @ts-nocheck
 // Cliente mínimo de PayPal Orders v2 (server-side). Usa credenciales REST:
-//   PAYPAL_CLIENT_ID, PAYPAL_SECRET, PAYPAL_ENV ('live' | 'sandbox', def. sandbox)
-const ENV = (process.env.PAYPAL_ENV || 'sandbox').toLowerCase()
+//   PAYPAL_CLIENT_ID, PAYPAL_SECRET, PAYPAL_ENV ('live' | 'sandbox')
+// Sin PAYPAL_ENV: 'live' en producción y 'sandbox' en el resto — una var ausente
+// en prod no debe hacer que se acepten pagos sandbox en silencio.
+const ENV = (process.env.PAYPAL_ENV || (process.env.NODE_ENV === 'production' ? 'live' : 'sandbox')).toLowerCase()
 export const PAYPAL_BASE = ENV === 'live'
   ? 'https://api-m.paypal.com'
   : 'https://api-m.sandbox.paypal.com'
