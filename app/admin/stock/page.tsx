@@ -63,8 +63,13 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
     if (!toApply.length) return
     let ok = 0
     for (const item of toApply) {
-      const { error } = await db.from('products').update({ stock: item.newStock }).eq('id', item.matched.id)
-      if (!error) ok++
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ id: item.matched.id, fields: { stock: item.newStock } })
+      })
+      if (res.ok) ok++
     }
     setResultMsg(ok + ' productos actualizados correctamente')
     setStep('success'); onStockUpdated()

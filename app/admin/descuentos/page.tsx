@@ -1,7 +1,5 @@
 // @ts-nocheck
 'use client'
-import { createClient } from '@supabase/supabase-js'
-const db = createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
 import { useEffect, useState, useCallback } from 'react'
 
 
@@ -25,8 +23,9 @@ export default function AdminDescuentos() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await db.from('discount_codes').select('*').order('created_at',{ascending:false})
-    setCodes(data||[])
+    const r = await fetch('/api/admin/discounts',{credentials:'same-origin'})
+    const d = await r.json()
+    setCodes(d.ok ? d.codes : [])
     setLoading(false)
   },[])
 
@@ -47,9 +46,9 @@ export default function AdminDescuentos() {
       active: form.active
     }
     if(editId) {
-      await db.from('discount_codes').update(payload).eq('id', editId)
+      await fetch('/api/admin/discounts',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id:editId, fields:payload})})
     } else {
-      await db.from('discount_codes').insert(payload)
+      await fetch('/api/admin/discounts',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(payload)})
     }
     setForm({...EMPTY, code: randomCode()})
     setEditId(null)
@@ -58,13 +57,13 @@ export default function AdminDescuentos() {
   }
 
   async function toggleActive(id, active) {
-    await db.from('discount_codes').update({ active: !active }).eq('id', id)
+    await fetch('/api/admin/discounts',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id, fields:{active:!active}})})
     setCodes(cs => cs.map(c => c.id===id ? {...c, active: !active} : c))
   }
 
   async function deleteCode(id) {
     if(!confirm('¿Eliminar este código?')) return
-    await db.from('discount_codes').delete().eq('id', id)
+    await fetch('/api/admin/discounts',{method:'DELETE',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id})})
     setCodes(cs => cs.filter(c => c.id!==id))
   }
 

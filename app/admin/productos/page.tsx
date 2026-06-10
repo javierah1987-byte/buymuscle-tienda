@@ -63,32 +63,26 @@ export default function AdminProductos(){
   async function save(){
     if(!editing) return
     setSaving(true)
-    // Guardar producto
-    await fetch(S+'/rest/v1/products?id=eq.'+editing.id,{
+    await fetch('/api/admin/products',{
       method:'PATCH',
-      headers:{...H,'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json'},
+      credentials:'same-origin',
       body:JSON.stringify({
-        name:editing.name,
-        brand:editing.brand,
-        price_incl_tax:Number(editing.price_incl_tax),
-        sale_price:editing.sale_price?Number(editing.sale_price):null,
-        stock:editing.stock,
-        active:editing.active,
-        image_url:editing.image_url||null,
-        description:editing.description||null,
-        category_id:editing.category_id||null
+        id:editing.id,
+        fields:{
+          name:editing.name,
+          brand:editing.brand,
+          price_incl_tax:Number(editing.price_incl_tax),
+          sale_price:editing.sale_price?Number(editing.sale_price):null,
+          stock:editing.stock,
+          active:editing.active,
+          image_url:editing.image_url||null,
+          description:editing.description||null,
+          category_id:editing.category_id||null
+        },
+        variants:variants.filter(v=>v.id).map(v=>({id:v.id,stock:parseInt(v.stock)||0,price_modifier:parseFloat(v.price_modifier)||0}))
       })
     })
-    // Guardar stock de variantes
-    for(const v of variants){
-      if(v.id){
-        await fetch(S+'/rest/v1/product_variants?id=eq.'+v.id,{
-          method:'PATCH',
-          headers:{...H,'Content-Type':'application/json'},
-          body:JSON.stringify({stock:parseInt(v.stock)||0,price_modifier:parseFloat(v.price_modifier)||0})
-        })
-      }
-    }
     setSaving(false)
     setEditing(null)
     setVariants([])
@@ -98,7 +92,7 @@ export default function AdminProductos(){
   }
 
   async function toggleActive(p){
-    await fetch(S+'/rest/v1/products?id=eq.'+p.id,{method:'PATCH',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({active:!p.active})})
+    await fetch('/api/admin/products',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id:p.id,fields:{active:!p.active}})})
     setProds(ps=>(ps||[]).map(x=>x.id===p.id?{...x,active:!p.active}:x))
   }
 

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 
+const S='https://awwlbepjxuoxaigztugh.supabase.co'
+const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const H={apikey:K,'Authorization':'Bearer '+K}
 const MARCAS = ['BuyMuscle','MVP','IO.Genix','Applied Nutrition','GN Nutrition','BioTechUSA','Scitec','HSN','Quamtrax']
 const INP = {width:'100%',padding:'9px 11px',border:'1px solid #333',borderRadius:4,background:'#1a1a1a',color:'white',fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}
 const LBL = {display:'block',fontSize:11,fontWeight:700,color:'#aaa',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:5}
@@ -17,7 +20,8 @@ export default function NuevoProducto() {
   const [nv,setNv]=useState({tipo:'Sabor',valor:'',stock:'10',mod:'0'})
 
   useEffect(()=>{
-    supabase.from('categories').select('id,name').order('name').then(({data})=>setCats(data||[]))
+    fetch(S+'/rest/v1/categories?select=id,name&order=name.asc',{headers:H})
+      .then(r=>r.json()).then(d=>setCats(Array.isArray(d)?d:[]))
   },[])
 
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
@@ -32,26 +36,29 @@ export default function NuevoProducto() {
     if(!form.name||!form.price_incl_tax){setMsg({err:true,text:'Nombre y precio obligatorios'});return}
     setSaving(true);setMsg(null)
     try{
-      const{data:prod,error:pe}=await supabase.from('products').insert({
-        name:form.name.trim(),brand:form.brand,
-        category_id:form.category_id?Number(form.category_id):null,
-        price_incl_tax:Number(form.price_incl_tax),
-        sale_price:form.sale_price?Number(form.sale_price):null,
-        on_sale:!!form.sale_price,
-        image_url:form.image_url.trim()||null,
-        stock:Number(form.stock)||0,
-        description:form.description.trim()||null,
-        active:form.active,
-        has_variants:variantes.length>0,
-      }).select().single()
-      if(pe) throw pe
-      for(const v of variantes){
-        let{data:at}=await supabase.from('attribute_types').select('id').eq('name',v.tipo).single()
-        if(!at){const r=await supabase.from('attribute_types').insert({name:v.tipo}).select().single();at=r.data}
-        const{data:av}=await supabase.from('attribute_values').insert({value:v.valor.trim(),attribute_type_id:at.id}).select().single()
-        await supabase.from('product_variants').insert({product_id:prod.id,attribute_value_id:av.id,stock:Number(v.stock)||0,price_modifier:Number(v.mod)||0,active:true})
-      }
-      setMsg({err:false,text:'Producto #'+prod.id+' creado. '+variantes.length+' variantes.'})
+      const res=await fetch('/api/admin/products',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        credentials:'same-origin',
+        body:JSON.stringify({
+          product:{
+            name:form.name.trim(),
+            brand:form.brand,
+            category_id:form.category_id?Number(form.category_id):null,
+            price_incl_tax:Number(form.price_incl_tax),
+            sale_price:form.sale_price?Number(form.sale_price):null,
+            on_sale:!!form.sale_price,
+            image_url:form.image_url.trim()||null,
+            stock:Number(form.stock)||0,
+            description:form.description.trim()||null,
+            active:form.active,
+          },
+          variants:variantes.map(v=>({tipo:v.tipo,valor:v.valor.trim(),stock:v.stock,mod:v.mod})),
+        }),
+      })
+      const data=await res.json()
+      if(!res.ok||!data.ok) throw new Error(data.error||'No se pudo crear el producto')
+      setMsg({err:false,text:'Producto #'+data.id+' creado. '+variantes.length+' variantes.'})
       setForm({name:'',brand:'BuyMuscle',category_id:'',price_incl_tax:'',sale_price:'',image_url:'',stock:'0',description:'',active:true})
       setVariantes([])
     }catch(e){setMsg({err:true,text:'Error: '+e.message})}

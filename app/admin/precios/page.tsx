@@ -29,23 +29,17 @@ export default function AdminPrecios(){
     if(!pct||pct<=0){setMsg('Introduce un porcentaje mayor que 0');return}
     setLoading(true)
     const factor=type==='increase'?(1+pct/100):(1-pct/100)
-    const r=await fetch(S+'/rest/v1/rpc/update_brand_prices',{method:'POST',headers:h,
-      body:JSON.stringify({brand_pattern:'%'+brand+'%',factor:parseFloat(factor.toFixed(4))})})
-    if(r.ok||r.status===200){
-      setMsg('Precios actualizados correctamente para '+brand+' ('+count+' productos)')
-      loadPreview()
-    } else {
-      // Fallback: actualizar via API uno a uno
-      const all2=await fetch(S+'/rest/v1/products?brand=ilike.%25'+encodeURIComponent(brand)+'%25&active=eq.true&select=id,price_incl_tax',{headers:h})
-      const prods=await all2.json()
-      let done=0
-      for(const p of(Array.isArray(prods)?prods:[])){
-        const np=Math.round(Number(p.price_incl_tax)*factor*100)/100
-        await fetch(S+'/rest/v1/products?id=eq.'+p.id,{method:'PATCH',headers:h,body:JSON.stringify({price_incl_tax:np})})
-        done++
+    try{
+      const r=await fetch('/api/admin/prices',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({brand,factor:parseFloat(factor.toFixed(4))})})
+      const d=await r.json()
+      if(r.ok&&d.ok){
+        setMsg('Precios actualizados correctamente para '+brand+' ('+d.updated+' productos)')
+        loadPreview()
+      } else {
+        setMsg(d.error||'Error al actualizar los precios')
       }
-      setMsg('Actualizados '+done+' productos de '+brand)
-      loadPreview()
+    } catch(e){
+      setMsg('Error al actualizar los precios')
     }
     setLoading(false)
     setTimeout(()=>setMsg(''),5000)
