@@ -8,7 +8,34 @@ export const dynamic = 'force-dynamic'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+const IGIC = 0.07
 function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
+
+// Crea una factura rectificativa (abono/creditnote) en Holded por los items
+// devueltos. Best-effort: si Holded falla no se interrumpe la devolución.
+async function createHoldedCreditNote(order, itemsDev){
+  const key = process.env.HOLDED_API_KEY
+  if(!key || !order?.customer_email) return null
+  try{
+    const cRes = await fetch('https://api.holded.com/api/invoicing/v1/contacts?email='+encodeURIComponent(order.customer_email),{headers:{key}})
+    const contacts = await cRes.json()
+    let contactId = contacts?.[0]?.id
+    if(!contactId){
+      const nc = await fetch('https://api.holded.com/api/invoicing/v1/contacts',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify({name:order.customer_name||order.customer_email,email:order.customer_email,type:'client'})}).then(r=>r.json())
+      contactId = nc?.id
+    }
+    if(!contactId) return null
+    const cn = {
+      contactId,
+      date: Math.floor(Date.now()/1000),
+      notes: 'Rectificativa devolución pedido '+order.order_number,
+      // Precios con IGIC incluido → desglosamos como en la factura original.
+      items: itemsDev.map(i => ({ name: i.product_name||'Producto', units: i.qty_dev, subtotal: round2(Number(i.unit_price)/(1+IGIC)), tax: 7 })),
+    }
+    const res = await fetch('https://api.holded.com/api/invoicing/v1/documents/creditnote',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify(cn)}).then(r=>r.json())
+    return res?.id || null
+  }catch(e){ console.error('holded creditnote error:', e); return null }
+}
 
 // POST /api/tpv-return → procesa una devolución (registra + repone stock)
 // body: { order_number, items:[{line_id,product_id,product_name,qty_dev,unit_price}], method, motivo }
@@ -25,7 +52,7 @@ export async function POST(req){
 
     // Verificar que el pedido existe
     const { data: order } = await db.from('orders')
-      .select('id,order_number,status').eq('order_number', String(order_number).toUpperCase()).maybeSingle()
+      .select('id,order_number,status,customer_email,customer_name').eq('order_number', String(order_number).toUpperCase()).maybeSingle()
     if(!order) return NextResponse.json({ ok:false, error:'order_not_found' }, { status:404 })
 
     // Solo se permiten devoluciones sobre pedidos pagados/cumplidos
@@ -68,7 +95,7 @@ export async function POST(req){
     const totalDev = round2(itemsDev.reduce((s, i) => s + i.importe, 0))
 
     // Registrar devolución
-    const { error: devErr } = await db.from('devoluciones').insert({
+    const { data: devRow, error: devErr } = await db.from('devoluciones').insert({
       order_number: order.order_number,
       order_id: order.id,
       items: itemsDev,
@@ -77,7 +104,7 @@ export async function POST(req){
       motivo,
       operator: 'TPV',
       created_at: new Date().toISOString(),
-    })
+    }).select('id').single()
     if(devErr) throw devErr
 
     // Reponer stock
@@ -86,7 +113,12 @@ export async function POST(req){
       if(p) await db.from('products').update({ stock: Number(p.stock) + item.qty_dev }).eq('id', item.product_id)
     }
 
-    return NextResponse.json({ ok:true, total: totalDev, method, items: itemsDev })
+    // Rectificativa en Holded (best-effort, no bloquea la devolución)
+    const creditNoteId = await createHoldedCreditNote(order, itemsDev)
+    if(creditNoteId && devRow?.id)
+      await db.from('devoluciones').update({ holded_creditnote_id: creditNoteId }).eq('id', devRow.id).catch(()=>{})
+
+    return NextResponse.json({ ok:true, total: totalDev, method, items: itemsDev, creditNoteId })
   }catch(e){
     console.error('tpv-return error:', e)
     return NextResponse.json({ ok:false, error:String(e?.message || e) }, { status:500 })
