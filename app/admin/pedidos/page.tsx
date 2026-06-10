@@ -55,9 +55,16 @@ export default function AdminPedidos() {
     setLines(data || [])
   }
 
+  // El cambio de estado pasa por la ruta server: al marcar 'paid' por primera
+  // vez descuenta stock una sola vez (los pendientes no reservan stock).
   async function setStatus(id, status) {
     setSaving(true)
-    await db.from('orders').update({ status }).eq('id', id)
+    const r = await fetch('/api/admin/order-status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ id, status })
+    })
+    const d = await r.json().catch(() => ({}))
+    if (!r.ok || !d.ok) { alert(d.error === 'sin_stock' ? 'No hay stock suficiente para marcar este pedido como pagado' : ('Error: ' + (d.error || r.status))); setSaving(false); return }
     setSel(o => ({ ...o, status }))
     setOrders(os => os.map(o => o.id === id ? { ...o, status } : o))
     setSaving(false)
@@ -66,8 +73,16 @@ export default function AdminPedidos() {
   async function bulkUpdate() {
     if (!selected.length) return
     setSaving(true)
-    await db.from('orders').update({ status: bulkStatus }).in('id', selected)
-    setOrders(os => os.map(o => selected.includes(o.id) ? { ...o, status: bulkStatus } : o))
+    const done = []
+    for (const id of selected) {
+      const r = await fetch('/api/admin/order-status', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ id, status: bulkStatus })
+      })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok && d.ok) done.push(id)
+    }
+    setOrders(os => os.map(o => done.includes(o.id) ? { ...o, status: bulkStatus } : o))
     setSelected([])
     setSaving(false)
   }

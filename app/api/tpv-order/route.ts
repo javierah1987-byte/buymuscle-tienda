@@ -125,16 +125,21 @@ export async function POST(req){
       discount_pct: disc,
       payment_method,
       status: 'paid',
+      // Venta presencial ya cobrada: el stock se descuenta aquí mismo (paso 6),
+      // así que se marca aplicado para que un cambio de estado posterior en
+      // admin no lo vuelva a descontar.
+      stock_applied: true,
       notes: 'TPV · ' + payment_method + (customer.name ? ' · ' + customer.name : ''),
     }).select().single()
     if(orderErr) throw orderErr
     const orderId = orderRow.id
 
-    // 5. Líneas del pedido (order_lines NO tiene columna variant_id)
+    // 5. Líneas del pedido
     const { error: linesErr } = await db.from('order_lines').insert(
       lines.map(l => ({
         order_id: orderId,
         product_id: l.product_id,
+        variant_id: l.variant_id || null,
         product_name: l.product_name,
         quantity: l.qty,
         unit_price: l.unit_price,

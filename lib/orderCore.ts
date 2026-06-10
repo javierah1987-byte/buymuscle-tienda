@@ -180,6 +180,11 @@ export async function persistOrder(db, body, opts = {}){
     payment_method,
     status,
     paypal_capture_id: opts.paypal_capture_id || null,
+    // El stock solo se descuenta cuando el pedido está pagado. Los pendientes
+    // (tarjeta/transferencia/efectivo) NO reservan stock hasta confirmarse el
+    // pago (se descuenta al marcarlos 'paid' en admin), para que no se pueda
+    // agotar inventario sin pagar.
+    stock_applied: status === 'paid',
     notes: customer.notes || null,
   }).select().single()
   if(orderErr) throw orderErr
@@ -189,6 +194,7 @@ export async function persistOrder(db, body, opts = {}){
     lines.map(l => ({
       order_id: orderId,
       product_id: l.product_id,
+      variant_id: l.variant_id || null,
       product_name: l.product_name,
       quantity: l.qty,
       unit_price: l.unit_price,
@@ -201,9 +207,10 @@ export async function persistOrder(db, body, opts = {}){
     throw linesErr
   }
 
-  const { error: stockErr } = await db.rpc('process_order_stock', {
+  // Solo descontar stock si el pedido nace pagado (p. ej. PayPal capturado).
+  const stockErr = status === 'paid' ? (await db.rpc('process_order_stock', {
     p_lines: lines.map(l => ({ product_id: l.product_id, variant_id: l.variant_id, qty: l.qty })),
-  })
+  })).error : null
   if(stockErr){
     await db.from('order_lines').delete().eq('order_id', orderId)
     await db.from('orders').delete().eq('id', orderId)
