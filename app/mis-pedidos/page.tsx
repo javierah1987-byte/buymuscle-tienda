@@ -61,8 +61,8 @@ export default function MisPedidos(){
               <div style={{padding:'16px 20px'}}>
                 {(o.order_lines||[]).map((l:any,i:number)=>(
                   <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #f9f9f9',fontSize:13}}>
-                    <span style={{color:'#333'}}>{l.product_name} {l.variant?'('+l.variant+')':''} × {l.qty}</span>
-                    <span style={{fontWeight:600}}>{Number(l.unit_price*l.qty).toFixed(2)} €</span>
+                    <span style={{color:'#333'}}>{l.product_name} × {l.quantity}</span>
+                    <span style={{fontWeight:600}}>{Number(l.line_total ?? l.unit_price*l.quantity).toFixed(2)} €</span>
                   </div>
                 ))}
                 <div style={{marginTop:12,padding:'10px',background:'#f9f9f9',fontSize:12,color:'#666'}}>

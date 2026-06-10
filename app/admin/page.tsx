@@ -20,7 +20,6 @@ const MODULOS=[
   {icon:'📊',t:'Suscriptores',d:'Emails captados',href:'/admin/suscriptores',c:'#3b82f6'},
   {icon:'🛒',t:'Carritos Abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
   {icon:'📧',t:'Newsletter',d:'Enviar emails a suscriptores',href:'/admin/newsletter',c:'#3b82f6'},
-  {icon:'🛒',t:'Carritos abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
   {icon:'📧',t:'Email (Resend)',d:'Plantillas de email',href:'https://resend.com',c:'#555',ext:true},
   {icon:'👥',t:'Clientes',d:'Historial y CRM',href:'/admin/clientes',c:'#8b5cf6'},
   {icon:'⭐',t:'Reseñas',d:'Aprobar / rechazar',href:'/admin/resenas',c:'#f59e0b'},
