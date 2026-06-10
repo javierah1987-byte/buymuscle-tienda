@@ -105,6 +105,9 @@ export default function DistribuidoresPage() {
               <Link href="/distribuidores/login" className="btn-primary" style={{fontSize:15, padding:'13px 32px', justifyContent:'center'}}>
                 Acceder al portal →
               </Link>
+              <Link href="/distribuidores/facturas" className="btn-outline" style={{fontSize:15, padding:'11px 28px', justifyContent:'center'}}>
+                Mis facturas
+              </Link>
               <a href="#solicitar" className="btn-outline" style={{fontSize:15, padding:'11px 28px', justifyContent:'center'}}>
                 Solicitar acceso
               </a>

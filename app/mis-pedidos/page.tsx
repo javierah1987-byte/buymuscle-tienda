@@ -69,9 +69,15 @@ export default function MisPedidos(){
                   {o.shipping_address&&<p style={{margin:'0 0 4px'}}><strong>Envío:</strong> {o.shipping_address}</p>}
                   {o.tracking_number&&<p style={{margin:0}}><strong>Seguimiento:</strong> {o.tracking_number}</p>}
                 </div>
-                <Link href="/tienda" style={{display:'inline-block',marginTop:12,background:'#111',color:'white',padding:'8px 16px',textDecoration:'none',fontSize:12,fontWeight:700}}>
-                  Volver a comprar →
-                </Link>
+                <div style={{display:'flex',gap:10,marginTop:12,flexWrap:'wrap'}}>
+                  <Link href="/tienda" style={{display:'inline-block',background:'#111',color:'white',padding:'8px 16px',textDecoration:'none',fontSize:12,fontWeight:700}}>
+                    Volver a comprar →
+                  </Link>
+                  {o.holded_invoice_id&&<a href={'/api/order-invoice?n='+encodeURIComponent(o.order_number)} target="_blank" rel="noopener"
+                    style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'8px 16px',textDecoration:'none',fontSize:12,fontWeight:700}}>
+                    ⬇ Descargar factura
+                  </a>}
+                </div>
               </div>
             )}
           </div>
