@@ -1,14 +1,21 @@
 // @ts-nocheck
 import{NextResponse}from 'next/server'
 export const dynamic='force-dynamic'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const h={apikey:K,'Authorization':'Bearer '+K}
-// GET /api/cron-abandoned?key=BM_CRON_2025
-// Configura en vercel.json: {"crons":[{"path":"/api/cron-abandoned?key=BM_CRON_2025","schedule":"0 */2 * * *"}]}
+const S=process.env.NEXT_PUBLIC_SUPABASE_URL
+// Service role: la tabla abandoned_carts solo permite LECTURA/UPDATE a roles
+// privilegiados (RLS). Con la anon key el cron leía 0 filas y el PATCH se
+// rechazaba en silencio → nunca enviaba ni marcaba nada.
+const SK=process.env.SUPABASE_SERVICE_ROLE_KEY
+const h={apikey:SK,'Authorization':'Bearer '+SK}
+// Secreto del cron configurable por entorno (fallback al legacy para no romper
+// el cron ya programado en vercel.json hasta que se fije CRON_SECRET en Vercel).
+const CRON_SECRET=process.env.CRON_SECRET||'BM_CRON_2025'
+// GET /api/cron-abandoned?key=<secret>  (o cabecera Authorization: Bearer <secret>)
 export async function GET(req){
   const{searchParams}=new URL(req.url)
-  if(searchParams.get('key')!=='BM_CRON_2025') return NextResponse.json({error:'Unauthorized'},{status:401})
+  const provided=searchParams.get('key')||(req.headers.get('authorization')||'').replace(/^Bearer\s+/i,'')
+  if(provided!==CRON_SECRET) return NextResponse.json({error:'Unauthorized'},{status:401})
+  if(!S||!SK) return NextResponse.json({error:'server_misconfigured'},{status:500})
   try{
     const twoHoursAgo=new Date(Date.now()-2*60*60*1000).toISOString()
     const r=await fetch(
