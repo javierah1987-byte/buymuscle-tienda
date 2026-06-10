@@ -4,8 +4,6 @@ import{useState}from 'react'
 import Link from 'next/link'
 import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const h={apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'}
 export default function Devoluciones(){
   const[num,setNum]=useState('')
   const[order,setOrder]=useState(null)
@@ -33,35 +31,32 @@ export default function Devoluciones(){
   async function procesar(){
     const itemsADevolver=lines.filter(l=>selected[l.id]>0)
     if(itemsADevolver.length===0){setMsg('Selecciona al menos un producto a devolver');return}
-    setLoading(true)
-    // Reponer stock
-    // FIX: Reponer stock sumando al actual
-    for(const l of itemsADevolver){
-      const rp=await fetch(S+'/rest/v1/products?id=eq.'+l.product_id+'&select=stock',{headers:h})
-      const dp=await rp.json()
-      const curStock=Array.isArray(dp)&&dp[0]?Number(dp[0].stock||0):0
-      await fetch(S+'/rest/v1/products?id=eq.'+l.product_id,{method:'PATCH',headers:h,
-        body:JSON.stringify({stock:curStock+Number(selected[l.id]||0)})}).catch(()=>{})
+    setLoading(true);setMsg('')
+    try{
+      // Procesar en servidor: registra la devolución, repone stock y genera
+      // la rectificativa en Holded (service role en /api/tpv-return).
+      const r=await fetch('/api/tpv-return',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          order_number:order.order_number,
+          items:itemsADevolver.map(l=>({line_id:l.id,product_id:l.product_id,product_name:l.product_name,qty_dev:Number(selected[l.id]||0),unit_price:l.unit_price})),
+          method:'efectivo',
+          motivo:'Devolución desde admin'
+        })})
+      const d=await r.json().catch(()=>({}))
+      if(!r.ok||!d.ok){
+        setMsg('Error al procesar la devolución: '+(d.error||('HTTP '+r.status)))
+        setLoading(false)
+        return
+      }
+      // Marcar pedido como devuelto (funciona con la sesión admin vía RLS)
+      await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:await authHeaders({'Content-Type':'application/json'}),
+        body:JSON.stringify({status:'returned',notes:'Devolucion: '+itemsADevolver.map(l=>l.product_name+'('+selected[l.id]+')').join(', ')})}).catch(()=>{})
+      setMsg('Devolución procesada. Stock repuesto'+(d.creditNoteId?' y rectificativa creada en Holded':'')+'. Total a reembolsar: '+Number(d.total||0).toFixed(2)+' €')
+      setDone(true)
+    }catch(e){
+      setMsg('Error al procesar la devolución: '+String(e?.message||e))
     }
-    // Guardar registro de devolución
-    const totalDev=itemsADevolver.reduce((s,l)=>s+(Number(l.unit_price||0)*selected[l.id]),0)
-    await fetch(S+'/rest/v1/devoluciones',{method:'POST',headers:{...h,'Prefer':'return=minimal'},
-      body:JSON.stringify({
-        order_number:order.order_number,
-        order_id:order.id,
-        items:itemsADevolver.map(l=>({product_id:l.product_id,product_name:l.product_name,qty_dev:selected[l.id],unit_price:l.unit_price})),
-        total_devuelto:totalDev,
-        method:'efectivo',
-        motivo:'Devolución desde admin',
-        operator:'Admin',
-        created_at:new Date().toISOString()
-      })
-    }).catch(()=>{})
-    // Marcar pedido como devuelto parcialmente
-    await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:await authHeaders({'Content-Type':'application/json'}),
-      body:JSON.stringify({status:'returned',notes:'Devolucion: '+itemsADevolver.map(l=>l.product_name+'('+selected[l.id]+')').join(', ')})})
-    setMsg('Devolucion procesada. Stock repuesto. Total a reembolsar: '+totalDev.toFixed(2)+' €')
-    setDone(true);setLoading(false)
+    setLoading(false)
   }
   const TD={padding:'10px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',fontSize:13,color:'rgba(255,255,255,0.8)'}
   return(

@@ -1,8 +1,7 @@
 // @ts-nocheck
 'use client'
 import{useState,useEffect}from 'react'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const API='/api/admin/content'
 
 const PLATFORMS=[
   {id:'instagram',icon:'📸',name:'Instagram',color:'#E1306C'},
@@ -15,11 +14,19 @@ export default function PanelRRSS(){
   const[form,setForm]=useState({content:'',image_url:'',platforms:[],scheduled_at:''})
   const[saving,setSaving]=useState(false)
   const[saved,setSaved]=useState(false)
+  const[errMsg,setErrMsg]=useState('')
   const[charCount,setCharCount]=useState(0)
 
+  function showErr(e){setErrMsg('Error: '+e.message);setTimeout(()=>setErrMsg(''),5000)}
+
   useEffect(()=>{
-    fetch(S+'/rest/v1/social_posts?order=created_at.desc&limit=20',{headers:{'apikey':K,'Authorization':'Bearer '+K}})
-      .then(r=>r.json()).then(d=>setPosts(d||[])).catch(()=>{})
+    fetch(API+'?t=rrss&order=created_at.desc')
+      .then(r=>r.json())
+      .then(j=>{
+        if(j.ok)setPosts(Array.isArray(j.data)?j.data:[])
+        else showErr(new Error(j.error||'Error al cargar'))
+      })
+      .catch(e=>showErr(e))
   },[])
 
   function togglePlatform(id){
@@ -29,21 +36,41 @@ export default function PanelRRSS(){
   async function save(status='draft'){
     if(!form.content||!form.platforms.length)return
     setSaving(true)
-    const r=await fetch(S+'/rest/v1/social_posts',{
-      method:'POST',
-      headers:{'apikey':K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({...form,status,published_at:status==='published'?new Date().toISOString():null})
-    })
-    const d=await r.json()
-    setPosts(p=>[d[0]||{},...p])
-    setForm({content:'',image_url:'',platforms:[],scheduled_at:''})
-    setCharCount(0);setSaved(true);setSaving(false)
-    setTimeout(()=>setSaved(false),3000)
+    // Solo columnas reales de social_posts; scheduled_at vacio -> null
+    const row={
+      content:form.content,
+      image_url:form.image_url||null,
+      platforms:form.platforms,
+      scheduled_at:form.scheduled_at?new Date(form.scheduled_at).toISOString():null,
+      status,
+      published_at:status==='published'?new Date().toISOString():null
+    }
+    try{
+      const r=await fetch(API,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({t:'rrss',row})
+      })
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al guardar')
+      setPosts(p=>[j.data,...p])
+      setForm({content:'',image_url:'',platforms:[],scheduled_at:''})
+      setCharCount(0);setSaved(true)
+      setTimeout(()=>setSaved(false),3000)
+    }catch(e){showErr(e)}
+    setSaving(false)
   }
 
   async function deletePost(id){
-    await fetch(S+'/rest/v1/social_posts?id=eq.'+id,{method:'DELETE',headers:{'apikey':K,'Authorization':'Bearer '+K}})
-    setPosts(p=>p.filter(x=>x.id!==id))
+    if(!confirm('¿Eliminar esta publicación?'))return
+    try{
+      const r=await fetch(API,{
+        method:'DELETE',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({t:'rrss',id})
+      })
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al eliminar')
+      setPosts(p=>p.filter(x=>x.id!==id))
+    }catch(e){showErr(e)}
   }
 
   const fmt=(d)=>d?new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):''
@@ -103,6 +130,7 @@ export default function PanelRRSS(){
           </div>
 
           {saved&&<div style={{background:'#f0fdf4',border:'1px solid #86efac',padding:'8px 12px',fontSize:13,color:'#166534',marginBottom:12}}>✅ Guardado correctamente</div>}
+          {errMsg&&<div style={{background:'#fef2f2',border:'1px solid #fca5a5',padding:'8px 12px',fontSize:13,color:'#991b1b',marginBottom:12}}>❌ {errMsg}</div>}
 
           <div style={{display:'flex',gap:8}}>
             <button onClick={()=>save('draft')} disabled={saving||!form.content||!form.platforms.length}

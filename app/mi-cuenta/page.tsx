@@ -20,7 +20,7 @@ export default function MiCuenta(){
     setLoading(true)
     const[ordRes,revRes]=await Promise.all([
       fetch('/api/my-orders?email='+encodeURIComponent(e)),
-      fetch(S+'/rest/v1/product_reviews?customer_email=eq.'+encodeURIComponent(e)+'&order=created_at.desc',{headers:h})
+      fetch(S+'/rest/v1/product_reviews?select=id,product_id,name,rating,comment,created_at&email=eq.'+encodeURIComponent(e)+'&order=created_at.desc',{headers:h})
     ])
     const ordJson=await ordRes.json();const revs=await revRes.json()
     const ords=ordJson&&ordJson.ok&&Array.isArray(ordJson.orders)?ordJson.orders:[]

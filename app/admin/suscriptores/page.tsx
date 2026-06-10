@@ -1,8 +1,6 @@
 // @ts-nocheck
 'use client'
 import{useState,useEffect}from 'react'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
 export default function AdminSuscriptores(){
   const[subs,setSubs]=useState([])
@@ -11,8 +9,14 @@ export default function AdminSuscriptores(){
   const[msg,setMsg]=useState('')
 
   useEffect(()=>{
-    fetch(S+'/rest/v1/email_subscribers?order=created_at.desc',{headers:{'apikey':K,'Authorization':'Bearer '+K}})
-      .then(r=>r.json()).then(d=>{setSubs(d||[]);setLoading(false)}).catch(()=>setLoading(false))
+    fetch('/api/admin/marketing?t=subscribers')
+      .then(async r=>{
+        const d=await r.json().catch(()=>({}))
+        if(!r.ok||!d.ok){setMsg('Error cargando suscriptores: '+(d.error||('HTTP '+r.status)));setSubs([])}
+        else setSubs(Array.isArray(d.rows)?d.rows:[])
+        setLoading(false)
+      })
+      .catch(e=>{setMsg('Error cargando suscriptores: '+String(e?.message||e));setLoading(false)})
   },[])
 
   function exportCSV(){
@@ -41,6 +45,7 @@ export default function AdminSuscriptores(){
       </div>
 
       <div style={{padding:'24px 32px'}}>
+        {msg&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',padding:'12px 16px',marginBottom:16,fontSize:13}}>{msg}</div>}
         {/* KPIs */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:24}}>
           {[

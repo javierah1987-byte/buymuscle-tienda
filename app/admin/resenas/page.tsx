@@ -29,16 +29,16 @@ export default function AdminResenas(){
 
   async function load(){
     setLoading(true)
-    // verified=true → aprobadas, verified=false/null → pendientes
-    const filter=tab==='approved'?'&verified=eq.true':'&verified=eq.false'
-    const r=await fetch(S+'/rest/v1/product_reviews?order=created_at.desc'+filter,{headers:h})
-    const d=await r.json()
-    setReviews(Array.isArray(d)?d:[])
+    // verified=true → aprobadas, verified=false → pendientes
+    const r=await fetch('/api/admin/reviews?filter='+tab,{credentials:'same-origin'})
+    const d=await r.json().catch(()=>null)
+    setReviews(d&&Array.isArray(d.reviews)?d.reviews:[])
     setLoading(false)
   }
 
   async function approve(id){
-    await fetch(S+'/rest/v1/product_reviews?id=eq.'+id,{method:'PATCH',headers:h,body:JSON.stringify({verified:true})})
+    await fetch('/api/admin/reviews',{method:'PATCH',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({id,verified:true})})
     setMsg('Reseña aprobada y publicada ✅')
     setTimeout(()=>setMsg(''),2500)
     load()
@@ -46,7 +46,8 @@ export default function AdminResenas(){
 
   async function reject(id){
     if(!confirm('Eliminar esta reseña?')) return
-    await fetch(S+'/rest/v1/product_reviews?id=eq.'+id,{method:'DELETE',headers:h})
+    await fetch('/api/admin/reviews',{method:'DELETE',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({id})})
     setMsg('Reseña eliminada')
     setTimeout(()=>setMsg(''),2500)
     load()
@@ -61,8 +62,9 @@ export default function AdminResenas(){
     const rating=prompt('Valoración (1-5):','5')
     const comment=prompt('Comentario:')
     if(!rating||!comment) return
-    await fetch(S+'/rest/v1/product_reviews',{method:'POST',headers:{...h,'Prefer':'return=minimal'},
-      body:JSON.stringify({product_id:Number(productId),name,rating:Number(rating),comment,verified:true,created_at:new Date().toISOString()})
+    await fetch('/api/admin/reviews',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({product_id:Number(productId),name,rating:Number(rating),comment,verified:true})
     })
     setMsg('Reseña añadida ✅')
     setTimeout(()=>setMsg(''),2500)

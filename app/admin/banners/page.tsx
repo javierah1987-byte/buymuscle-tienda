@@ -2,9 +2,7 @@
 'use client'
 import{useState,useEffect}from 'react'
 import Link from 'next/link'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const h={apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'}
+const API='/api/admin/content'
 const EMPTY={title:'',subtitle:'',url:'/',image_url:'',active:true,order_pos:0}
 export default function AdminBanners(){
   const[banners,setBanners]=useState([])
@@ -12,27 +10,51 @@ export default function AdminBanners(){
   const[saving,setSaving]=useState(false)
   const[msg,setMsg]=useState('')
   useEffect(()=>{load()},[])
+  function showErr(e){setMsg('❌ Error: '+e.message);setTimeout(()=>setMsg(''),5000)}
   async function load(){
-    const r=await fetch(S+'/rest/v1/banners?order=order_pos.asc',{headers:h})
-    const d=await r.json()
-    setBanners(Array.isArray(d)?d:[])
+    try{
+      const r=await fetch(API+'?t=banners&order=order_pos.asc')
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al cargar')
+      setBanners(Array.isArray(j.data)?j.data:[])
+    }catch(e){showErr(e)}
   }
   async function save(){
     setSaving(true)
-    const method=form.id?'PATCH':'POST'
-    const url=form.id?S+'/rest/v1/banners?id=eq.'+form.id:S+'/rest/v1/banners'
-    await fetch(url,{method,headers:h,body:JSON.stringify(form.id?{...form,id:undefined}:form)})
-    setMsg('Guardado');setTimeout(()=>setMsg(''),2000)
-    setForm(null);load();setSaving(false)
+    // Solo columnas reales de banners
+    const fields={title:form.title||null,subtitle:form.subtitle||null,url:form.url||'/',
+      image_url:form.image_url||null,active:!!form.active,order_pos:Number(form.order_pos)||0}
+    try{
+      const r=await fetch(API,{
+        method:form.id?'PATCH':'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(form.id?{t:'banners',id:form.id,fields}:{t:'banners',row:fields})
+      })
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al guardar')
+      setMsg('Guardado');setTimeout(()=>setMsg(''),2000)
+      setForm(null);load()
+    }catch(e){showErr(e)}
+    setSaving(false)
   }
   async function toggle(b){
-    await fetch(S+'/rest/v1/banners?id=eq.'+b.id,{method:'PATCH',headers:h,body:JSON.stringify({active:!b.active})})
-    load()
+    try{
+      const r=await fetch(API,{method:'PATCH',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({t:'banners',id:b.id,fields:{active:!b.active}})})
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al cambiar estado')
+      load()
+    }catch(e){showErr(e)}
   }
   async function del(b){
     if(!confirm('Eliminar este banner?'))return
-    await fetch(S+'/rest/v1/banners?id=eq.'+b.id,{method:'DELETE',headers:h})
-    load()
+    try{
+      const r=await fetch(API,{method:'DELETE',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({t:'banners',id:b.id})})
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al eliminar')
+      load()
+    }catch(e){showErr(e)}
   }
   const F=form||{}
   return(
@@ -44,7 +66,9 @@ export default function AdminBanners(){
           <Link href="/admin" style={{color:'rgba(255,255,255,0.4)',textDecoration:'none',fontSize:13,display:'flex',alignItems:'center'}}>← Admin</Link>
         </div>
       </div>
-      {msg&&<div style={{background:'rgba(34,197,94,0.1)',padding:'10px 28px',fontSize:13,color:'#22c55e',borderBottom:'1px solid rgba(34,197,94,0.2)'}}>{msg}</div>}
+      {msg&&<div style={msg.startsWith('❌')
+        ?{background:'rgba(239,68,68,0.1)',padding:'10px 28px',fontSize:13,color:'#ef4444',borderBottom:'1px solid rgba(239,68,68,0.2)'}
+        :{background:'rgba(34,197,94,0.1)',padding:'10px 28px',fontSize:13,color:'#22c55e',borderBottom:'1px solid rgba(34,197,94,0.2)'}}>{msg}</div>}
       <div style={{padding:28}}>
         <p style={{color:'rgba(255,255,255,0.4)',fontSize:13,marginBottom:20}}>Los banners se muestran en el slider de la portada. Arrastra para reordenar (en desarrollo).</p>
         {banners.length===0&&!form?<div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.3)'}}>No hay banners. Crea el primero.</div>

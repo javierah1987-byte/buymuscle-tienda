@@ -2,8 +2,7 @@
 'use client'
 import{useState,useEffect}from 'react'
 import Link from 'next/link'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const API='/api/admin/content'
 const CATS=['Todos','nutricion','entrenamiento','recetas','suplementacion','lifestyle']
 const EMPTY={title:'',slug:'',excerpt:'',content:'',cover_image:'',category:'nutricion',tags:'',published:false}
 
@@ -15,8 +14,13 @@ export default function BlogAdmin(){
   const[msg,setMsg]=useState('')
 
   useEffect(()=>{
-    fetch(S+'/rest/v1/blog_posts?order=created_at.desc',{headers:{'apikey':K,'Authorization':'Bearer '+K}})
-      .then(r=>r.json()).then(d=>setPosts(Array.isArray(d)?d:[])).catch(()=>{})
+    fetch(API+'?t=blog&order=created_at.desc')
+      .then(r=>r.json())
+      .then(j=>{
+        if(j.ok)setPosts(Array.isArray(j.data)?j.data:[])
+        else setMsg('❌ Error al cargar: '+(j.error||'desconocido'))
+      })
+      .catch(e=>setMsg('❌ Error al cargar: '+e.message))
   },[])
 
   function slugify(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')}
@@ -28,40 +32,69 @@ export default function BlogAdmin(){
   async function save(){
     if(!form.title||!form.slug)return
     setSaving(true)
-    const body={...form,tags:form.tags?form.tags.split(',').map(t=>t.trim()):[],
-      published_at:form.published?new Date().toISOString():null}
-    if(editing){
-      await fetch(S+'/rest/v1/blog_posts?id=eq.'+editing,{
-        method:'PATCH',headers:{'apikey':K,'Authorization':'Bearer '+K,'Content-Type':'application/json'},
-        body:JSON.stringify(body)
-      })
-      setPosts(p=>p.map(x=>x.id===editing?{...x,...body}:x))
-      setMsg('Artículo actualizado ✅')
-    }else{
-      const r=await fetch(S+'/rest/v1/blog_posts',{
-        method:'POST',headers:{'apikey':K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'return=representation'},
-        body:JSON.stringify(body)
-      })
-      const d=await r.json()
-      setPosts(p=>[d[0],...p])
-      setMsg('Artículo creado ✅')
+    // Solo columnas reales de blog_posts (no propagar id/created_at del row editado)
+    const fields={
+      title:form.title,slug:form.slug,excerpt:form.excerpt||null,content:form.content||null,
+      cover_image:form.cover_image||null,category:form.category||null,
+      tags:form.tags?form.tags.split(',').map(t=>t.trim()).filter(Boolean):[],
+      published:!!form.published,
+      published_at:form.published?new Date().toISOString():null
     }
-    setForm({...EMPTY});setEditing(null);setSaving(false)
-    setTimeout(()=>setMsg(''),3000)
+    try{
+      if(editing){
+        const r=await fetch(API,{
+          method:'PATCH',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({t:'blog',id:editing,fields})
+        })
+        const j=await r.json()
+        if(!j.ok)throw new Error(j.error||'Error al actualizar')
+        setPosts(p=>p.map(x=>x.id===editing?j.data:x))
+        setMsg('Artículo actualizado ✅')
+      }else{
+        const r=await fetch(API,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({t:'blog',row:fields})
+        })
+        const j=await r.json()
+        if(!j.ok)throw new Error(j.error||'Error al crear')
+        setPosts(p=>[j.data,...p])
+        setMsg('Artículo creado ✅')
+      }
+      setForm({...EMPTY});setEditing(null)
+    }catch(e){
+      setMsg('❌ Error: '+e.message)
+    }
+    setSaving(false)
+    setTimeout(()=>setMsg(''),5000)
   }
 
   async function toggle(id,published){
-    await fetch(S+'/rest/v1/blog_posts?id=eq.'+id,{
-      method:'PATCH',headers:{'apikey':K,'Authorization':'Bearer '+K,'Content-Type':'application/json'},
-      body:JSON.stringify({published:!published,published_at:!published?new Date().toISOString():null})
-    })
-    setPosts(p=>p.map(x=>x.id===id?{...x,published:!published}:x))
+    try{
+      const r=await fetch(API,{
+        method:'PATCH',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({t:'blog',id,fields:{published:!published,published_at:!published?new Date().toISOString():null}})
+      })
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al cambiar estado')
+      setPosts(p=>p.map(x=>x.id===id?j.data:x))
+    }catch(e){
+      setMsg('❌ Error: '+e.message);setTimeout(()=>setMsg(''),5000)
+    }
   }
 
   async function del(id){
     if(!confirm('¿Eliminar este artículo?'))return
-    await fetch(S+'/rest/v1/blog_posts?id=eq.'+id,{method:'DELETE',headers:{'apikey':K,'Authorization':'Bearer '+K}})
-    setPosts(p=>p.filter(x=>x.id!==id))
+    try{
+      const r=await fetch(API,{
+        method:'DELETE',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({t:'blog',id})
+      })
+      const j=await r.json()
+      if(!j.ok)throw new Error(j.error||'Error al eliminar')
+      setPosts(p=>p.filter(x=>x.id!==id))
+    }catch(e){
+      setMsg('❌ Error: '+e.message);setTimeout(()=>setMsg(''),5000)
+    }
   }
 
   function edit(p){setEditing(p.id);setForm({...p,tags:(p.tags||[]).join(', ')})}
@@ -87,7 +120,9 @@ export default function BlogAdmin(){
           <h3 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',margin:'0 0 20px'}}>
             {editing?'Editar artículo':'Nuevo artículo'}
           </h3>
-          {msg&&<div style={{background:'#f0fdf4',border:'1px solid #86efac',padding:'8px 12px',fontSize:13,color:'#166534',marginBottom:12}}>{msg}</div>}
+          {msg&&<div style={msg.startsWith('❌')
+            ?{background:'#fef2f2',border:'1px solid #fca5a5',padding:'8px 12px',fontSize:13,color:'#991b1b',marginBottom:12}
+            :{background:'#f0fdf4',border:'1px solid #86efac',padding:'8px 12px',fontSize:13,color:'#166534',marginBottom:12}}>{msg}</div>}
           {[
             {label:'Título *',key:'title',type:'text',ph:'Título del artículo',fn:v=>handleTitle(v)},
             {label:'Slug (URL)',key:'slug',type:'text',ph:'url-del-articulo'},

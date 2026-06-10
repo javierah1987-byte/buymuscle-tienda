@@ -86,12 +86,20 @@ export default function AdminDashboard(){
   async function bulkUpdate(){
     if(!selected.length)return
     setSaving(true)
-    const hdr=await authHeaders({'Content-Type':'application/json'})
-    await Promise.all(selected.map(id=>
-      fetch(S+'/rest/v1/orders?id=eq.'+id,{method:'PATCH',headers:hdr,body:JSON.stringify({status:bulkStatus})})
-    ))
-    setOrders(o=>o.map(x=>selected.includes(x.id)?{...x,status:bulkStatus}:x))
-    setSelected([]);setSaving(false);setMsg('Estado actualizado')
+    // Vía la ruta server: al marcar 'paid' descuenta stock una sola vez y al
+    // marcar 'shipped' envía el email de seguimiento (un PATCH directo a
+    // orders se saltaría ambas cosas).
+    const done=[]
+    for(const id of selected){
+      const r=await fetch('/api/admin/order-status',{method:'POST',
+        headers:{'Content-Type':'application/json'},credentials:'same-origin',
+        body:JSON.stringify({id,status:bulkStatus})})
+      const d=await r.json().catch(()=>({}))
+      if(r.ok&&d.ok) done.push(id)
+    }
+    setOrders(o=>o.map(x=>done.includes(x.id)?{...x,status:bulkStatus}:x))
+    setSelected([]);setSaving(false)
+    setMsg(done.length===selected.length?'Estado actualizado':('Actualizados '+done.length+' de '+selected.length))
     setTimeout(()=>setMsg(''),2500)
   }
 

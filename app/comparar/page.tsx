@@ -18,11 +18,11 @@ export default function Comparar(){
   async function buscar(q){
     if(q.length<2){setResults([]);return}
     setLoading(true)
-    const r=await fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,on_sale,image_url,stock,description,category&active=eq.true&name=ilike.*'+encodeURIComponent(q)+'*&limit=8',{
+    const r=await fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,on_sale,image_url,stock,description,categories(name)&active=eq.true&name=ilike.*'+encodeURIComponent(q)+'*&limit=8',{
       headers:{'apikey':K,'Authorization':'Bearer '+K}
     })
     const d=await r.json()
-    setResults(d||[]);setLoading(false)
+    setResults(Array.isArray(d)?d:[]);setLoading(false)
   }
 
   function addProduct(p){
@@ -110,7 +110,7 @@ export default function Comparar(){
                 <tr style={{background:'#f9f9f9'}}>
                   <td style={{padding:'12px 16px',fontWeight:600,fontSize:13,color:'#555',borderBottom:'1px solid #f0f0f0'}}>Categoría</td>
                   {selected.map(p=>(
-                    <td key={p.id} style={{padding:'12px 16px',textAlign:'center',borderBottom:'1px solid #f0f0f0',fontSize:13,color:'#555'}}>{p.category||'—'}</td>
+                    <td key={p.id} style={{padding:'12px 16px',textAlign:'center',borderBottom:'1px solid #f0f0f0',fontSize:13,color:'#555'}}>{p.categories?.name||'—'}</td>
                   ))}
                   {Array.from({length:3-selected.length}).map((_,i)=><td key={'e'+i} style={{borderBottom:'1px solid #f0f0f0'}}/>)}
                 </tr>

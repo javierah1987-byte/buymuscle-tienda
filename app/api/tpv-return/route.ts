@@ -2,11 +2,18 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { tpvAuthorized } from '@/lib/tpvAuth'
+import { getAdminUser } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// Autorizado si hay PIN de TPV (cookie) O sesión de admin (allowlist),
+// mismo patrón dual que /api/tpv-caja.
+async function authorized(){
+  return tpvAuthorized() || !!(await getAdminUser())
+}
 
 const IGIC = 0.07
 function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
@@ -41,7 +48,7 @@ async function createHoldedCreditNote(order, itemsDev){
 // body: { order_number, items:[{line_id,product_id,product_name,qty_dev,unit_price}], method, motivo }
 export async function POST(req){
   try{
-    if(!tpvAuthorized()) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
+    if(!(await authorized())) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
     if(!SERVICE_KEY) return NextResponse.json({ ok:false, error:'server_misconfigured' }, { status:500 })
     const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth:{ autoRefreshToken:false, persistSession:false } })
 

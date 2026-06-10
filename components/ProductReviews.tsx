@@ -26,7 +26,7 @@ export default function ProductReviews({productId,productName}){
   const[sending,setSending]=useState(false)
   const[msg,setMsg]=useState('')
   useEffect(()=>{
-    fetch(S+'/rest/v1/product_reviews?product_id=eq.'+productId+'&status=eq.approved&order=created_at.desc',{headers:h})
+    fetch(S+'/rest/v1/product_reviews?select=id,name,rating,comment,created_at&product_id=eq.'+productId+'&verified=eq.true&order=created_at.desc',{headers:h})
       .then(r=>r.json()).then(d=>{
         const revs=Array.isArray(d)?d:[]
         setReviews(revs)
@@ -37,11 +37,11 @@ export default function ProductReviews({productId,productName}){
     if(!form.rating){setMsg('Selecciona una valoracion');return}
     if(!form.name.trim()||!form.email.trim()){setMsg('Nombre y email son obligatorios');return}
     setSending(true)
-    const res=await fetch(S+'/rest/v1/product_reviews',{method:'POST',
-      headers:{...h,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({product_id:productId,product_name:productName,customer_name:form.name,customer_email:form.email,rating:form.rating,comment:form.comment,status:'pending'})})
+    const res=await fetch('/api/reviews',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({product_id:productId,name:form.name.trim(),email:form.email.trim(),rating:form.rating,comment:form.comment})})
     setSending(false)
-    if(res.ok||res.status===201){setMsg('Gracias. Tu resena sera publicada tras revision.');setShowForm(false);setForm({name:'',email:'',rating:0,comment:''})}
+    if(res.ok){setMsg('Gracias. Tu resena sera publicada tras revision.');setShowForm(false);setForm({name:'',email:'',rating:0,comment:''})}
     else setMsg('Error al enviar. Intentalo de nuevo.')
     setTimeout(()=>setMsg(''),4000)
   }
@@ -95,14 +95,13 @@ export default function ProductReviews({productId,productName}){
       )}
       {reviews.length===0?<p style={{color:'#aaa',fontStyle:'italic',fontSize:14}}>Aun no hay valoraciones. Se el primero en valorar este producto.</p>
       :reviews.map((r,i)=>(
-        <div key={i} style={{paddingBottom:20,marginBottom:20,borderBottom:'1px solid #f0f0f0'}}>
+        <div key={r.id||i} style={{paddingBottom:20,marginBottom:20,borderBottom:'1px solid #f0f0f0'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
             <div>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
                 <Stars rating={r.rating||0}/>
-                {r.verified&&<span style={{fontSize:11,background:'#f0fdf4',color:'#166534',padding:'2px 6px',border:'1px solid #bbf7d0',fontWeight:600}}>Compra verificada</span>}
               </div>
-              <div style={{fontWeight:700,fontSize:14,marginTop:4,color:'#111'}}>{r.customer_name||'Cliente'}</div>
+              <div style={{fontWeight:700,fontSize:14,marginTop:4,color:'#111'}}>{r.name||'Cliente'}</div>
             </div>
             <div style={{fontSize:12,color:'#aaa'}}>{r.created_at?fmt(r.created_at):''}</div>
           </div>

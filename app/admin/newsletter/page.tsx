@@ -1,9 +1,6 @@
 // @ts-nocheck
 'use client'
 import{useState,useEffect}from 'react'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const h={apikey:K,'Authorization':'Bearer '+K}
 export default function AdminNewsletter(){
   const[subs,setSubs]=useState([])
   const[subject,setSubject]=useState('')
@@ -12,21 +9,38 @@ export default function AdminNewsletter(){
   const[sending,setSending]=useState(false)
   const[msg,setMsg]=useState('')
   const[campaigns,setCampaigns]=useState([])
+  async function loadCampaigns(){
+    const r=await fetch('/api/admin/marketing?t=campaigns')
+    const d=await r.json().catch(()=>({}))
+    if(r.ok&&d.ok)setCampaigns(Array.isArray(d.rows)?d.rows:[])
+  }
   useEffect(()=>{
-    fetch(S+'/rest/v1/email_subscribers?order=created_at.desc',{headers:h}).then(r=>r.json()).then(d=>setSubs(d||[]))
-    fetch(S+'/rest/v1/newsletter_campaigns?order=created_at.desc&limit=10',{headers:h}).then(r=>r.json()).then(d=>setCampaigns(d||[]))
+    fetch('/api/admin/marketing?t=subscribers').then(async r=>{
+      const d=await r.json().catch(()=>({}))
+      if(!r.ok||!d.ok){setMsg('Error cargando suscriptores: '+(d.error||('HTTP '+r.status)));return}
+      setSubs(Array.isArray(d.rows)?d.rows:[])
+    }).catch(e=>setMsg('Error cargando suscriptores: '+String(e?.message||e)))
+    loadCampaigns()
   },[])
   async function send(){
     if(!subject.trim()||!body.trim()){setMsg('Rellena asunto y cuerpo');return}
+    if(subs.length===0){setMsg('No hay suscriptores en la lista');return}
     setSending(true)
-    // Guardar campaña
-    const res=await fetch(S+'/rest/v1/newsletter_campaigns',{method:'POST',headers:{...h,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({subject,body_html:body,status:'sending',sent_count:subs.length})})
-    // Enviar via Resend a cada suscriptor (batch real requiere Resend API en backend)
+    // Guardar campaña (service role en el servidor) y comprobar el resultado
+    const res=await fetch('/api/admin/marketing',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({t:'campaign',row:{subject,body_html:body,status:'sending',sent_count:subs.length}})})
+    const saved=await res.json().catch(()=>({}))
+    if(!res.ok||!saved.ok){
+      setMsg('Error guardando la campaña: '+(saved.error||('HTTP '+res.status)))
+      setSending(false);setTimeout(()=>setMsg(''),5000);return
+    }
+    // Enviar via Resend a cada suscriptor (la lista viene del servidor)
     const r=await fetch('/api/email-newsletter',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject,body,subs:subs.map(s=>s.email)})})
     const d=await r.json().catch(()=>({}))
     setSending(false)
-    if(d.ok){setMsg('Newsletter enviada a '+subs.length+' suscriptores');setSubject('');setBody('')}
-    else{setMsg('Enviada (revisa logs si usas Resend sin dominio verificado)')}
+    if(r.ok&&d.ok){setMsg('Newsletter enviada a '+subs.length+' suscriptores');setSubject('');setBody('')}
+    else{setMsg('Campaña guardada pero el envío falló: '+(d.error||('HTTP '+r.status)))}
+    loadCampaigns()
     setTimeout(()=>setMsg(''),5000)
   }
   const fmt=d=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})
@@ -60,7 +74,7 @@ export default function AdminNewsletter(){
               {preview
                 ?<div style={{background:'white',color:'black',padding:20,minHeight:200,fontSize:14}} dangerouslySetInnerHTML={{__html:body||'<p>Sin contenido</p>'}}/>
                 :<textarea value={body} onChange={e=>setBody(e.target.value)} rows={10}
-                  placeholder="Escribe el email. Puedes usar HTML.&#10;&#10;Ejemplo:&#10;<h2>Hola {{nombre}}</h2>&#10;<p>Esta semana tenemos nuevas proteinas...</p>&#10;<a href='https://buymuscle-tienda.vercel.app/tienda'>Ver productos</a>"
+                  placeholder="Escribe el email. Puedes usar HTML.&#10;&#10;Ejemplo:&#10;<h2>Hola {{nombre}}</h2>&#10;<p>Esta semana tenemos nuevas proteinas...</p>&#10;<a href='https://tienda.buymuscle.es/tienda'>Ver productos</a>"
                   style={{width:'100%',padding:'10px 12px',background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'white',fontSize:13,fontFamily:'monospace',boxSizing:'border-box',resize:'vertical'}}/>
               }
             </div>
@@ -71,7 +85,7 @@ export default function AdminNewsletter(){
               </button>
             </div>
             <div style={{marginTop:16,padding:'12px 14px',background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',fontSize:12,color:'rgba(255,255,255,0.4)'}}>
-              💡 Para envios masivos con dominio buymuscle.es verifica el dominio en Resend. El envio funciona con pruebasgrupoaxen.com hasta entonces.
+              💡 Para envios masivos con dominio buymuscle.es verifica el dominio en Resend. Los envios salen desde newsletter@buymuscle.es.
             </div>
           </div>
         </div>

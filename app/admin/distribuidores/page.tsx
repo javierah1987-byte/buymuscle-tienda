@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { authHeaders } from '@/lib/supabaseBrowser'
 
 const S ='https://awwlbepjxuoxaigztugh.supabase.co'
-const K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
 
 const LEVEL_COLORS = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
 const LEVEL_ICON = { Bronze:'🥉', Silver:'🥈', Gold:'🥇' }
@@ -15,7 +14,7 @@ export default function AdminDistribuidoresPage() {
   const [distributors, setDistributors] = useState([])
   const [loading, setLoading] = useState(true)
   const [editLevel, setEditLevel] = useState(null)
-  const [newDist, setNewDist] = useState({ email:'', company_name:'', level_id:'', phone:'', nif:'' })
+  const [newDist, setNewDist] = useState({ email:'', password:'', company_name:'', level_id:'', phone:'', nif:'' })
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [selDist, setSelDist] = useState(null)    // distribuidor seleccionado para ver detalle
@@ -26,36 +25,53 @@ export default function AdminDistribuidoresPage() {
 
   async function load() {
     setLoading(true)
-    const h = {apikey: K, 'Authorization': 'Bearer ' + K}
-    const [r1, r2] = await Promise.all([
-      fetch(S + '/rest/v1/distributor_levels?order=discount_pct.asc', {headers: h}).then(r => r.json()),
-      fetch(S + '/rest/v1/distributors?select=*,distributor_levels(name,discount_pct)&order=company_name.asc', {headers: h}).then(r => r.json())
-    ])
-    setLevels(Array.isArray(r1) ? r1 : [])
-    setDistributors(Array.isArray(r2) ? r2 : [])
+    try {
+      const r = await fetch('/api/admin/distributors')
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ok) {
+        setMsg('Error cargando distribuidores: ' + (d.error || ('HTTP ' + r.status)))
+        setLevels([]); setDistributors([])
+      } else {
+        setLevels(Array.isArray(d.levels) ? d.levels : [])
+        setDistributors(Array.isArray(d.distributors) ? d.distributors : [])
+      }
+    } catch (e) {
+      setMsg('Error cargando distribuidores: ' + String(e?.message || e))
+    }
     setLoading(false)
+  }
+
+  async function patchAdmin(kind, id, fields) {
+    const r = await fetch('/api/admin/distributors', {
+      method: 'PATCH', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ kind, id, fields })
+    })
+    const d = await r.json().catch(() => ({}))
+    if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status))
   }
 
   async function saveLevel() {
     if (!editLevel) return
     setSaving(true)
-    const h2 = {apikey: K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json'}
-    await fetch(S + '/rest/v1/distributor_levels?id=eq.' + editLevel.id, {
-      method: 'PATCH', headers: h2,
-      body: JSON.stringify({discount_pct: Number(editLevel.discount_pct), min_order_amount: Number(editLevel.min_order_amount)})
-    })
-    setMsg('Nivel actualizado')
-    setEditLevel(null)
+    try {
+      await patchAdmin('level', editLevel.id, {
+        discount_pct: Number(editLevel.discount_pct),
+        min_order_amount: Number(editLevel.min_order_amount)
+      })
+      setMsg('Nivel actualizado')
+      setEditLevel(null)
+      load()
+    } catch (e) {
+      setMsg('Error guardando nivel: ' + String(e?.message || e))
+    }
     setSaving(false)
     setTimeout(() => setMsg(''), 2500)
-    load()
   }
 
   async function openDetalle(d) {
     setSelDist(d)
     setDistOrders([])
-    // Cargar pedidos del distribuidor por email
-    const h = {apikey: K, 'Authorization': 'Bearer ' + K}
+    // Cargar pedidos del distribuidor por email (sesión admin vía RLS)
     const r = await fetch(S + '/rest/v1/orders?customer_email=eq.' + encodeURIComponent(d.email) + '&order=created_at.desc&limit=20', {headers: await authHeaders()})
     const data = await r.json()
     setDistOrders(Array.isArray(data) ? data : [])
@@ -64,51 +80,75 @@ export default function AdminDistribuidoresPage() {
   async function saveEditDist() {
     if (!editDist) return
     setSaving(true)
-    const h = {apikey: K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json'}
-    await fetch(S + '/rest/v1/distributors?id=eq.' + editDist.id, {
-      method: 'PATCH', headers: h,
-      body: JSON.stringify({
+    try {
+      await patchAdmin('distributor', editDist.id, {
         company_name: editDist.company_name,
         phone: editDist.phone || null,
         nif: editDist.nif || null,
         level_id: Number(editDist.level_id),
         active: editDist.active
       })
-    })
+      setEditDist(null)
+      setSelDist(null)
+      setMsg('Distribuidor actualizado')
+      load()
+    } catch (e) {
+      setMsg('Error guardando distribuidor: ' + String(e?.message || e))
+    }
     setSaving(false)
-    setEditDist(null)
-    setSelDist(null)
-    load()
-    setMsg('Distribuidor actualizado')
     setTimeout(() => setMsg(''), 2500)
   }
 
   async function toggleActive(id, active) {
-    const h3 = {apikey: K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json'}
-    await fetch(S + '/rest/v1/distributors?id=eq.' + id, {
-      method: 'PATCH', headers: h3, body: JSON.stringify({active: !active})
-    })
+    try {
+      await patchAdmin('distributor', id, { active: !active })
+    } catch (e) {
+      setMsg('Error cambiando estado: ' + String(e?.message || e))
+      setTimeout(() => setMsg(''), 2500)
+    }
     load()
   }
 
   async function createDistributor() {
-    if (!newDist.email || !newDist.company_name || !newDist.level_id) {
-      setMsg('Rellena email, empresa y nivel')
+    if (!newDist.email || !newDist.password || !newDist.company_name || !newDist.level_id) {
+      setMsg('Rellena email, contraseña, empresa y nivel')
       setTimeout(() => setMsg(''), 2500)
       return
     }
     setSaving(true)
-    const h4 = {apikey: K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'}
-    const r = await fetch(S + '/rest/v1/distributors', {
-      method: 'POST', headers: h4,
-      body: JSON.stringify({email: newDist.email, company_name: newDist.company_name, level_id: Number(newDist.level_id), phone: newDist.phone || null, nif: newDist.nif || null, active: true})
-    })
-    if (!r.ok) { const err = await r.text(); setMsg('Error: ' + err); setSaving(false); return }
-    setMsg('Distribuidor creado correctamente')
-    setNewDist({ email:'', company_name:'', level_id:'', phone:'', nif:'' })
+    try {
+      // Crea el usuario Auth + registro distribuidor (service role en el servidor)
+      const r = await fetch('/api/admin/create-distributor', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          email: newDist.email,
+          password: newDist.password,
+          company_name: newDist.company_name,
+          level_id: Number(newDist.level_id)
+        })
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || d.error) { setMsg('Error: ' + (d.error || ('HTTP ' + r.status))); setSaving(false); return }
+
+      // El alta no guarda teléfono/NIF: completarlos con un PATCH posterior
+      if (newDist.phone || newDist.nif) {
+        try {
+          const g = await fetch('/api/admin/distributors')
+          const gd = await g.json().catch(() => ({}))
+          const created = (gd.distributors || []).find(x => x.email === newDist.email)
+          if (created) await patchAdmin('distributor', created.id, { phone: newDist.phone || null, nif: newDist.nif || null })
+        } catch {}
+      }
+
+      setMsg('Distribuidor creado correctamente')
+      setNewDist({ email:'', password:'', company_name:'', level_id:'', phone:'', nif:'' })
+      setTimeout(() => setMsg(''), 3000)
+      load()
+    } catch (e) {
+      setMsg('Error: ' + String(e?.message || e))
+      setTimeout(() => setMsg(''), 3000)
+    }
     setSaving(false)
-    setTimeout(() => setMsg(''), 3000)
-    load()
   }
 
   const fmt = d => d ? new Date(d).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '-'
@@ -124,7 +164,7 @@ export default function AdminDistribuidoresPage() {
         <Link href="/admin" style={{ color:'rgba(255,255,255,0.4)', textDecoration:'none', fontSize:13 }}>← Admin</Link>
       </div>
 
-      {msg && <div style={{ background:'rgba(34,197,94,0.1)', borderBottom:'1px solid rgba(34,197,94,0.2)', padding:'12px 28px', fontSize:13, color:'#22c55e' }}>{msg}</div>}
+      {msg && <div style={{ background:msg.indexOf('Error')===0?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.1)', borderBottom:'1px solid '+(msg.indexOf('Error')===0?'rgba(239,68,68,0.2)':'rgba(34,197,94,0.2)'), padding:'12px 28px', fontSize:13, color:msg.indexOf('Error')===0?'#ef4444':'#22c55e' }}>{msg}</div>}
 
       <div style={{ padding:'24px 28px', display:'grid', gridTemplateColumns:'300px 1fr', gap:24 }}>
 
@@ -175,6 +215,7 @@ export default function AdminDistribuidoresPage() {
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>Nuevo distribuidor</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               <input value={newDist.email} onChange={function(e){ setNewDist(function(p){ return {...p, email:e.target.value} }) }} placeholder="Email *" style={inp}/>
+              <input type="password" value={newDist.password} onChange={function(e){ setNewDist(function(p){ return {...p, password:e.target.value} }) }} placeholder="Contraseña *" style={inp}/>
               <input value={newDist.company_name} onChange={function(e){ setNewDist(function(p){ return {...p, company_name:e.target.value} }) }} placeholder="Empresa *" style={inp}/>
               <input value={newDist.phone} onChange={function(e){ setNewDist(function(p){ return {...p, phone:e.target.value} }) }} placeholder="Telefono" style={inp}/>
               <input value={newDist.nif} onChange={function(e){ setNewDist(function(p){ return {...p, nif:e.target.value} }) }} placeholder="NIF/CIF" style={inp}/>
