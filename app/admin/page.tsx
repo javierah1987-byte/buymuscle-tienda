@@ -26,6 +26,7 @@ const MODULOS=[
   {icon:'📊',t:'Métricas',d:'KPIs avanzados',href:'/admin/metricas',c:'#22c55e'},
   {icon:'🎯',t:'Precios masivos',d:'Subir/bajar por marca',href:'/admin/precios',c:'#ef4444'},
   {icon:'💰',t:'Caja',d:'Apertura y cierre Z',href:'/admin/caja',c:'#059669'},
+  {icon:'📈',t:'Estimador de pedidos',d:'Qué reponer cada viernes',href:'/admin/estimador',c:'#0ea5e9'},
   {icon:'🔄',t:'Devoluciones',d:'Gestionar devoluciones',href:'/admin/devoluciones',c:'#dc2626'},
   {icon:'🏷️',t:'Holded Facturas',d:'Ver facturas en Holded',href:'https://app.holded.com',c:'#555',ext:true},
 ]
