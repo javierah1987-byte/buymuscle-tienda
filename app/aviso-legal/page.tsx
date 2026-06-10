@@ -17,8 +17,8 @@ export default function AvisoLegal() {
         <div style={{ marginTop: 12, padding: '16px 20px', background: '#f8f8f8', border: '1px solid #e5e5e5', borderRadius: 8 }}>
           <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
             <li><strong>Nombre comercial:</strong> BUYMUSCLE</li>
-            <li><strong>Razón social:</strong> [PENDIENTE — completar]</li>
-            <li><strong>NIF/CIF:</strong> [PENDIENTE — completar]</li>
+            <li><strong>Razón social:</strong> Endorfinate SLU</li>
+            <li><strong>NIF/CIF:</strong> B76251594</li>
             <li><strong>Dirección:</strong> Alcalde Manuel Amador Rodríguez 23, Telde, Las Palmas</li>
             <li><strong>Email:</strong> tienda@buymuscle.es</li>
             <li><strong>Teléfono / WhatsApp:</strong> 828 048 310</li>

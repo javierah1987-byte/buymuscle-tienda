@@ -31,9 +31,13 @@ export async function GET(req){
     let sent=0
     for(const cart of carts){
       if(!cart.email) continue
+      // cart_data puede ser array de items o {items:[...]} (mismo parseo que /admin/abandoned)
       let items=[]
-      try{items=typeof cart.cart_data==='string'?JSON.parse(cart.cart_data):(cart.cart_data||[])}catch{}
-      if(!Array.isArray(items)) items=[]
+      try{
+        const raw=typeof cart.cart_data==='string'?JSON.parse(cart.cart_data):cart.cart_data
+        if(Array.isArray(raw)) items=raw
+        else if(raw&&Array.isArray(raw.items)) items=raw.items
+      }catch{}
       const total=Number(cart.total)||items.reduce((s,i)=>s+(Number(i.price||0)*(i.qty||1)),0)
       const name='cliente'
       if(resendKey){
