@@ -145,9 +145,12 @@ export default function TPVPage() {
       setCategories(['Todos', ...new Set(p.map(x => x.categories?.name).filter(Boolean).sort())])
       setLoading(false)
       // Ver si hay caja abierta primero, para acotar el arqueo al turno
-      const rc = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/caja_sessions?closed_at=is.null&order=opened_at.desc&limit=1', {headers:H})
-      const cajas = await rc.json()
-      const caja = (Array.isArray(cajas) && cajas.length > 0) ? cajas[0] : null
+      let caja = null
+      try {
+        const rc = await fetch('/api/tpv-caja', { credentials:'same-origin' })
+        const cajaData = await rc.json()
+        if (cajaData && cajaData.ok) caja = cajaData.open || null
+      } catch {}
       if (caja) setCajaAbierta(caja)
       // Stats: si hay turno abierto, desde su apertura; si no, del día
       await recargarVentas(caja?.opened_at)
@@ -256,31 +259,35 @@ export default function TPVPage() {
   // ── APERTURA DE CAJA ────────────────────────────────────
   const abrirCaja = async () => {
     if (!efectivoApertura || isNaN(Number(efectivoApertura))) { alert('Introduce el efectivo de apertura'); return }
-    const { data, error } = await db.from('caja_sessions').insert({
-      opened_at: new Date().toISOString(),
-      cash_open: Number(efectivoApertura),
-      operator: 'TPV',
-      total_efectivo: 0, total_tarjeta: 0, total_vales: 0, num_tickets: 0
-    }).select().single()
-    if (error) { alert('Error: ' + error.message); return }
-    setCajaAbierta(data)
-    setShowApertura(false)
-    setEfectivoApertura('')
+    try {
+      const r = await fetch('/api/tpv-caja', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ cash_open: Number(efectivoApertura), operator: 'TPV' }),
+      })
+      const data = await r.json()
+      if (!data.ok) { alert('Error: ' + (data.error || 'No se pudo abrir la caja')); return }
+      setCajaAbierta(data.session)
+      setShowApertura(false)
+      setEfectivoApertura('')
+    } catch (e) { alert('Error: ' + (e?.message || e)) }
   }
 
   // ── CIERRE DE CAJA (Z) ─────────────────────────────────
   const cerrarCaja = async () => {
     if (!cajaAbierta) return
     if (!efectivoCierre && efectivoCierre !== '0') { alert('Introduce el efectivo en caja al cierre'); return }
-    const { error } = await db.from('caja_sessions').update({
-      closed_at: new Date().toISOString(),
-      cash_close: Number(efectivoCierre),
-      total_efectivo: ventasDia.efectivo,
-      total_tarjeta: ventasDia.tarjeta + ventasDia.bizum,
-      num_tickets: ventasDia.count,
-      notes: cierreNotes
-    }).eq('id', cajaAbierta.id)
-    if (error) { alert('Error: ' + error.message); return }
+    try {
+      const r = await fetch('/api/tpv-caja', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ id: cajaAbierta.id, cash_close: Number(efectivoCierre), notes: cierreNotes }),
+      })
+      const data = await r.json()
+      if (!data.ok) { alert('Error: ' + (data.error || 'No se pudo cerrar la caja')); return }
+    } catch (e) { alert('Error: ' + (e?.message || e)); return }
     setCajaAbierta(null)
     setShowCierre(false)
     setEfectivoCierre('')

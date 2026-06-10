@@ -2,10 +2,6 @@
 'use client'
 import{useState,useEffect}from 'react'
 import Link from 'next/link'
-import { authHeaders } from '@/lib/supabaseBrowser'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
-const h={apikey:K,'Authorization':'Bearer '+K,'Content-Type':'application/json'}
 export default function AdminCaja(){
   const[sessions,setSessions]=useState([])
   const[open,setOpen]=useState(null)
@@ -16,17 +12,18 @@ export default function AdminCaja(){
   useEffect(()=>{load()},[])
   async function load(){
     setLoading(true)
-    const r=await fetch(S+'/rest/v1/caja_sessions?order=opened_at.desc&limit=30',{headers:h})
+    const r=await fetch('/api/tpv-caja',{credentials:'same-origin'})
     const d=await r.json()
-    const ss=Array.isArray(d)?d:[]
-    setSessions(ss)
-    setOpen(ss.find(s=>!s.closed_at)||null)
+    setSessions(d.sessions||[])
+    setOpen(d.open||null)
     setLoading(false)
   }
   async function abrirCaja(){
     const ef=parseFloat(efectivoInicial)||0
-    await fetch(S+'/rest/v1/caja_sessions',{method:'POST',headers:{...h,'Prefer':'return=minimal'},
+    const r=await fetch('/api/tpv-caja',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
       body:JSON.stringify({cash_open:ef,operator:'admin'})})
+    const d=await r.json()
+    if(!d.ok){setMsg('Error: '+(d.error||'No se pudo abrir la caja'));setTimeout(()=>setMsg(''),3000);return}
     setMsg('Caja abierta con '+ef.toFixed(2)+' € de efectivo inicial')
     setEfectivoInicial('')
     load()
@@ -35,15 +32,11 @@ export default function AdminCaja(){
   async function cerrarCaja(){
     if(!open)return
     const ef=parseFloat(efectivoFinal)||0
-    // Calcular totales del dia en orders
-    const hoy=open.opened_at.split('T')[0]
-    const r=await fetch(S+'/rest/v1/orders?created_at=gte.'+hoy+'T00:00:00&channel=eq.tpv_retail&select=total,payment_method',{headers:await authHeaders({'Content-Type':'application/json'})})
-    const orders=await r.json()
-    const totalEf=(Array.isArray(orders)?orders:[]).filter(o=>o.payment_method==='efectivo').reduce((s,o)=>s+Number(o.total||0),0)
-    const totalTarjeta=(Array.isArray(orders)?orders:[]).filter(o=>o.payment_method!=='efectivo').reduce((s,o)=>s+Number(o.total||0),0)
-    await fetch(S+'/rest/v1/caja_sessions?id=eq.'+open.id,{method:'PATCH',headers:h,
-      body:JSON.stringify({closed_at:new Date().toISOString(),cash_close:ef,total_efectivo:totalEf,total_tarjeta:totalTarjeta,num_tickets:Array.isArray(orders)?orders.length:0})})
-    setMsg('Caja cerrada. Efectivo esperado: '+(Number(open.cash_open||0)+totalEf).toFixed(2)+' € · Real: '+ef.toFixed(2)+' €')
+    const r=await fetch('/api/tpv-caja',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+      body:JSON.stringify({id:open.id,cash_close:ef})})
+    const d=await r.json()
+    if(!d.ok){setMsg('Error: '+(d.error||'No se pudo cerrar la caja'));setTimeout(()=>setMsg(''),3000);return}
+    setMsg('Caja cerrada. Efectivo esperado: '+Number(d.expected_cash||0).toFixed(2)+' € · Real: '+ef.toFixed(2)+' €')
     setEfectivoFinal('')
     load()
     setTimeout(()=>setMsg(''),5000)

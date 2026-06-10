@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { tpvAuthorized } from '@/lib/tpvAuth'
+import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,9 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const IGIC = 0.07           // Canarias: IGIC general 7%
 
-function genId(){ return 'BM-TPV-' + Date.now().toString().slice(-8) }
+// Aleatorio criptográfico: 'BM-TPV-'+Date.now() era enumerable (cualquiera
+// adivinaba números de ticket cercanos y los consultaba en /api/order-lookup).
+function genId(){ return 'BM-TPV-' + crypto.randomBytes(8).toString('hex').toUpperCase() }
 function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
 
 // ── HOLDED (factura del TPV, IGIC 7%) ────────────────────

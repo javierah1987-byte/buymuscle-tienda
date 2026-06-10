@@ -3,12 +3,18 @@
 // y /api/paypal/capture (pago verificado). Centraliza precios autoritativos,
 // desglose de IGIC, descuento de stock atómico, cupones, CRM y notificaciones.
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 export const IGIC = 0.07           // Canarias: IGIC general 7%
 export const SHIP_FREE_FROM = 50
 export const SHIP_COST = 4.90
 
-export function genId(prefix = 'BM'){ return prefix + '-' + Math.random().toString(36).slice(2,10).toUpperCase() }
+// El order_number actúa como token de capacidad (se consulta el pedido por él
+// en /api/order-lookup), así que debe ser IMPREDECIBLE. Math.random no sirve:
+// 10 bytes aleatorios criptográficos en base32 → inenumerable.
+export function genId(prefix = 'BM'){
+  return prefix + '-' + crypto.randomBytes(10).toString('hex').toUpperCase()
+}
 export function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
 
 export function adminDb(){

@@ -25,8 +25,23 @@ export async function POST(req){
 
     // Verificar que el pedido existe
     const { data: order } = await db.from('orders')
-      .select('id,order_number').eq('order_number', String(order_number).toUpperCase()).maybeSingle()
+      .select('id,order_number,status').eq('order_number', String(order_number).toUpperCase()).maybeSingle()
     if(!order) return NextResponse.json({ ok:false, error:'order_not_found' }, { status:404 })
+
+    // Solo se permiten devoluciones sobre pedidos pagados/cumplidos
+    if(order.status === 'pending' || order.status === 'cancelled')
+      return NextResponse.json({ ok:false, error:'pedido_no_reembolsable' }, { status:400 })
+
+    // Cargar devoluciones previas para no exceder lo ya devuelto por línea
+    const { data: prevDevs } = await db.from('devoluciones').select('items').eq('order_id', order.id)
+    const alreadyReturned = {}
+    for(const dev of (prevDevs||[])){
+      for(const di of (Array.isArray(dev?.items) ? dev.items : [])){
+        const lid = di?.line_id
+        if(lid == null) continue
+        alreadyReturned[lid] = (alreadyReturned[lid] || 0) + (parseInt(di?.qty_dev) || 0)
+      }
+    }
 
     // Recalcular importes a partir de precios reales de las líneas (anti-manipulación)
     const { data: dbLines } = await db.from('order_lines').select('id,product_id,product_name,unit_price,quantity').eq('order_id', order.id)
@@ -36,7 +51,8 @@ export async function POST(req){
     for(const it of items){
       const dbl = lineMap.get(it.line_id)
       if(!dbl) continue
-      const qty = Math.max(0, Math.min(parseInt(it.qty_dev || 0), Number(dbl.quantity)))
+      const remaining = Number(dbl.quantity) - (alreadyReturned[dbl.id] || 0)
+      const qty = Math.max(0, Math.min(parseInt(it.qty_dev || 0), remaining))
       if(qty <= 0) continue
       itemsDev.push({
         line_id: dbl.id,

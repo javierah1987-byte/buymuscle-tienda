@@ -1,8 +1,14 @@
 // @ts-nocheck
+import { getAdminUser } from '@/lib/adminAuth'
 export const dynamic='force-dynamic'
 
 export async function POST(req:Request){
   try{
+    // Solo un admin puede disparar este envío (lo usa el panel de carritos
+    // abandonados). Sin guard, cualquiera podría mandar emails con el dominio
+    // Resend de la tienda (spam/phishing/quema de cuota).
+    const admin = await getAdminUser()
+    if(!admin) return new Response(JSON.stringify({error:'No autorizado'}),{status:401})
     const body=await req.json()
     const{order_id,customer_email,customer_name,items,total,shipping_address}=body
 
