@@ -63,7 +63,10 @@ export async function POST(req){
     if(!Array.isArray(items) || items.length === 0)
       return NextResponse.json({ ok:false, error:'empty_cart' }, { status:400 })
 
-    const disc = Math.min(100, Math.max(0, Number(discount_pct) || 0))
+    // Tope del descuento manual del TPV: evita tickets a 0 € por error o abuso.
+    // Ajustable si necesitáis promociones más agresivas.
+    const MAX_TPV_DISCOUNT = 60
+    const disc = Math.min(MAX_TPV_DISCOUNT, Math.max(0, Number(discount_pct) || 0))
 
     // 1. Precios autoritativos desde BD (evita manipulación del cliente)
     const productIds = [...new Set(items.map(i => Number(i.product_id ?? i.id)).filter(Boolean))]

@@ -63,7 +63,13 @@ async function createHoldedInvoice(order, lines){
       date: Math.floor(Date.now()/1000),
       notes: 'Pedido '+order.order_number,
       // Holded espera precio SIN impuesto; nuestros precios llevan IGIC incluido → desglosamos
-      items: lines.map(l => ({ name: l.product_name||'Producto', units: l.qty||1, subtotal: round2(Number(l.unit_price)/(1+IGIC)), tax: 7 })),
+      items: [
+        ...lines.map(l => ({ name: l.product_name||'Producto', units: l.qty||1, subtotal: round2(Number(l.unit_price)/(1+IGIC)), tax: 7 })),
+        // Línea de envío: sin ella la factura quedaba por debajo de lo cobrado.
+        ...(Number(order.shipping_cost) > 0
+          ? [{ name: 'Gastos de envío', units: 1, subtotal: round2(Number(order.shipping_cost)/(1+IGIC)), tax: 7 }]
+          : []),
+      ],
       ...(serie && { numSerieId: serie })
     }
     const invRes = await fetch('https://api.holded.com/api/invoicing/v1/documents/invoice',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify(inv)}).then(r=>r.json())
@@ -221,7 +227,9 @@ export async function persistOrder(db, body, opts = {}){
   }
 
   if(couponRow){
-    await db.from('discount_codes').update({ uses: (couponRow.uses || 0) + 1 }).eq('id', couponRow.id).catch(()=>{})
+    // Incremento atómico (uses = uses + 1) vía RPC: un update leído-y-escrito
+    // permitía superar max_uses con pedidos simultáneos.
+    await db.rpc('increment_coupon_uses', { p_id: couponRow.id }).catch(()=>{})
   }
 
   if(customer.email){

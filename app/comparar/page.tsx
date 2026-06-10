@@ -18,7 +18,7 @@ export default function Comparar(){
   async function buscar(q){
     if(q.length<2){setResults([]);return}
     setLoading(true)
-    const r=await fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,image_url,stock,description,category&active=eq.true&name=ilike.*'+encodeURIComponent(q)+'*&limit=8',{
+    const r=await fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,on_sale,image_url,stock,description,category&active=eq.true&name=ilike.*'+encodeURIComponent(q)+'*&limit=8',{
       headers:{'apikey':K,'Authorization':'Bearer '+K}
     })
     const d=await r.json()
@@ -53,7 +53,7 @@ export default function Comparar(){
                 :<div style={{width:40,height:40,background:'#f0f0f0',flexShrink:0}}/>}
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:'#111'}}>{p.name}</div>
-                  <div style={{fontSize:12,color:'#ff1e41',fontWeight:700}}>{Number(p.sale_price||p.price_incl_tax).toFixed(2)} €</div>
+                  <div style={{fontSize:12,color:'#ff1e41',fontWeight:700}}>{Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax).toFixed(2)} €</div>
                 </div>
               </div>
             ))}
@@ -90,7 +90,7 @@ export default function Comparar(){
                   <td style={{padding:'12px 16px',fontWeight:700,fontSize:13,color:'#111',borderBottom:'1px solid #f0f0f0'}}>Precio</td>
                   {selected.map(p=>(
                     <td key={p.id} style={{padding:'12px 16px',textAlign:'center',borderBottom:'1px solid #f0f0f0'}}>
-                      <div style={{fontSize:18,fontWeight:900,color:'#ff1e41'}}>{Number(p.sale_price||p.price_incl_tax).toFixed(2)} €</div>
+                      <div style={{fontSize:18,fontWeight:900,color:'#ff1e41'}}>{Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax).toFixed(2)} €</div>
                       {p.sale_price&&p.sale_price<p.price_incl_tax&&<div style={{fontSize:11,color:'#aaa',textDecoration:'line-through'}}>{Number(p.price_incl_tax).toFixed(2)} €</div>}
                     </td>
                   ))}
@@ -118,7 +118,7 @@ export default function Comparar(){
                   <td style={{padding:'12px 16px',borderBottom:'1px solid #f0f0f0'}}/>
                   {selected.map(p=>(
                     <td key={p.id} style={{padding:'12px 16px',textAlign:'center',borderBottom:'1px solid #f0f0f0'}}>
-                      <button onClick={()=>add({id:p.id,name:p.name,price:Number(p.sale_price||p.price_incl_tax),image:p.image_url,qty:1})}
+                      <button onClick={()=>add({id:p.id,name:p.name,price:Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax),image:p.image_url,qty:1})}
                         style={{background:'#ff1e41',color:'white',border:'none',padding:'8px 16px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
                         🛒 Añadir al carrito
                       </button>

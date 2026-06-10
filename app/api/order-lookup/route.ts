@@ -31,7 +31,7 @@ export async function GET(req){
     if(wantUpsell){
       const boughtIds = (lines||[]).map(l => l.product_id)
       const { data: ups } = await db.from('products')
-        .select('id,name,price_incl_tax,sale_price,image_url')
+        .select('id,name,price_incl_tax,sale_price,on_sale,image_url')
         .eq('active', true).gt('stock', 0).order('id', { ascending:false }).limit(12)
       upsell = (ups||[]).filter(p => boughtIds.indexOf(p.id) === -1).slice(0, 4)
     }

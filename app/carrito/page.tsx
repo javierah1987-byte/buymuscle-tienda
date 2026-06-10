@@ -12,7 +12,7 @@ function RecomendadosVacio() {
   const [prods, setProds] = useState([])
   const { add } = useCart()
   useEffect(()=>{
-    fetch(S+'/rest/v1/products?active=eq.true&stock=gt.0&order=id.desc&limit=4&select=id,name,price_incl_tax,sale_price,image_url,categories(name)',{headers:{apikey:K,'Authorization':'Bearer '+K}})
+    fetch(S+'/rest/v1/products?active=eq.true&stock=gt.0&order=id.desc&limit=4&select=id,name,price_incl_tax,sale_price,on_sale,image_url,categories(name)',{headers:{apikey:K,'Authorization':'Bearer '+K}})
       .then(r=>r.json()).then(d=>Array.isArray(d)&&setProds(d)).catch(()=>{})
   },[])
   if(!prods.length) return null
@@ -21,7 +21,7 @@ function RecomendadosVacio() {
       <h3 style={{fontSize:14,fontWeight:700,color:'#111',marginBottom:16,textTransform:'uppercase',letterSpacing:'0.05em'}}>Los mas vendidos — no te vayas sin nada 🔥</h3>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:12}}>
         {prods.map(p=>{
-          const price = Number(p.sale_price||p.price_incl_tax)
+          const price = Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax)
           return(
             <Link key={p.id} href={'/producto/'+p.id} style={{textDecoration:'none',color:'inherit',background:'white',border:'1px solid #f0f0f0',borderRadius:6,overflow:'hidden',display:'flex',flexDirection:'column'}}>
               <div style={{background:'#f9f9f9',aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>

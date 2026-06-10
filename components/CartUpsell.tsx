@@ -15,7 +15,7 @@ export default function CartUpsell() {
   useEffect(()=>{
     if(!items.length) return
     const ids=items.map(i=>i.id)
-    fetch(SUPA_URL+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,image_url,stock,category_id&active=eq.true&stock=gt.0&limit=100',{
+    fetch(SUPA_URL+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,on_sale,image_url,stock,category_id&active=eq.true&stock=gt.0&limit=100',{
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
     }).then(r=>r.json()).then(data=>{
       const cats=new Set(items.map(i=>i.category_id))
@@ -29,7 +29,7 @@ export default function CartUpsell() {
   if(!related.length) return null
 
   function handleAdd(p){
-    add({id:p.id,name:p.name,price:Number(p.sale_price||p.price_incl_tax),image:p.image_url,qty:1})
+    add({id:p.id,name:p.name,price:Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax),image:p.image_url,qty:1})
     setAdded(p.id)
     setTimeout(()=>setAdded(null),2000)
   }
@@ -41,7 +41,7 @@ export default function CartUpsell() {
       </h3>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
         {related.map(p=>{
-          const price=Number(p.sale_price||p.price_incl_tax)
+          const price=Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax)
           const isAdded=added===p.id
           return(
             <div key={p.id} style={{border:'1px solid #f0f0f0',background:'white',padding:10,display:'flex',flexDirection:'column',gap:6}}>

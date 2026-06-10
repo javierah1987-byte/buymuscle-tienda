@@ -31,11 +31,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [loaded, setLoaded] = useState(false)
 
-  // Cargar desde localStorage al montar
+  // Cargar desde localStorage al montar. Se valida cada entrada: un carrito
+  // corrupto (precio/qty no numéricos) contaminaría TODOS los totales con NaN.
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) setItems(JSON.parse(saved))
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const clean = (Array.isArray(parsed) ? parsed : [])
+          .map((i: any) => ({ ...i, id: Number(i?.id), price: Number(i?.price), qty: Number(i?.qty) }))
+          .filter((i: any) => Number.isFinite(i.id) && Number.isFinite(i.price) && Number.isFinite(i.qty) && i.qty > 0)
+        setItems(clean)
+      }
     } catch {}
     setLoaded(true)
   }, [])

@@ -172,7 +172,7 @@ function Contenido() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12 }}>
               {upsell.map(function(p){
-                const price = Number(p.sale_price||p.price_incl_tax)
+                const price = Number((p.on_sale&&p.sale_price)?p.sale_price:p.price_incl_tax)
                 return(
                   <Link key={p.id} href={'/producto/'+p.id} style={{ textDecoration:'none', color:'inherit', background:'white', border:'1px solid #e8e8e8', borderRadius:8, overflow:'hidden', display:'flex', flexDirection:'column' }}>
                     <div style={{ background:'#f9f9f9', aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', padding:10 }}>
