@@ -13,7 +13,7 @@ import ProductoGrid from '@/components/ProductoGrid'
 import Script from 'next/script'
 import { SITE_URL } from '@/lib/site'
 
-const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
+const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 // ISR: la página se regenera cada 60 s. El stock mostrado puede tener hasta 1 min
 // de antigüedad, pero el checkout valida stock de forma autoritativa (sin_stock 409),
 // así que una insignia "disponible" ligeramente obsoleta no causa sobreventa.

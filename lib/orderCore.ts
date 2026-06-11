@@ -168,6 +168,17 @@ export async function quoteOrder(db, { items = [], discount_code = '' }){
 // o { ok:false, error, status }.
 // opts: { status='pending', payment_method, paypal_capture_id, channel, customer }
 export async function persistOrder(db, body, opts = {}){
+  // Idempotencia: si el cliente reenvía el mismo checkout (red móvil, doble
+  // clic), la clave única evita un segundo pedido. Respaldada por índice
+  // único parcial orders_idempotency_key_uniq.
+  const idemKey = typeof body.idempotency_key === 'string' && body.idempotency_key.length >= 8
+    ? body.idempotency_key.slice(0, 64) : null
+  if(idemKey){
+    const { data: existing } = await db.from('orders')
+      .select('order_number,total').eq('idempotency_key', idemKey).maybeSingle()
+    if(existing) return { ok:true, order_number: existing.order_number, total: Number(existing.total), idempotent:true }
+  }
+
   const quote = await quoteOrder(db, body)
   if(!quote.ok) return quote
 
@@ -180,6 +191,7 @@ export async function persistOrder(db, body, opts = {}){
   const order_number = genId()
   const { data: orderRow, error: orderErr } = await db.from('orders').insert({
     order_number,
+    idempotency_key: idemKey,
     channel,
     customer_name: customer.name || null,
     customer_email: customer.email || null,
@@ -204,7 +216,16 @@ export async function persistOrder(db, body, opts = {}){
     stock_applied: status === 'paid',
     notes: customer.notes || null,
   }).select().single()
-  if(orderErr) throw orderErr
+  if(orderErr){
+    // Carrera idempotente: dos envíos simultáneos con la misma clave; el índice
+    // único frena al segundo → devolvemos el pedido que sí se creó.
+    if(idemKey && String(orderErr.code) === '23505' && String(orderErr.message||'').includes('idempotency')){
+      const { data: existing } = await db.from('orders')
+        .select('order_number,total').eq('idempotency_key', idemKey).maybeSingle()
+      if(existing) return { ok:true, order_number: existing.order_number, total: Number(existing.total), idempotent:true }
+    }
+    throw orderErr
+  }
   const orderId = orderRow.id
 
   const { error: linesErr } = await db.from('order_lines').insert(

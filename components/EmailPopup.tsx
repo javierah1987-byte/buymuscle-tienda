@@ -2,7 +2,7 @@
 'use client'
 import{useState,useEffect}from 'react'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 export default function EmailPopup(){
   const[v,setV]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[load,setLoad]=useState(false)
   useEffect(()=>{if(localStorage.getItem('bm_popup'))return;const t=setTimeout(()=>setV(true),8000);return()=>clearTimeout(t)},[])

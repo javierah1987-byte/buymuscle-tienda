@@ -4,7 +4,7 @@ export const dynamic='force-dynamic'
 // GET /api/cron-stock?key=BM_CRON_2025
 // vercel.json: {"crons":[...,{"path":"/api/cron-stock?key=BM_CRON_2025","schedule":"0 8 * * *"}]}
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const h={apikey:K,'Authorization':'Bearer '+K}
 // Secreto del cron configurable por entorno (fallback al legacy para no romper
 // el cron ya programado en vercel.json hasta que se fije CRON_SECRET en Vercel).

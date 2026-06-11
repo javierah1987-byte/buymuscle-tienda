@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import{createClient}from'@supabase/supabase-js'
 export const revalidate=3600
-const sb=createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
+const sb=createClient('https://awwlbepjxuoxaigztugh.supabase.co',process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 export const metadata={title:'Blog | BUYMUSCLE',description:'Articulos sobre nutricion deportiva, suplementacion y entrenamiento.'}
 export default async function BlogPage(){
   const{data:posts}=await sb.from('blog_posts').select('id,slug,title,excerpt,cover_image,category,published_at').eq('published',true).order('published_at',{ascending:false})

@@ -7,7 +7,7 @@ import PayPalButton from '@/components/PayPalButton'
 import { trackBeginCheckout } from '@/lib/analytics'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 function RecomendadosVacio() {
   const [prods, setProds] = useState([])
@@ -58,6 +58,13 @@ export default function CarritoPage() {
   const [discountInfo, setDiscountInfo] = useState(null) // { type:'percent'|'fixed', value, discountAmt }
   const [discountMsg, setDiscountMsg] = useState('')
   const [ordering, setOrdering] = useState(false)
+  // Clave de idempotencia: una por carga de página. Si la red móvil reintenta
+  // o el cliente pulsa dos veces, el servidor devuelve el MISMO pedido en vez
+  // de crear un duplicado.
+  const [idemKey] = useState(() =>
+    (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : Date.now().toString(36) + Math.random().toString(36).slice(2))
 
   // Analítica: begin_checkout al entrar en el paso de datos
   useEffect(()=>{
@@ -146,6 +153,7 @@ export default function CarritoPage() {
           })),
           payment_method: method || 'transfer',
           discount_code: discountInfo ? coupon.trim() : '',
+          idempotency_key: idemKey,
           channel: 'web',
         })
       })

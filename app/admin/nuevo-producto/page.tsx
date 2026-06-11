@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const H={apikey:K,'Authorization':'Bearer '+K}
 const MARCAS = ['BuyMuscle','MVP','IO.Genix','Applied Nutrition','GN Nutrition','BioTechUSA','Scitec','HSN','Quamtrax']
 const INP = {width:'100%',padding:'9px 11px',border:'1px solid #333',borderRadius:4,background:'#1a1a1a',color:'white',fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}

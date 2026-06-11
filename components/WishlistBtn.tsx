@@ -2,7 +2,7 @@
 'use client'
 import{useEffect,useState}from 'react'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 function sid(){let i=localStorage.getItem('bm_sid');if(!i){i=Math.random().toString(36).slice(2);localStorage.setItem('bm_sid',i)}return i}
 export default function WishlistBtn({productId,size=24}){
   const[saved,setSaved]=useState(false),[loading,setLoading]=useState(false)

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
 const S = 'https://awwlbepjxuoxaigztugh.supabase.co'
-const K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+const K = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const H = { apikey: K, 'Authorization': 'Bearer ' + K }
 
 const card = { background: '#1a1a1a', border: '1px solid #333', borderRadius: 8, padding: 16, display: 'flex', gap: 16, alignItems: 'center' }

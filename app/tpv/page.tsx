@@ -82,7 +82,7 @@ export default function TPVPage() {
   useEffect(() => {
     if (tpvAuth !== true) return
     async function load() {
-      const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
+      const H = {apikey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,'Authorization':'Bearer '+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}
       // Productos con categorías — solo las columnas que usa el TPV
       // (la grid, las líneas del ticket y el cálculo de precio), no todo el catálogo con *.
       const rp = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/products?active=eq.true&stock=gt.0&order=name.asc&select=id,name,price_incl_tax,sale_price,on_sale,stock,image_url,categories(name)', {headers:H})
@@ -139,7 +139,7 @@ export default function TPVPage() {
   const discount = Math.max(DISCOUNTS[clientType] || 0, discManual || 0)
 
   const addLine = async (product) => {
-    const H = {apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'}
+    const H = {apikey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,'Authorization':'Bearer '+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}
     const rv2 = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/product_variants?product_id=eq.'+product.id+'&active=eq.true&stock=gt.0&select=*,attribute_values(value,attribute_types(name))', {headers:H})
     const variants = await rv2.json()
     if (variants && variants.length > 0) { setVariantModal({ product, variants }); return }
