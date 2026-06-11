@@ -94,18 +94,20 @@ export default function SearchAutocomplete({ placeholder = 'Buscar...' }) {
           onKeyDown={handleKey}
           onFocus={() => q.length >= 2 && results.length > 0 && setOpen(true)}
           placeholder={placeholder}
+          aria-label="Buscar productos"
           style={{
             width: '100%', padding: '10px 40px 10px 14px',
             border: '1px solid #e0e0e0', borderRadius: 4,
             fontSize: 14, fontFamily: 'Heebo, sans-serif',
-            outline: 'none', background: 'white', color: '#111',
+            background: 'white', color: '#111',
           }}
         />
         {loading ? (
-          <div style={{ position: 'absolute', right: 10, width: 18, height: 18, border: '2px solid #ff1e41', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+          <div aria-hidden="true" style={{ position: 'absolute', right: 10, width: 18, height: 18, border: '2px solid #ff1e41', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
         ) : (
           <button
             onClick={() => q.trim() && router.push('/tienda?q='+encodeURIComponent(q.trim()))}
+            aria-label="Buscar"
             style={{ position: 'absolute', right: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#ff1e41', fontSize: 18, padding: 4, display: 'flex' }}
           >🔍</button>
         )}
@@ -113,14 +115,14 @@ export default function SearchAutocomplete({ placeholder = 'Buscar...' }) {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {open && results.length > 0 && (
-        <div style={{
+        <div role="listbox" aria-label="Resultados de búsqueda" style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 500,
           background: 'white', borderRadius: '0 0 8px 8px',
           boxShadow: '0 8px 32px rgba(0,0,0,0.15)', border: '1px solid #eee', borderTop: 'none',
           maxHeight: 420, overflowY: 'auto',
         }}>
           {results.map((p, i) => (
-            <div key={p.id} onClick={() => goTo(p.id)}
+            <div key={p.id} onClick={() => goTo(p.id)} role="option" aria-selected={sel === i}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
                 cursor: 'pointer', transition: 'background 0.1s',
@@ -147,6 +149,8 @@ export default function SearchAutocomplete({ placeholder = 'Buscar...' }) {
           ))}
           <div
             onClick={() => { router.push('/tienda?q='+encodeURIComponent(q.trim())); setOpen(false) }}
+            role="button" tabIndex={0}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push('/tienda?q='+encodeURIComponent(q.trim())); setOpen(false) } }}
             style={{ padding: '10px 14px', fontSize: 13, color: '#ff1e41', cursor: 'pointer', textAlign: 'center', fontWeight: 700, borderTop: '1px solid #f0f0f0' }}
           >
             Ver todos los resultados para "{q}" →

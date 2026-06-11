@@ -20,6 +20,12 @@ export default function ExitIntent(){
     document.addEventListener('mouseleave',handler)
     return()=>document.removeEventListener('mouseleave',handler)
   },[])
+  useEffect(()=>{
+    if(!show)return
+    const h=(e)=>{if(e.key==='Escape')setShow(false)}
+    window.addEventListener('keydown',h)
+    return()=>window.removeEventListener('keydown',h)
+  },[show])
   async function subscribe(){
     if(!email.includes('@'))return
     await fetch(S+'/rest/v1/email_subscribers',{method:'POST',
@@ -32,7 +38,7 @@ export default function ExitIntent(){
   return(
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.72)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Arial,sans-serif'}}
       onClick={e=>{if(e.target===e.currentTarget)setShow(false)}}>
-      <div style={{background:'white',maxWidth:460,width:'92%',position:'relative',overflow:'hidden'}}>
+      <div role="dialog" aria-modal="true" aria-label="Oferta de descuento antes de salir" style={{background:'white',maxWidth:460,width:'92%',position:'relative',overflow:'hidden'}}>
         <div style={{background:'#ff1e41',padding:'28px 32px 20px',textAlign:'center',color:'white'}}>
           <div style={{fontSize:36,fontWeight:900,letterSpacing:'-1px'}}>ESPERA</div>
           <h2 style={{margin:'4px 0 8px',fontSize:22,fontWeight:900}}>Antes de irte...</h2>
@@ -48,8 +54,8 @@ export default function ExitIntent(){
             <>
               <div style={{display:'flex',gap:0,marginBottom:12}}>
                 <input value={email} onChange={e=>setEmail(e.target.value)}
-                  onKeyDown={e=>e.key==='Enter'&&subscribe()} type="email" placeholder="tu@email.com"
-                  style={{flex:1,padding:'12px 14px',border:'2px solid #e0e0e0',borderRight:'none',fontSize:14,fontFamily:'Arial',outline:'none'}}/>
+                  onKeyDown={e=>e.key==='Enter'&&subscribe()} type="email" placeholder="tu@email.com" aria-label="Tu correo electrónico"
+                  style={{flex:1,padding:'12px 14px',border:'2px solid #e0e0e0',borderRight:'none',fontSize:14,fontFamily:'Arial'}}/>
                 <button onClick={subscribe}
                   style={{background:'#ff1e41',color:'white',border:'none',padding:'12px 18px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Arial',whiteSpace:'nowrap'}}>
                   Quiero el 5%

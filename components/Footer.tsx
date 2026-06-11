@@ -119,7 +119,7 @@ export default function Footer(){
         {/* Bottom bar */}
         <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:20,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
           <div style={{fontSize:12,color:'rgba(255,255,255,0.3)'}}>© {new Date().getFullYear()} BuyMuscle. Todos los derechos reservados.</div>
-          <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+          <div aria-hidden="true" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
             {['💳','🏦','📱','🍎','🔐'].map((i,idx)=>(
               <div key={idx} style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',padding:'4px 8px',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>{i}</div>
             ))}

@@ -228,7 +228,7 @@ export default function CarritoPage() {
                 <div style={{background:'white',border:'1px solid #e8e8e8',borderRadius:8,overflow:'hidden'}}>
                   <div style={{padding:'14px 20px',borderBottom:'1px solid #f0f0f0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span style={{fontWeight:700,fontSize:14}}>{items.length} PRODUCTOS</span>
-                    <button onClick={clear} style={{background:'none',border:'none',color:'#aaa',cursor:'pointer',fontSize:12}}>Vaciar carrito</button>
+                    <button onClick={clear} style={{background:'none',border:'none',color:'#767676',cursor:'pointer',fontSize:12}}>Vaciar carrito</button>
                   </div>
                   {items.map(item=>(
                     <div key={item.id+item.variant} style={{display:'grid',gridTemplateColumns:'60px 1fr auto',gap:14,padding:'14px 20px',borderBottom:'1px solid #f9f9f9',alignItems:'center'}}>
@@ -239,11 +239,11 @@ export default function CarritoPage() {
                         <div style={{fontSize:14,fontWeight:900,color:'#ff1e41',marginTop:4}}>{item.price.toFixed(2)} €</div>
                       </div>
                       <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
-                        <button onClick={()=>remove(item.id,item.variant)} style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:18,lineHeight:1}}>✕</button>
+                        <button onClick={()=>remove(item.id,item.variant)} aria-label={'Eliminar '+item.name+' del carrito'} style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:18,lineHeight:1}}>✕</button>
                         <div style={{display:'flex',alignItems:'center',border:'1px solid #e8e8e8',borderRadius:4}}>
-                          <button onClick={()=>updateQty(item.id,item.variant,Math.max(1,item.qty-1))} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>−</button>
+                          <button onClick={()=>updateQty(item.id,item.variant,Math.max(1,item.qty-1))} aria-label={'Disminuir cantidad de '+item.name} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>−</button>
                           <span style={{width:32,textAlign:'center',fontSize:13,fontWeight:600}}>{item.qty}</span>
-                          <button onClick={()=>updateQty(item.id,item.variant,item.qty+1)} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>+</button>
+                          <button onClick={()=>updateQty(item.id,item.variant,item.qty+1)} aria-label={'Aumentar cantidad de '+item.name} style={{width:28,height:28,border:'none',background:'none',cursor:'pointer',fontSize:16}}>+</button>
                         </div>
                         <span style={{fontSize:13,fontWeight:700,color:'#111'}}>{(item.price*item.qty).toFixed(2)} €</span>
                       </div>
@@ -272,17 +272,17 @@ export default function CarritoPage() {
                 {[['name','Nombre completo *'],['email','Email *'],['phone','Telefono'],['address','Direccion'],['city','Ciudad'],['postal_code','Cod. Postal'],['province','Provincia'],['nif','NIF/CIF']].map(([k,l])=>(
                   <div key={k} style={{gridColumn:k==='address'||k==='notes'?'1/-1':'auto'}}>
                     <label style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:4}}>{l}</label>
-                    <input value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}
-                      style={{width:'100%',padding:'9px 12px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:13,outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+                    <input value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} aria-label={l.replace(' *','')}
+                      style={{width:'100%',padding:'9px 12px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}/>
                   </div>
                 ))}
                 <div style={{gridColumn:'1/-1'}}>
                   <label style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:4}}>Notas del pedido (opcional)</label>
-                  <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2}
-                    style={{width:'100%',padding:'9px 12px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:13,outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box'}}/>
+                  <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} rows={2} aria-label="Notas del pedido"
+                    style={{width:'100%',padding:'9px 12px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:13,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box'}}/>
                 </div>
               </div>
-              <button onClick={()=>setPaso(1)} style={{marginTop:12,background:'none',border:'none',color:'#aaa',cursor:'pointer',fontSize:12}}>← Volver al carrito</button>
+              <button onClick={()=>setPaso(1)} style={{marginTop:12,background:'none',border:'none',color:'#767676',cursor:'pointer',fontSize:12}}>← Volver al carrito</button>
             </div>
           )}
         </div>
@@ -313,8 +313,8 @@ export default function CarritoPage() {
             {paso===1&&(
               <div style={{marginTop:14}}>
                 <div style={{display:'flex',gap:6}}>
-                  <input value={coupon} onChange={e=>setCoupon(e.target.value)} onKeyDown={e=>e.key==='Enter'&&applyCoupon()} placeholder="Codigo descuento" style={{flex:1,padding:'8px 10px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:12,outline:'none'}}/>
-                  <button onClick={applyCoupon} style={{padding:'8px 12px',background:'#111',color:'white',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:700}}>OK</button>
+                  <input value={coupon} onChange={e=>setCoupon(e.target.value)} onKeyDown={e=>e.key==='Enter'&&applyCoupon()} placeholder="Codigo descuento" aria-label="Código de descuento" style={{flex:1,padding:'8px 10px',border:'1px solid #e0e0e0',borderRadius:4,fontSize:12}}/>
+                  <button onClick={applyCoupon} aria-label="Aplicar código de descuento" style={{padding:'8px 12px',background:'#111',color:'white',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:700}}>OK</button>
                 </div>
                 {discountMsg&&<p style={{fontSize:11,color:discountInfo?'#22c55e':'#ef4444',marginTop:4}}>{discountMsg}</p>}
               </div>

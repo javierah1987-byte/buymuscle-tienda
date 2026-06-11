@@ -128,7 +128,7 @@ export default function NuevaPasswordPage() {
                   <label style={{color:'rgba(255,255,255,0.5)', fontSize:13}}>Nueva contraseña</label>
                   <input
                     type="password" value={password} onChange={e=>setPassword(e.target.value)}
-                    placeholder="Mínimo 8 caracteres" required minLength={8} autoFocus
+                    placeholder="Mínimo 8 caracteres" required minLength={8} autoFocus aria-label="Nueva contraseña"
                     style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', color:'white', marginTop:6}}
                   />
                 </div>
@@ -136,7 +136,7 @@ export default function NuevaPasswordPage() {
                   <label style={{color:'rgba(255,255,255,0.5)', fontSize:13}}>Repite la contraseña</label>
                   <input
                     type="password" value={password2} onChange={e=>setPassword2(e.target.value)}
-                    placeholder="••••••••" required minLength={8}
+                    placeholder="••••••••" required minLength={8} aria-label="Repite la contraseña"
                     style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', color:'white', marginTop:6}}
                   />
                 </div>

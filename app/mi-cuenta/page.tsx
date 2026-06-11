@@ -47,7 +47,7 @@ export default function MiCuenta(){
         <div style={{marginBottom:16}}>
           <label style={{fontSize:12,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',display:'block',marginBottom:6}}>Email</label>
           <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
-            placeholder="tu@email.com" type="email"
+            placeholder="tu@email.com" type="email" aria-label="Email"
             style={{width:'100%',padding:'12px',border:'1px solid #ddd',fontSize:14,fontFamily:'Arial',boxSizing:'border-box'}}/>
         </div>
         <button onClick={login} disabled={loading}

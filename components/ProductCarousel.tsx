@@ -103,12 +103,12 @@ export default function ProductCarousel({
             <h2 style={{ fontSize:16, fontWeight:800, textTransform:'uppercase', color:'#111', margin:0 }}>{title}</h2>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <button onClick={goLeft} style={btnStyle(atStart)}
+            <button onClick={goLeft} aria-label="Productos anteriores" style={btnStyle(atStart)}
               onMouseEnter={e=>{ if(!atStart){ e.currentTarget.style.background='var(--red)'; e.currentTarget.style.color='white'; e.currentTarget.style.borderColor='var(--red)'; }}}
               onMouseLeave={e=>{ e.currentTarget.style.background='white'; e.currentTarget.style.color=atStart?'#ccc':'#444'; e.currentTarget.style.borderColor=atStart?'#eee':'#bbb'; }}>
               ‹
             </button>
-            <button onClick={goRight} style={btnStyle(atEnd)}
+            <button onClick={goRight} aria-label="Productos siguientes" style={btnStyle(atEnd)}
               onMouseEnter={e=>{ if(!atEnd){ e.currentTarget.style.background='var(--red)'; e.currentTarget.style.color='white'; e.currentTarget.style.borderColor='var(--red)'; }}}
               onMouseLeave={e=>{ e.currentTarget.style.background='white'; e.currentTarget.style.color=atEnd?'#ccc':'#444'; e.currentTarget.style.borderColor=atEnd?'#eee':'#bbb'; }}>
               ›

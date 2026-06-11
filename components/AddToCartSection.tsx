@@ -79,7 +79,8 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
               const v = variantsByType[typeName].find(v => String(v.variantId) === val)
               setSelected(prev => v ? { ...prev, [typeName]: v } : (({ [typeName]:_, ...rest }) => rest)(prev))
             }}
-            style={{ width:'100%', padding:'10px 12px', border:'1px solid #ddd', fontSize:13, background:'white', cursor:'pointer', fontFamily:'var(--font-body)', outline:'none' }}>
+            aria-label={typeName}
+            style={{ width:'100%', padding:'10px 12px', border:'1px solid #ddd', fontSize:13, background:'white', cursor:'pointer', fontFamily:'var(--font-body)' }}>
             <option value=''>-- Selecciona {typeName} --</option>
             {variantsByType[typeName].map(v => (
               <option key={v.variantId} value={String(v.variantId)} disabled={v.stock <= 0}>
@@ -97,10 +98,10 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
 
       <div style={{ display:'flex', gap:'1rem', marginBottom:'1rem', alignItems:'center' }}>
         <div style={{ display:'flex', border:'1px solid #e0e0e0', alignItems:'center' }}>
-          <button onClick={() => setQty(q => Math.max(1,q-1))}
+          <button onClick={() => setQty(q => Math.max(1,q-1))} aria-label="Disminuir cantidad"
             style={{ width:36, height:40, border:'none', background:'none', cursor:'pointer', fontSize:18, color:'#555' }}>−</button>
           <span style={{ width:44, textAlign:'center', fontSize:15, fontWeight:700 }}>{qty}</span>
-          <button onClick={() => setQty(q => Math.min(variantStock, q+1))}
+          <button onClick={() => setQty(q => Math.min(variantStock, q+1))} aria-label="Aumentar cantidad"
             style={{ width:36, height:40, border:'none', background:'none', cursor:'pointer', fontSize:18, color:'#555' }}>+</button>
         </div>
         <div style={{ fontSize:11, color:'#888' }}>

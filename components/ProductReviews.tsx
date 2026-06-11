@@ -7,10 +7,11 @@ const h={apikey:K,'Authorization':'Bearer '+K}
 function Stars({rating,interactive,onRate}){
   const[hover,setHover]=useState(0)
   return(
-    <div style={{display:'flex',gap:2}}>
+    <div style={{display:'flex',gap:2}} role={interactive?undefined:'img'} aria-label={interactive?undefined:rating+' de 5 estrellas'}>
       {[1,2,3,4,5].map(s=>(
         <span key={s} onClick={()=>interactive&&onRate&&onRate(s)}
           onMouseEnter={()=>interactive&&setHover(s)} onMouseLeave={()=>interactive&&setHover(0)}
+          {...(interactive?{role:'button',tabIndex:0,'aria-label':'Valorar con '+s+(s===1?' estrella':' estrellas'),onKeyDown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onRate&&onRate(s)}}}:{'aria-hidden':true})}
           style={{fontSize:interactive?22:16,cursor:interactive?'pointer':'default',color:(hover||rating)>=s?'#f59e0b':'#ddd',transition:'color 0.1s'}}>
           ★
         </span>
@@ -78,18 +79,18 @@ export default function ProductReviews({productId,productName,initialReviews=nul
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
             <div>
               <label style={{fontSize:12,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',display:'block',marginBottom:4}}>Nombre *</label>
-              <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Tu nombre"
+              <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Tu nombre" aria-label="Nombre"
                 style={{width:'100%',padding:'10px',border:'1px solid #ddd',fontSize:13,fontFamily:'Arial',boxSizing:'border-box'}}/>
             </div>
             <div>
               <label style={{fontSize:12,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',display:'block',marginBottom:4}}>Email *</label>
-              <input value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="tu@email.com" type="email"
+              <input value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="tu@email.com" type="email" aria-label="Email"
                 style={{width:'100%',padding:'10px',border:'1px solid #ddd',fontSize:13,fontFamily:'Arial',boxSizing:'border-box'}}/>
             </div>
           </div>
           <div style={{marginBottom:16}}>
             <label style={{fontSize:12,fontWeight:700,color:'#555',textTransform:'uppercase',letterSpacing:'0.08em',display:'block',marginBottom:4}}>Comentario</label>
-            <textarea value={form.comment} onChange={e=>setForm(f=>({...f,comment:e.target.value}))} rows={3} placeholder="Cuéntanos tu experiencia con el producto..."
+            <textarea value={form.comment} onChange={e=>setForm(f=>({...f,comment:e.target.value}))} rows={3} placeholder="Cuéntanos tu experiencia con el producto..." aria-label="Comentario"
               style={{width:'100%',padding:'10px',border:'1px solid #ddd',fontSize:13,fontFamily:'Arial',boxSizing:'border-box',resize:'vertical'}}/>
           </div>
           <button onClick={submit} disabled={sending}

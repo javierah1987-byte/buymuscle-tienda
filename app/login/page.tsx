@@ -36,13 +36,13 @@ function LoginForm() {
         <form onSubmit={handleLogin}>
           <div style={{marginBottom:'1rem'}}>
             <label style={{display:'block',color:'#ccc',marginBottom:6,fontSize:14}}>Email</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required aria-label="Email"
               style={{width:'100%',padding:'10px 14px',borderRadius:8,border:'1px solid #333',background:'#252525',color:'white',fontSize:15,boxSizing:'border-box'}}
               placeholder="admin@buymuscle.es" autoComplete="email" />
           </div>
           <div style={{marginBottom:'1.5rem'}}>
             <label style={{display:'block',color:'#ccc',marginBottom:6,fontSize:14}}>Contraseña</label>
-            <input type="password" value={pass} onChange={e=>setPass(e.target.value)} required
+            <input type="password" value={pass} onChange={e=>setPass(e.target.value)} required aria-label="Contraseña"
               style={{width:'100%',padding:'10px 14px',borderRadius:8,border:'1px solid #333',background:'#252525',color:'white',fontSize:15,boxSizing:'border-box'}}
               placeholder="••••••••" autoComplete="current-password" />
           </div>

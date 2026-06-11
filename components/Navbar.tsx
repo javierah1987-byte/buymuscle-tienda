@@ -104,7 +104,7 @@ export default function Navbar(){
               <div className="nav-search" style={{flex:1}}><SearchAutocomplete placeholder="Buscar productos..." /></div>
               {/* HAMBURGER MÓVIL */}
               <button onClick={()=>setMobileOpen(function(o){ return !o })}
-                aria-label="Menú" className="nav-hamburger" style={{background:'none',border:'none',cursor:'pointer',color:'white',padding:4,ng:4,display:'none'}}>
+                aria-label="Menú" aria-expanded={mobileOpen} className="nav-hamburger" style={{background:'none',border:'none',cursor:'pointer',color:'white',padding:4,display:'none'}}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   {mobileOpen
                     ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
@@ -148,7 +148,7 @@ export default function Navbar(){
             <div style={{display:'flex',alignItems:'stretch',position:'relative'}}>
 
               {/* Icono casa */}
-              <Link href="/" style={{height:42,padding:'0 12px',display:'flex',alignItems:'center',color:'rgba(255,255,255,0.8)',fontSize:18,flexShrink:0,textDecoration:'none',transition:'color 0.1s'}}
+              <Link href="/" aria-label="Inicio" style={{height:42,padding:'0 12px',display:'flex',alignItems:'center',color:'rgba(255,255,255,0.8)',fontSize:18,flexShrink:0,textDecoration:'none',transition:'color 0.1s'}}
                 onMouseEnter={e=>(e.currentTarget.style.color='var(--red)')}
                 onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.8)')}>
                 🏠
@@ -241,7 +241,7 @@ export default function Navbar(){
       {isMobile && <div className={'nav-mobile-menu'+(mobileOpen?' open':'')} style={{paddingTop:0}}>
         <div style={{background:'#000',padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:1}}>
           <span style={{color:'var(--red)',fontWeight:900,fontSize:20}}>BUYMUSCLE</span>
-          <button onClick={()=>setMobileOpen(false)} style={{background:'none',border:'none',color:'white',cursor:'pointer',fontSize:28,lineHeight:1}}>✕</button>
+          <button onClick={()=>setMobileOpen(false)} aria-label="Cerrar menú" style={{background:'none',border:'none',color:'white',cursor:'pointer',fontSize:28,lineHeight:1}}>✕</button>
         </div>
         <div style={{padding:'12px 0'}}>
           {[

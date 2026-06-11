@@ -29,7 +29,7 @@ export default function ShippingBar() {
         : <span>🚚 ¡Te faltan <strong style={{color:'#ffd700'}}>{remaining.toFixed(2)} €</strong> para envío GRATIS · Ahorra {SHIP_COST.toFixed(2)} €</span>
       }
       {!free && (
-        <div style={{
+        <div aria-hidden="true" style={{
           position:'absolute',bottom:0,left:0,
           height:3,width:pct+'%',
           background:'linear-gradient(90deg,#ff1e41,#ffd700)',

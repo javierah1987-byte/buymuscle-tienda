@@ -43,11 +43,14 @@ export default function Comparar(){
         {/* Buscador */}
         {selected.length<3&&<div style={{background:'white',padding:20,border:'1px solid #e8e8e8',marginBottom:24,position:'relative'}}>
           <input value={search} onChange={e=>{setSearch(e.target.value);buscar(e.target.value)}}
-            placeholder="Busca un producto para comparar..." style={{width:'100%',padding:'10px 14px',border:'1px solid #ddd',fontSize:14,fontFamily:'inherit',boxSizing:'border-box'}}/>
+            placeholder="Busca un producto para comparar..." aria-label="Buscar producto para comparar" style={{width:'100%',padding:'10px 14px',border:'1px solid #ddd',fontSize:14,fontFamily:'inherit',boxSizing:'border-box'}}/>
           {loading&&<div style={{position:'absolute',right:32,top:30,fontSize:12,color:'#aaa'}}>Buscando...</div>}
           {results.length>0&&<div style={{position:'absolute',top:'100%',left:0,right:0,background:'white',border:'1px solid #ddd',zIndex:10,maxHeight:280,overflowY:'auto',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
             {results.map(p=>(
-              <div key={p.id} onClick={()=>addProduct(p)} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',cursor:'pointer',borderBottom:'1px solid #f5f5f5'}}
+              <div key={p.id} onClick={()=>addProduct(p)} role="button" tabIndex={0}
+                onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();addProduct(p)}}}
+                aria-label={'Añadir '+p.name+' a la comparación'}
+                style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',cursor:'pointer',borderBottom:'1px solid #f5f5f5'}}
                 onMouseEnter={e=>e.currentTarget.style.background='#f9f9f9'} onMouseLeave={e=>e.currentTarget.style.background='white'}>
                 {p.image_url?<img src={p.image_url} alt={p.name} style={{width:40,height:40,objectFit:'contain',background:'#f9f9f9',flexShrink:0}}/>
                 :<div style={{width:40,height:40,background:'#f0f0f0',flexShrink:0}}/>}
@@ -74,7 +77,7 @@ export default function Comparar(){
                       <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
                         {p.image_url&&<img src={p.image_url} alt={p.name} style={{width:60,height:60,objectFit:'contain',background:'rgba(255,255,255,0.1)'}}/>}
                         <span style={{fontSize:12,lineHeight:1.3,maxWidth:160,display:'block'}}>{p.name}</span>
-                        <button onClick={()=>remove(p.id)} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',padding:'2px 10px',fontSize:11,cursor:'pointer',borderRadius:20}}>✕ Quitar</button>
+                        <button onClick={()=>remove(p.id)} aria-label={'Quitar '+p.name+' de la comparación'} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',padding:'2px 10px',fontSize:11,cursor:'pointer',borderRadius:20}}>✕ Quitar</button>
                       </div>
                     </th>
                   ))}

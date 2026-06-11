@@ -93,7 +93,7 @@ export default function LoginDistribuidoresPage() {
                   <label style={{color:'rgba(255,255,255,0.5)', fontSize:13}}>Email</label>
                   <input
                     type="email" value={email} onChange={e=>setEmail(e.target.value)}
-                    placeholder="tu@empresa.com" required autoFocus
+                    placeholder="tu@empresa.com" required autoFocus aria-label="Email"
                     style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', color:'white', marginTop:6}}
                   />
                 </div>
@@ -108,7 +108,7 @@ export default function LoginDistribuidoresPage() {
                     </div>
                     <input
                       type="password" value={password} onChange={e=>setPassword(e.target.value)}
-                      placeholder="••••••••" required
+                      placeholder="••••••••" required aria-label="Contraseña"
                       style={{background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', color:'white', marginTop:6}}
                     />
                   </div>

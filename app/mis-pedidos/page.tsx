@@ -30,7 +30,7 @@ export default function MisPedidos(){
         <div style={{background:'white',padding:28,border:'1px solid #e8e8e8',marginBottom:24}}>
           <h3 style={{fontSize:14,fontWeight:700,textTransform:'uppercase',margin:'0 0 16px'}}>Buscar por email</h3>
           <form onSubmit={buscar} style={{display:'flex',gap:10}}>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tu@email.com" required
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tu@email.com" aria-label="Email con el que hiciste el pedido" required
               style={{flex:1,padding:'10px 14px',border:'1px solid #ddd',fontSize:14,fontFamily:'inherit'}}/>
             <button type="submit" disabled={loading}
               style={{background:'#ff1e41',color:'white',border:'none',padding:'10px 20px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
@@ -46,6 +46,8 @@ export default function MisPedidos(){
         :orders.map(o=>(
           <div key={o.id} style={{background:'white',border:'1px solid #e8e8e8',marginBottom:12,overflow:'hidden'}}>
             <div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer',borderBottom:open===o.id?'1px solid #f0f0f0':'none'}}
+              role="button" tabIndex={0} aria-expanded={open===o.id}
+              onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setOpen(open===o.id?null:o.id)}}}
               onClick={()=>setOpen(open===o.id?null:o.id)}>
               <div>
                 <div style={{fontSize:13,fontWeight:700,color:'#111'}}>Pedido #{o.id?.slice(0,8).toUpperCase()}</div>

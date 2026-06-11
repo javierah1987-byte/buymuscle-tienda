@@ -4,6 +4,7 @@ import ProductCard from '@/components/ProductCard'
 import ProductCarousel from '@/components/ProductCarousel'
 import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
+import LazyBgVideo from '@/components/LazyBgVideo'
 
 // ISR: la home se regenera cada 5 min (catálogo, no sensible al stock en tiempo real)
 export const revalidate = 300
@@ -202,10 +203,8 @@ export default async function Home() {
 
       {/* DISTRIBUIDORES */}
       <section style={{position:'relative',padding:'3.5rem 0',overflow:'hidden',borderTop:'3px solid var(--red)'}}>
-        <video autoPlay muted loop playsInline
-          style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',minWidth:'100%',minHeight:'100%',objectFit:'cover',zIndex:0,opacity:0.45,filter:'brightness(0.5)'}}>
-          <source src={BG_VIDEO_3} type="video/mp4"/>
-        </video>
+        <LazyBgVideo src={BG_VIDEO_3}
+          style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',minWidth:'100%',minHeight:'100%',objectFit:'cover',opacity:0.45,filter:'brightness(0.5)'}}/>
         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.62)',zIndex:1}}/>
         <div style={{position:'relative',zIndex:2,maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:'3rem',alignItems:'center'}}>

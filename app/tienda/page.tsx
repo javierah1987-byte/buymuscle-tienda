@@ -53,7 +53,7 @@ function SidebarSection({ title, children }: { title: string; children: React.Re
   const [open, setOpen] = useState(true)
   return (
     <div style={{borderBottom:'1px solid #e8e8e8'}}>
-      <button onClick={()=>setOpen(o=>!o)} style={{width:'100%',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'none',border:'none',cursor:'pointer',fontSize:11,fontWeight:800,color:'#222',textTransform:'uppercase',letterSpacing:'0.07em',fontFamily:'var(--font-body)'}}>
+      <button onClick={()=>setOpen(o=>!o)} aria-expanded={open} style={{width:'100%',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'none',border:'none',cursor:'pointer',fontSize:11,fontWeight:800,color:'#222',textTransform:'uppercase',letterSpacing:'0.07em',fontFamily:'var(--font-body)'}}>
         {title}<span style={{fontSize:14,color:'#aaa'}}>{open?'▾':'▸'}</span>
       </button>
       {open && <div style={{padding:'0 14px 12px'}}>{children}</div>}
@@ -182,7 +182,7 @@ function TiendaContent() {
             </SidebarSection>
           )}
           <SidebarSection title="Precio max.">
-            <input type="range" min={0} max={200} value={maxPrice} onChange={e=>setMaxPrice(Number(e.target.value))} style={{width:'100%',accentColor:'var(--red)',border:'none',padding:0}}/>
+            <input type="range" min={0} max={200} value={maxPrice} onChange={e=>setMaxPrice(Number(e.target.value))} aria-label="Precio máximo" style={{width:'100%',accentColor:'var(--red)',border:'none',padding:0}}/>
             <div style={{fontSize:12,color:'#888',marginTop:4}}>Hasta {maxPrice} €</div>
           </SidebarSection>
           {(catParam||filtroMarcas.length>0||maxPrice<200)&&(
@@ -204,10 +204,10 @@ function TiendaContent() {
             </div>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
               <div style={{display:'flex'}}>
-                <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')updateUrl({q:search})}} placeholder="Buscar..." style={{padding:'7px 10px',fontSize:13,border:'1px solid #ddd',borderRight:'none',width:160,fontFamily:'var(--font-body)'}}/>
-                <button onClick={()=>updateUrl({q:search})} style={{background:'var(--red)',color:'white',border:'none',padding:'7px 12px',cursor:'pointer',fontSize:13}}>🔍</button>
+                <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')updateUrl({q:search})}} placeholder="Buscar..." aria-label="Buscar productos" style={{padding:'7px 10px',fontSize:13,border:'1px solid #ddd',borderRight:'none',width:160,fontFamily:'var(--font-body)'}}/>
+                <button onClick={()=>updateUrl({q:search})} aria-label="Buscar" style={{background:'var(--red)',color:'white',border:'none',padding:'7px 12px',cursor:'pointer',fontSize:13}}>🔍</button>
               </div>
-              <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{padding:'7px 10px',fontSize:12,border:'1px solid #ddd',background:'white',fontFamily:'var(--font-body)',cursor:'pointer'}}>
+              <select value={sortBy} onChange={e=>setSortBy(e.target.value)} aria-label="Ordenar productos" style={{padding:'7px 10px',fontSize:12,border:'1px solid #ddd',background:'white',fontFamily:'var(--font-body)',cursor:'pointer'}}>
                 <option value="newest">Mas recientes</option>
                 <option value="price_asc">Precio: menor a mayor</option>
                 <option value="price_desc">Precio: mayor a menor</option>

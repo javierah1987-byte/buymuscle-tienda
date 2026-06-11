@@ -31,7 +31,7 @@ export default function CookieBanner() {
   if (!visible) return null
 
   return (
-    <div style={{
+    <div role="dialog" aria-label="Aviso de cookies" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
       background: 'white', boxShadow: '0 -4px 24px rgba(0,0,0,0.15)',
       borderTop: '3px solid #ff1e41', fontFamily: 'Heebo, sans-serif',
@@ -73,7 +73,7 @@ export default function CookieBanner() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Configurar cookies</h3>
-              <button onClick={() => setDetail(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#888' }}>✕</button>
+              <button onClick={() => setDetail(false)} aria-label="Cerrar configuración de cookies" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#888' }}>✕</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
               {/* Técnicas — siempre activas */}
@@ -91,7 +91,7 @@ export default function CookieBanner() {
                   <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Google Analytics — estadísticas de uso anónimas.</div>
                 </div>
                 <label className="cookie-toggle">
-                  <input type="checkbox" checked={prefs.analytics} onChange={e => setPrefs(p => ({ ...p, analytics: e.target.checked }))} />
+                  <input type="checkbox" aria-label="Permitir cookies analíticas" checked={prefs.analytics} onChange={e => setPrefs(p => ({ ...p, analytics: e.target.checked }))} />
                   <span className="cookie-toggle-slider" />
                 </label>
               </div>
@@ -102,7 +102,7 @@ export default function CookieBanner() {
                   <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Meta Pixel — personalización y medición de campañas.</div>
                 </div>
                 <label className="cookie-toggle">
-                  <input type="checkbox" checked={prefs.marketing} onChange={e => setPrefs(p => ({ ...p, marketing: e.target.checked }))} />
+                  <input type="checkbox" aria-label="Permitir cookies de marketing" checked={prefs.marketing} onChange={e => setPrefs(p => ({ ...p, marketing: e.target.checked }))} />
                   <span className="cookie-toggle-slider" />
                 </label>
               </div>

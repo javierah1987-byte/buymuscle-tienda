@@ -63,7 +63,7 @@ export default function ProductCard({ product }) {
             onMouseLeave={e=>e.target.style.transform='scale(1)'}
           />
         ) : (
-          <div style={{ fontSize:48, opacity:0.3 }}>📦</div>
+          <div aria-hidden="true" style={{ fontSize:48, opacity:0.3 }}>📦</div>
         )}
         {lowStock && (
           <div style={{ position:'absolute', bottom:6, left:0, right:0, textAlign:'center', zIndex:3 }}>
@@ -81,7 +81,7 @@ export default function ProductCard({ product }) {
           {product.name}
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:6 }}>
-          <div style={{ color:'#f59e0b', fontSize:11, letterSpacing:1 }}>★★★★★</div>
+          <div aria-hidden="true" style={{ color:'#f59e0b', fontSize:11, letterSpacing:1 }}>★★★★★</div>
           <span style={{ fontSize:10, color:'#ccc', fontStyle:'italic' }}>Sin reseñas aún</span>
         </div>
         <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:'0.75rem' }}>

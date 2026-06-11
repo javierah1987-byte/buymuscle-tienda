@@ -7,6 +7,12 @@ export default function EmailPopup(){
   const[v,setV]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[load,setLoad]=useState(false)
   useEffect(()=>{if(localStorage.getItem('bm_popup'))return;const t=setTimeout(()=>setV(true),8000);return()=>clearTimeout(t)},[])
   function close(){setV(false);localStorage.setItem('bm_popup','1')}
+  useEffect(()=>{
+    if(!v)return
+    const h=e=>{if(e.key==='Escape')close()}
+    window.addEventListener('keydown',h)
+    return()=>window.removeEventListener('keydown',h)
+  },[v])
   async function submit(e){
     e.preventDefault();if(!email)return;setLoad(true)
     await fetch(S+'/rest/v1/email_subscribers',{method:'POST',headers:{'apikey':K,'Authorization':'Bearer '+K,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({email,discount_code:'BIENVENIDO10',source:'popup'})}).catch(()=>{})
@@ -15,8 +21,8 @@ export default function EmailPopup(){
   if(!v)return null
   return(
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.75)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div style={{background:'white',maxWidth:460,width:'100%',position:'relative',overflow:'hidden'}}>
-        <button onClick={close} style={{position:'absolute',top:10,right:14,background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#aaa',zIndex:1}}>✕</button>
+      <div role="dialog" aria-modal="true" aria-label="Oferta de descuento por suscripción" style={{background:'white',maxWidth:460,width:'100%',position:'relative',overflow:'hidden'}}>
+        <button onClick={close} aria-label="Cerrar" style={{position:'absolute',top:10,right:14,background:'none',border:'none',fontSize:22,cursor:'pointer',color:'#aaa',zIndex:1}}>✕</button>
         <div style={{background:'#ff1e41',padding:'32px 32px 24px',textAlign:'center'}}>
           <div style={{fontSize:42,marginBottom:8}}>🎁</div>
           <h2 style={{color:'white',fontSize:22,fontWeight:900,margin:'0 0 6px',textTransform:'uppercase'}}>¡10% de descuento!</h2>
@@ -26,10 +32,10 @@ export default function EmailPopup(){
           {!sent?(<>
             <p style={{fontSize:14,color:'#555',textAlign:'center',margin:'0 0 20px'}}>Suscríbete y recibe el código al instante.</p>
             <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:10}}>
-              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tu@email.com" required style={{padding:'12px 16px',border:'1px solid #ddd',fontSize:14,fontFamily:'inherit',width:'100%',boxSizing:'border-box'}}/>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tu@email.com" aria-label="Tu correo electrónico" required style={{padding:'12px 16px',border:'1px solid #ddd',fontSize:14,fontFamily:'inherit',width:'100%',boxSizing:'border-box'}}/>
               <button type="submit" disabled={load} style={{background:'#ff1e41',color:'white',border:'none',padding:'12px',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>{load?'Enviando...':'QUIERO MI DESCUENTO'}</button>
             </form>
-            <p onClick={close} style={{textAlign:'center',fontSize:12,color:'#aaa',marginTop:12,cursor:'pointer',textDecoration:'underline'}}>No, prefiero pagar precio completo</p>
+            <p onClick={close} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();close()}}} style={{textAlign:'center',fontSize:12,color:'#767676',marginTop:12,cursor:'pointer',textDecoration:'underline'}}>No, prefiero pagar precio completo</p>
           </>):(
             <div style={{textAlign:'center',padding:'20px 0'}}>
               <div style={{fontSize:48,marginBottom:12}}>✅</div>

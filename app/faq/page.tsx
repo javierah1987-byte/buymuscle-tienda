@@ -38,10 +38,10 @@ export default function FAQ(){
               const id=cat.c+i,isOpen=open===id
               return(
                 <div key={i} style={{background:'white',marginBottom:6,border:'1px solid #e8e8e8'}}>
-                  <button onClick={()=>setOpen(isOpen?null:id)}
+                  <button onClick={()=>setOpen(isOpen?null:id)} aria-expanded={isOpen}
                     style={{width:'100%',textAlign:'left',padding:'14px 18px',background:'none',border:'none',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',fontFamily:'inherit'}}>
                     <span style={{fontSize:14,fontWeight:600,color:'#111',flex:1,paddingRight:12}}>{q}</span>
-                    <span style={{fontSize:20,color:'#ff1e41',flexShrink:0,display:'inline-block',transform:isOpen?'rotate(45deg)':'none',transition:'transform 0.2s'}}>+</span>
+                    <span aria-hidden="true" style={{fontSize:20,color:'#ff1e41',flexShrink:0,display:'inline-block',transform:isOpen?'rotate(45deg)':'none',transition:'transform 0.2s'}}>+</span>
                   </button>
                   {isOpen&&<p style={{padding:'12px 18px 16px',fontSize:14,color:'#555',lineHeight:1.7,margin:0}}>{a}</p>}
                 </div>

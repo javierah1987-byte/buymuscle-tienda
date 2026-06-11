@@ -56,7 +56,7 @@ export default function PWAInstallBanner() {
       padding:'16px 20px', display:'flex', alignItems:'center', gap:14,
       fontFamily:'Heebo,Arial,sans-serif', boxShadow:'0 -4px 20px rgba(0,0,0,0.5)'
     }}>
-      <div style={{ width:48, height:48, background:'#ff1e41', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:24 }}>
+      <div aria-hidden="true" style={{ width:48, height:48, background:'#ff1e41', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:24 }}>
         💪
       </div>
       <div style={{ flex:1, minWidth:0 }}>
@@ -83,7 +83,7 @@ export default function PWAInstallBanner() {
             Instalar
           </button>
         )}
-        <button onClick={dismiss} style={{
+        <button onClick={dismiss} aria-label="Cerrar aviso de instalación" style={{
           background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.6)',
           border:'none', padding:'9px 12px', fontSize:20, lineHeight:1,
           cursor:'pointer', borderRadius:6, fontFamily:'inherit'
