@@ -7,7 +7,6 @@ import ExitIntent from '@/components/ExitIntent'
 import WhatsAppButton from '@/components/WhatsAppButton'
 import EmailPopup from '@/components/EmailPopup'
 import CookieBanner from '@/components/CookieBanner'
-import { CookieConsentManager } from '@/components/CookieConsentManager'
 import PushNotifPrompt from '@/components/PushNotifPrompt'
 
 export default function StoreWrapper({ children }) {
@@ -29,7 +28,6 @@ export default function StoreWrapper({ children }) {
       <WhatsAppButton />
       <EmailPopup />
       <CookieBanner />
-      <CookieConsentManager />
       <PushNotifPrompt />
     </>
   )

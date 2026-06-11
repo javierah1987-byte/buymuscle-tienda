@@ -43,7 +43,8 @@ export default async function ProductoPage({ params }) {
   const [product, variantsRes, reviewsRes] = await Promise.all([
     getProduct(params.id),
     supabase.from('product_variants').select('*, attribute_values(value, hex_color, attribute_types(name))').eq('product_id', params.id).eq('active', true),
-    supabase.from('product_reviews').select('*').eq('product_id', params.id).order('created_at', { ascending: false }).limit(10)
+    // Mismo filtro/orden que el fetch cliente de ProductReviews para que las listas coincidan
+    supabase.from('product_reviews').select('id,name,rating,comment,created_at').eq('product_id', params.id).eq('verified', true).order('created_at', { ascending: false })
   ])
   if (!product) notFound()
   const rawVariants = variantsRes.data || []

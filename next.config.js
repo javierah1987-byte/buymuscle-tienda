@@ -6,9 +6,11 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   compress: true,
   images: {
+    // Solo los hosts reales de imágenes de producto. Con el optimizador activo
+    // (sin `unoptimized`), un comodín '**' lo convertiría en proxy abierto.
     remotePatterns: [
       { protocol: 'https', hostname: 'tienda.buymuscle.es' },
-      { protocol: 'https', hostname: '**' },
+      { protocol: 'https', hostname: 'awwlbepjxuoxaigztugh.supabase.co' },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,

@@ -1,32 +1,47 @@
 // @ts-nocheck
-'use client'
-import{useEffect,useState}from 'react'
 import Link from 'next/link'
-const S='https://awwlbepjxuoxaigztugh.supabase.co'
-const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo'
+import{createClient}from'@supabase/supabase-js'
+import{cache}from'react'
+
+// Server Component con ISR (mismo patrón que el índice del blog en app/blog/page.tsx).
+export const revalidate=3600
+const sb=createClient('https://awwlbepjxuoxaigztugh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3d2xiZXBqeHVveGFpZ3p0dWdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzM5MDksImV4cCI6MjA5MTYwOTkwOX0.-80Bx1i8ZyGTHEhsO_cjMQMOt3B5OgEz3nXCNQ3ijCo')
+
 const CAT_COLORS:any={nutricion:'#3b82f6',entrenamiento:'#f59e0b',recetas:'#22c55e',suplementacion:'#ff1e41',lifestyle:'#8b5cf6'}
 
-export default function BlogPost({params}:any){
-  const[post,setPost]=useState(null)
-  const[loading,setLoading]=useState(true)
-  const[related,setRelated]=useState([])
+// cache() dedupe: generateMetadata y la página comparten la misma petición.
+const getPost=cache(async(slug:string)=>{
+  const{data}=await sb.from('blog_posts').select('*').eq('slug',slug).eq('published',true).limit(1)
+  return data?.[0]||null
+})
 
-  useEffect(()=>{
-    if(!params?.slug)return
-    fetch(S+'/rest/v1/blog_posts?slug=eq.'+params.slug+'&published=eq.true',{headers:{'apikey':K,'Authorization':'Bearer '+K}})
-      .then(r=>r.json()).then(d=>{
-        const p=d?.[0]
-        setPost(p||null);setLoading(false)
-        if(p){
-          fetch(S+'/rest/v1/blog_posts?published=eq.true&category=eq.'+p.category+'&slug=neq.'+params.slug+'&limit=3',{headers:{'apikey':K,'Authorization':'Bearer '+K}})
-            .then(r=>r.json()).then(d=>setRelated(d||[]))
-        }
-      }).catch(()=>setLoading(false))
-  },[params?.slug])
+export async function generateMetadata({params}:any){
+  const post=await getPost(params?.slug||'')
+  if(!post)return{title:'Artículo no encontrado | Blog BUYMUSCLE'}
+  return{
+    title:post.title+' | Blog BUYMUSCLE',
+    description:post.excerpt||('Artículo del blog de BuyMuscle: '+post.title),
+  }
+}
 
-  const fmt=d=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})
+const fmt=(d:any)=>new Date(d).toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})
 
-  if(loading) return <div style={{padding:'60px',textAlign:'center',fontFamily:'Arial,sans-serif',color:'#aaa'}}>Cargando...</div>
+// Renderizar markdown básico
+function renderContent(text:string){
+  return text.split('\n').map((line,i)=>{
+    if(line.startsWith('# ')) return <h2 key={i} style={{fontSize:24,fontWeight:900,color:'#111',margin:'32px 0 12px',textTransform:'uppercase'}}>{line.slice(2)}</h2>
+    if(line.startsWith('## ')) return <h3 key={i} style={{fontSize:18,fontWeight:700,color:'#111',margin:'24px 0 10px'}}>{line.slice(3)}</h3>
+    if(line.startsWith('- ')) return <li key={i} style={{fontSize:15,color:'#444',lineHeight:1.8,marginBottom:4}}>{line.slice(2)}</li>
+    if(line.startsWith('**')&&line.endsWith('**')) return <strong key={i} style={{display:'block',fontSize:15,color:'#111',margin:'12px 0 4px'}}>{line.slice(2,-2)}</strong>
+    if(!line.trim()) return <br key={i}/>
+    return <p key={i} style={{fontSize:15,color:'#444',lineHeight:1.8,margin:'0 0 16px'}}>{line}</p>
+  })
+}
+
+export default async function BlogPost({params}:any){
+  const slug=params?.slug||''
+  const post=await getPost(slug)
+
   if(!post) return(
     <div style={{padding:'60px',textAlign:'center',fontFamily:'Arial,sans-serif'}}>
       <div style={{fontSize:48,marginBottom:16}}>😕</div>
@@ -35,17 +50,12 @@ export default function BlogPost({params}:any){
     </div>
   )
 
-  // Renderizar markdown básico
-  function renderContent(text:string){
-    return text.split('\n').map((line,i)=>{
-      if(line.startsWith('# ')) return <h2 key={i} style={{fontSize:24,fontWeight:900,color:'#111',margin:'32px 0 12px',textTransform:'uppercase'}}>{line.slice(2)}</h2>
-      if(line.startsWith('## ')) return <h3 key={i} style={{fontSize:18,fontWeight:700,color:'#111',margin:'24px 0 10px'}}>{line.slice(3)}</h3>
-      if(line.startsWith('- ')) return <li key={i} style={{fontSize:15,color:'#444',lineHeight:1.8,marginBottom:4}}>{line.slice(2)}</li>
-      if(line.startsWith('**')&&line.endsWith('**')) return <strong key={i} style={{display:'block',fontSize:15,color:'#111',margin:'12px 0 4px'}}>{line.slice(2,-2)}</strong>
-      if(!line.trim()) return <br key={i}/>
-      return <p key={i} style={{fontSize:15,color:'#444',lineHeight:1.8,margin:'0 0 16px'}}>{line}</p>
-    })
-  }
+  // Los relacionados dependen de la categoría del post, así que van después;
+  // todo se resuelve en el servidor y queda cacheado por ISR.
+  const{data:relatedData}=await sb.from('blog_posts')
+    .select('id,slug,title,cover_image')
+    .eq('published',true).eq('category',post.category).neq('slug',slug).limit(3)
+  const related=relatedData||[]
 
   return(
     <div style={{background:'white',fontFamily:'Arial,sans-serif'}}>
@@ -120,4 +130,4 @@ export default function BlogPost({params}:any){
       </div>}
     </div>
   )
-    }
+}

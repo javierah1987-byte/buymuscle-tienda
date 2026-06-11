@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client'
 import{useState}from 'react'
+import Image from 'next/image'
 // Mismo proxy que ProductCard: Edge Function de Supabase para bypass de hotlink.
 function proxyImg(url){
   if(!url) return '/placeholder.jpg'
@@ -17,19 +18,24 @@ export default function ImageGallery({images=[],name=''}){
   )
   return(
     <div>
-      {/* Imagen principal */}
-      <div style={{position:'relative',overflow:'hidden',cursor:'zoom-in',background:'#fafafa',border:'1px solid #f0f0f0'}} onClick={()=>setZoom(true)}>
-        <img src={proxyImg(imgs[main])} alt={name} style={{width:'100%',aspectRatio:'1',objectFit:'contain',display:'block',transition:'transform 0.3s'}}
+      {/* Imagen principal — vía next/image: el optimizador de Vercel redimensiona,
+          convierte a WebP/AVIF y cachea (Storage sirve no-cache, así que sin esto
+          el navegador re-descarga el original completo en cada visita). */}
+      <div style={{position:'relative',overflow:'hidden',cursor:'zoom-in',background:'#fafafa',border:'1px solid #f0f0f0',aspectRatio:'1'}} onClick={()=>setZoom(true)}>
+        <Image src={proxyImg(imgs[main])} alt={name} fill priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+          style={{objectFit:'contain',transition:'transform 0.3s'}}
           onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();const x=((e.clientX-r.left)/r.width-0.5)*20;const y=((e.clientY-r.top)/r.height-0.5)*20;e.currentTarget.style.transform='scale(1.4) translate('+(-x)+'px,'+(-y)+'px)'}}
           onMouseLeave={e=>{e.currentTarget.style.transform='scale(1)'}}/>
         <div style={{position:'absolute',bottom:8,right:8,background:'rgba(0,0,0,0.4)',color:'white',padding:'2px 6px',fontSize:11,borderRadius:2}}>🔍 Zoom</div>
       </div>
-      {/* Miniaturas */}
+      {/* Miniaturas (64px reales en vez del original completo) */}
       {imgs.length>1&&<div style={{display:'flex',gap:8,marginTop:10,flexWrap:'wrap'}}>
         {imgs.map((img,i)=>(
           <button key={i} onClick={()=>setMain(i)}
-            style={{border:main===i?'2px solid #ff1e41':'2px solid #f0f0f0',padding:0,background:'none',cursor:'pointer',width:64,height:64,flexShrink:0,overflow:'hidden'}}>
-            <img src={proxyImg(img)} alt={name+' '+i} style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>
+            style={{border:main===i?'2px solid #ff1e41':'2px solid #f0f0f0',padding:0,background:'none',cursor:'pointer',width:64,height:64,flexShrink:0,overflow:'hidden',position:'relative'}}>
+            <Image src={proxyImg(img)} alt={name+' '+i} width={64} height={64} loading="lazy"
+              style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>
           </button>
         ))}
       </div>}

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
+import { CARD_COLUMNS } from '@/lib/productCard'
 import Link from 'next/link'
 export const revalidate = 60
 
@@ -8,10 +9,10 @@ async function getProducts() {
   const { data: catData } = await supabase.from('categories').select('id').in('name', cats)
   const ids = catData?.map((c:any)=>c.id) || []
   if(!ids.length) {
-    const { data } = await supabase.from('products').select('*, categories(name)').eq('active',true).gt('stock',0).order('id',{ascending:false}).limit(20)
+    const { data } = await supabase.from('products').select(CARD_COLUMNS + ', categories(name)').eq('active',true).gt('stock',0).order('id',{ascending:false}).limit(20)
     return data || []
   }
-  const { data } = await supabase.from('products').select('*, categories(name)').in('category_id',ids).eq('active',true).gt('stock',0).order('id',{ascending:false}).limit(48)
+  const { data } = await supabase.from('products').select(CARD_COLUMNS + ', categories(name)').in('category_id',ids).eq('active',true).gt('stock',0).order('id',{ascending:false}).limit(48)
   return data || []
 }
 

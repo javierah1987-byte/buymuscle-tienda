@@ -9,6 +9,24 @@ import Link from 'next/link'
 
 const PER_PAGE = 24
 
+// Columnas que realmente consume ProductCard (evita un select('*') pesado).
+// Nota: la tabla no tiene columna has_variants, por eso no se pide.
+const CARD_COLS = 'id,name,brand,price_incl_tax,sale_price,on_sale,image_url,stock,category_id,is_new,categories(name)'
+
+// Cache a nivel de módulo: las categorías se piden UNA sola vez por sesión.
+// Guardamos la promesa (no el resultado) para deduplicar también las
+// peticiones concurrentes; los cambios de filtro/página posteriores no
+// vuelven a esperar a la red.
+let categoriesPromise: Promise<any[]> | null = null
+function getCategorias(): Promise<any[]> {
+  if (!categoriesPromise) {
+    categoriesPromise = supabase.from('categories').select('id,name')
+      .then(({ data }) => data || [])
+      .catch(() => { categoriesPromise = null; return [] })
+  }
+  return categoriesPromise
+}
+
 // Normaliza para comparar categorias sin que importe tilde/mayusculas/espacios.
 // Asi un enlace "Proteinas" casa con la categoria real "Proteínas" de la BD.
 const normCat = (s: string) =>
@@ -66,6 +84,12 @@ function TiendaContent() {
     return function(){ window.removeEventListener('resize',check) }
   },[])
 
+  // Pre-calienta la cache de categorías al montar para que la primera carga
+  // de productos con ?cat= no añada latencia extra (corre en paralelo).
+  useEffect(()=>{ getCategorias() },[])
+
+  // Marcas para el filtro lateral: solo la columna brand, en paralelo,
+  // sin bloquear la carga de productos.
   useEffect(()=>{
     supabase.from('products').select('brand').eq('active',true).not('brand','is',null)
       .then(({data})=>{
@@ -78,11 +102,12 @@ function TiendaContent() {
 
   const fetchProducts = useCallback(async ()=>{
     setLoading(true)
-    let query = supabase.from('products').select('*, categories(name)',{count:'exact'}).eq('active',true).gt('stock',0)
+    let query = supabase.from('products').select(CARD_COLS,{count:'exact'}).eq('active',true).gt('stock',0)
     if(catParam){
       // Resolvemos la categoria de forma tolerante a tildes/mayusculas y aceptamos
       // duplicados con el mismo nombre normalizado (p.ej. "Accesorios" y "ACCESORIOS").
-      const {data:cats} = await supabase.from('categories').select('id,name')
+      // Las categorías vienen de la cache de módulo (1 sola petición por sesión).
+      const cats = await getCategorias()
       const target = normCat(catParam)
       const group = CAT_ALIAS_GROUPS.find(g=>g.includes(target))
       const targets = group || [target]

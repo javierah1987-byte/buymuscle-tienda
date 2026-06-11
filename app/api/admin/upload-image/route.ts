@@ -45,7 +45,10 @@ export async function POST(req: Request) {
 
     const { error: upErr } = await supabaseAdmin.storage
       .from(BUCKET)
-      .upload(path, bytes, { contentType: file.type, upsert: true })
+      // cacheControl 30 días: sin él Storage guarda no-cache y el navegador
+      // re-descarga cada imagen en cada visita. La URL lleva ?v= de cache-bust,
+      // así que una re-subida se ve al momento aunque la caché sea larga.
+      .upload(path, bytes, { contentType: file.type, upsert: true, cacheControl: '2592000' })
     if (upErr) throw new Error(upErr.message)
 
     const publicUrl = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl

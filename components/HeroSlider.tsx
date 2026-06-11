@@ -12,21 +12,22 @@ const FALLBACK=[
   {id:3,image_url:'https://tienda.buymuscle.es/img/cms/Banner-Canal-Whatsapp-BM-1600x630.jpg',url:'/tienda',title:'BuyMuscle',subtitle:'Tu suplementacion en Canarias'},
 ]
 
-export default function HeroSlider(){
-  const[slides,setSlides]=useState(FALLBACK)
+// initialBanners llega del servidor (app/page.tsx, ISR): así el primer banner
+// sale ya en el HTML inicial (mejor LCP) y no hay doble descarga fallback→real.
+// Sin prop (otros usos), conserva el fetch en cliente.
+export default function HeroSlider({initialBanners=null}){
+  const hasInitial=Array.isArray(initialBanners)&&initialBanners.length>0
+  const[slides,setSlides]=useState(hasInitial?initialBanners:FALLBACK)
   const[idx,setIdx]=useState(0)
-  const[loaded,setLoaded]=useState(false)
 
   useEffect(()=>{
+    if(hasInitial) return
     fetch(S+'/rest/v1/banners?active=eq.true&order=order_pos.asc',{
       headers:{apikey:K,'Authorization':'Bearer '+K}
     }).then(r=>r.json()).then(d=>{
-      if(Array.isArray(d)&&d.length>0){
-        setSlides(d)
-      }
-      setLoaded(true)
-    }).catch(()=>setLoaded(true))
-  },[])
+      if(Array.isArray(d)&&d.length>0) setSlides(d)
+    }).catch(()=>{})
+  },[hasInitial])
 
   const prev=useCallback(()=>setIdx(i=>(i-1+slides.length)%slides.length),[slides.length])
   const next=useCallback(()=>setIdx(i=>(i+1)%slides.length),[slides.length])
@@ -44,6 +45,7 @@ export default function HeroSlider(){
       {s.image_url&&(
         // eslint-disable-next-line @next/next/no-img-element
         <img src={s.image_url} alt={s.title||'Banner'} key={s.id||idx}
+          fetchPriority={idx===0?'high':'auto'} decoding="async"
           style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.85,transition:'opacity 0.4s'}}/>
       )}
 

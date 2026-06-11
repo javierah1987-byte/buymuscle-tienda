@@ -18,21 +18,26 @@ function Stars({rating,interactive,onRate}){
     </div>
   )
 }
-export default function ProductReviews({productId,productName}){
-  const[reviews,setReviews]=useState([])
-  const[avg,setAvg]=useState(0)
+export default function ProductReviews({productId,productName,initialReviews=null}){
+  const[reviews,setReviews]=useState(initialReviews||[])
+  const[avg,setAvg]=useState(initialReviews&&initialReviews.length>0?initialReviews.reduce((s,r)=>s+(r.rating||0),0)/initialReviews.length:0)
   const[showForm,setShowForm]=useState(false)
   const[form,setForm]=useState({name:'',email:'',rating:0,comment:''})
   const[sending,setSending]=useState(false)
   const[msg,setMsg]=useState('')
-  useEffect(()=>{
+  function fetchReviews(){
     fetch(S+'/rest/v1/product_reviews?select=id,name,rating,comment,created_at&product_id=eq.'+productId+'&verified=eq.true&order=created_at.desc',{headers:h})
       .then(r=>r.json()).then(d=>{
         const revs=Array.isArray(d)?d:[]
         setReviews(revs)
         if(revs.length>0) setAvg(revs.reduce((s,r)=>s+(r.rating||0),0)/revs.length)
       })
-  },[productId])
+  }
+  useEffect(()=>{
+    // Si el servidor ya pasó las reseñas (initialReviews), evitamos el doble fetch.
+    if(initialReviews!==null) return
+    fetchReviews()
+  },[productId]) // eslint-disable-line react-hooks/exhaustive-deps
   async function submit(){
     if(!form.rating){setMsg('Selecciona una valoracion');return}
     if(!form.name.trim()||!form.email.trim()){setMsg('Nombre y email son obligatorios');return}
@@ -41,7 +46,7 @@ export default function ProductReviews({productId,productName}){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({product_id:productId,name:form.name.trim(),email:form.email.trim(),rating:form.rating,comment:form.comment})})
     setSending(false)
-    if(res.ok){setMsg('Gracias. Tu resena sera publicada tras revision.');setShowForm(false);setForm({name:'',email:'',rating:0,comment:''})}
+    if(res.ok){setMsg('Gracias. Tu resena sera publicada tras revision.');setShowForm(false);setForm({name:'',email:'',rating:0,comment:''});fetchReviews()}
     else setMsg('Error al enviar. Intentalo de nuevo.')
     setTimeout(()=>setMsg(''),4000)
   }

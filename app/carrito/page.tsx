@@ -58,8 +58,6 @@ export default function CarritoPage() {
   const [discountInfo, setDiscountInfo] = useState(null) // { type:'percent'|'fixed', value, discountAmt }
   const [discountMsg, setDiscountMsg] = useState('')
   const [ordering, setOrdering] = useState(false)
-  const [orderDone, setOrderDone] = useState(null)
-  const [upsellProds, setUpsellProds] = useState([])
 
   // Analítica: begin_checkout al entrar en el paso de datos
   useEffect(()=>{
@@ -192,37 +190,6 @@ export default function CarritoPage() {
     clear()
     if(typeof window !== 'undefined') window.location.href = '/pedido-confirmado?n='+orderNum
   }
-
-  // PASO 3 — Confirmación c5
-  if(paso===3&&orderDone){return(
-    <div style={{maxWidth:640,margin:'3rem auto',padding:'0 20px'}}>
-      <div style={{background:'white',border:'1px solid #e8e8e8',borderRadius:8,padding:'2.5rem',textAlign:'center'}}>
-        <div style={{fontSize:56,marginBottom:16}}>🎉</div>
-        <h1 style={{fontSize:22,fontWeight:900,color:'#111',margin:'0 0 8px'}}>¡Pedido confirmado!</h1>
-        <p style={{fontSize:14,color:'#666',margin:'0 0 4px'}}>Pedido <strong style={{color:'#111'}}>{orderDone.orderNum}</strong></p>
-        <p style={{fontSize:13,color:'#888',margin:'0 0 24px'}}>Te hemos enviado la confirmacion a <strong>{orderDone.email}</strong></p>
-        <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'}}>
-          <Link href="/tienda" style={{padding:'10px 24px',background:'#ff1e41',color:'white',borderRadius:4,textDecoration:'none',fontWeight:700,fontSize:13}}>Seguir comprando</Link>
-          <Link href="/mis-pedidos" style={{padding:'10px 24px',border:'1px solid #ddd',color:'#555',borderRadius:4,textDecoration:'none',fontWeight:600,fontSize:13}}>Ver mis pedidos</Link>
-        </div>
-      </div>
-      {/* c5 UPSELL */}
-      {upsellProds.length>0&&(
-        <div style={{marginTop:32}}>
-          <h3 style={{fontSize:14,fontWeight:700,color:'#111',marginBottom:12,textTransform:'uppercase'}}>Tambien te puede gustar</h3>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-            {upsellProds.map(p=>(
-              <Link key={p.id} href={'/producto/'+p.id} style={{textDecoration:'none',color:'inherit',background:'white',border:'1px solid #f0f0f0',borderRadius:6,overflow:'hidden',textAlign:'center',padding:10}}>
-                {p.image_url&&<img src={p.image_url} alt="" style={{width:'100%',aspectRatio:'1',objectFit:'contain',background:'#f9f9f9'}}/>}
-                <div style={{fontSize:11,color:'#111',marginTop:6,fontWeight:600,lineHeight:1.3}}>{p.name.slice(0,40)}</div>
-                <div style={{fontSize:13,color:'#ff1e41',fontWeight:900,marginTop:4}}>{Number(p.price_incl_tax).toFixed(2)} €</div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )}
 
   return(
     <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 20px'}}>

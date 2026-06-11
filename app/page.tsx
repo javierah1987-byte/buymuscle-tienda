@@ -17,14 +17,27 @@ const BLOG_POSTS = [
   { titulo:'Que tomar antes de entrenar? Opciones naturales y suplementos para energia', href:'/blog/news/que-tomar-antes-de-entrenar-opciones-naturales-y-suplementos-antes-de-entrenar-para-energia', img:'/modules/ph_simpleblog/covers/113-thumb.jpg', fecha:'Febrero 2, 2026', cat:'Pre-entreno' },
 ]
 
+// Columnas que consumen las tarjetas (evita arrastrar description en el payload ISR)
+const CARD_COLS = 'id,name,brand,price_incl_tax,sale_price,on_sale,image_url,stock,category_id,is_new,categories(name)'
+
 async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'id') {
-  let q = supabase.from('products').select('*, categories(name)').eq('active',true).gt('stock',0)
+  let q = supabase.from('products').select(CARD_COLS).eq('active',true).gt('stock',0)
   if(cat){
     const {data:cd} = await supabase.from('categories').select('id').eq('name',cat).single()
     if(cd) q = q.eq('category_id', cd.id)
   }
   q = orderBy === 'stock' ? q.order('stock',{ascending:false}) : q.order('id',{ascending:false})
   const {data} = await q.limit(limit)
+  // Las tarjetas solo usan CARD_COLS; el tipo Product completo no aplica aquí.
+  return (data || []) as any[]
+}
+
+// Banners del hero en servidor (ISR): el primer slide sale en el HTML inicial
+// → mejor LCP y sin doble descarga fallback→real en el cliente.
+async function getBanners() {
+  const { data } = await supabase.from('banners')
+    .select('id,image_url,url,title,subtitle')
+    .eq('active', true).order('order_pos', { ascending: true })
   return data || []
 }
 
@@ -42,18 +55,19 @@ const QUICK_CATS = [
 ]
 
 export default async function Home() {
-  const [novedades, masVendidos, proteinas, preEntrenos, veganos] = await Promise.all([
+  const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
     getProducts(undefined, 8, 'id'),
     getProducts(undefined, 8, 'stock'),
     getProducts('Proteinas', 8, 'id'),
     getProducts('Pre-entrenos', 8, 'id'),
     getProducts('Veganos', 8, 'id'),
+    getBanners(),
   ])
 
   return (
     <main style={{background:'#f5f5f5'}}>
       <h1 style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
-      <HeroSlider />
+      <HeroSlider initialBanners={banners as any} />
 
       {/* h2 BANNER OFERTA PRINCIPAL */}
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
