@@ -13,7 +13,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 // (p. ej. apertura del turno) para el arqueo por turno.
 export async function GET(req){
   try{
-    if(!tpvAuthorized()) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
+    if(!(await tpvAuthorized())) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
     if(!SERVICE_KEY) return NextResponse.json({ ok:false, error:'server_misconfigured' }, { status:500 })
     const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth:{ autoRefreshToken:false, persistSession:false } })
 

@@ -47,7 +47,7 @@ async function createHoldedInvoice(order, lines){
 // ── POST /api/tpv-order ──────────────────────────────────
 export async function POST(req){
   try{
-    if(!tpvAuthorized()) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
+    if(!(await tpvAuthorized())) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
     if(!SERVICE_KEY) return NextResponse.json({ ok:false, error:'server_misconfigured' }, { status:500 })
     const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth:{ autoRefreshToken:false, persistSession:false } })
 

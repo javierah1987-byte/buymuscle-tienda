@@ -12,7 +12,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 // Autorizado si hay PIN de TPV (cookie) O sesión de admin (allowlist),
 // mismo patrón dual que /api/tpv-caja.
 async function authorized(){
-  return tpvAuthorized() || !!(await getAdminUser())
+  return (await tpvAuthorized()) || !!(await getAdminUser())
 }
 
 const IGIC = 0.07

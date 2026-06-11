@@ -1,16 +1,8 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-import { tpvToken, tpvAuthorized, TPV_COOKIE } from '@/lib/tpvAuth'
+import { tpvToken, tpvAuthorized, tpvPinConfigured, validateTpvPin, TPV_COOKIE } from '@/lib/tpvAuth'
 
 export const dynamic = 'force-dynamic'
-
-// Comparación en tiempo constante para no filtrar el PIN por timing.
-function safeEqual(a, b){
-  const ab = Buffer.from(String(a)), bb = Buffer.from(String(b))
-  if(ab.length !== bb.length) return false
-  return crypto.timingSafeEqual(ab, bb)
-}
 
 // Límite de intentos best-effort por IP (en memoria; mitiga fuerza bruta
 // dentro de una misma instancia). Ventana de 5 min, 8 intentos.
@@ -33,23 +25,23 @@ function bump(ip){
 // POST { pin } -> valida el PIN y deja cookie httpOnly de 12h
 // DELETE -> cierra la sesión TPV
 export async function GET(){
-  return NextResponse.json({ ok:true, authorized: tpvAuthorized() })
+  return NextResponse.json({ ok:true, authorized: await tpvAuthorized() })
 }
 
 export async function POST(req){
   try{
-    if(!process.env.TPV_PIN)
+    if(!(await tpvPinConfigured()))
       return NextResponse.json({ ok:false, error:'server_misconfigured' }, { status:500 })
     const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
     if(tooMany(ip))
       return NextResponse.json({ ok:false, error:'demasiados_intentos' }, { status:429 })
     const { pin } = await req.json()
-    if(!pin || !safeEqual(pin, process.env.TPV_PIN)){
+    if(!(await validateTpvPin(pin))){
       bump(ip)
       return NextResponse.json({ ok:false, error:'pin_invalido' }, { status:401 })
     }
     const res = NextResponse.json({ ok:true })
-    res.cookies.set(TPV_COOKIE, tpvToken(), {
+    res.cookies.set(TPV_COOKIE, await tpvToken(), {
       httpOnly:true, secure:true, sameSite:'lax', path:'/', maxAge: 60*60*12,
     })
     return res

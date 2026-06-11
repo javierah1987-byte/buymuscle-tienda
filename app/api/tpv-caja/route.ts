@@ -14,7 +14,7 @@ function svc(){
 }
 
 async function authorized(){
-  return tpvAuthorized() || !!(await getAdminUser())
+  return (await tpvAuthorized()) || !!(await getAdminUser())
 }
 
 function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
