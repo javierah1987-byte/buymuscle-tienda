@@ -121,10 +121,16 @@ export default function Navbar(){
                     <button onClick={handleSignOut} style={{fontSize:11,color:'rgba(255,255,255,0.4)',background:'none',border:'1px solid rgba(255,255,255,0.15)',padding:'4px 10px',cursor:'pointer',fontFamily:'var(--font-body)'}}>Salir</button>
                   </div>
                 ):(
-                  <Link href="/distribuidores/login" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
+                  <>
+                  <Link href="/mi-cuenta" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Distribuidores
+                    Acceder
                   </Link>
+                  <Link href="/distribuidores/login" className="nav-hide-mobile" title="Acceso profesional para distribuidores" style={{display:'flex',alignItems:'center',gap:6,textDecoration:'none',fontSize:11,fontWeight:700,color:'#d9b45a',border:'1px solid rgba(217,180,90,0.45)',padding:'7px 12px',borderRadius:4,whiteSpace:'nowrap'}}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 9l1-5h16l1 5M4 9v11h16V9M9 13h6"/></svg>
+                    Zona Distribuidores
+                  </Link>
+                  </>
                 ))}
                 <Link href="/tpv" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.4)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
