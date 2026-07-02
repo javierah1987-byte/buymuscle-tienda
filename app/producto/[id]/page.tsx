@@ -34,8 +34,8 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   return {
     title: p.name,
     alternates: { canonical: SITE_URL + '/producto/' + params.id },
-    description: (p.description||'').slice(0,160)||'Suplementacion deportiva BuyMuscle',
-    openGraph: { images: p.image_url ? [{ url: p.image_url }] : [] }
+    description: desc,
+    openGraph: { title: p.name + ' | BuyMuscle', description: desc, type: 'website', url: SITE_URL + '/producto/' + params.id, images: p.image_url ? [{ url: p.image_url }] : [] }
   }
 }
 

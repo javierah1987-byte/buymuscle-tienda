@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   viewport: { width: 'device-width', initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: 'cover', themeColor: '#111111' },
   icons: { apple: [{ url: '/icon?size=180', sizes: '180x180', type: 'image/png' }] },
   openGraph: { title: 'BUYMUSCLE | Suplementación Deportiva', description: 'Tu tienda de suplementación en Canarias', locale: 'es_ES', type: 'website' },
+  alternates: { canonical: '/' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={heebo.variable}>
       <body className={heebo.className}>
         <script dangerouslySetInnerHTML={{__html: "if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.log('SW error:',e)})})}"}} />
+        {/* Datos estructurados (SEO): negocio + buscador del sitio */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({"@context":"https://schema.org","@type":"Store","name":"BuyMuscle","image":"https://tienda.buymuscle.es/icon?size=180","url":"https://tienda.buymuscle.es","telephone":"+34828048310","email":"tienda@buymuscle.es","priceRange":"€€","address":{"@type":"PostalAddress","streetAddress":"Alcalde Manuel Amador Rodríguez 23","addressLocality":"Telde","addressRegion":"Las Palmas","postalCode":"35200","addressCountry":"ES"}})}} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({"@context":"https://schema.org","@type":"WebSite","name":"BuyMuscle","url":"https://tienda.buymuscle.es","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://tienda.buymuscle.es/tienda?q={search_term_string}"},"query-input":"required name=search_term_string"}})}} />
         <AuthProvider>
           <CartProvider>
             <StoreWrapper>{children}</StoreWrapper>
