@@ -80,3 +80,55 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+// POST { kind:'level', fields:{ name, discount_pct, min_order_amount } } -> crea un grupo
+export async function POST(req: Request) {
+  const admin = await getAdminUser()
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  let body: any
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'JSON invalido' }, { status: 400 }) }
+  if (body?.kind !== 'level') return NextResponse.json({ error: 'kind invalido' }, { status: 400 })
+  const f = body.fields || {}
+  const name = String(f.name || '').trim()
+  if (!name) return NextResponse.json({ error: 'El nombre del grupo es obligatorio' }, { status: 400 })
+  try {
+    const { data, error } = await svc().from('distributor_levels').insert({
+      name,
+      discount_pct: Number(f.discount_pct) || 0,
+      min_order_amount: Number(f.min_order_amount) || 0,
+    }).select().single()
+    if (error) throw new Error(error.message)
+    return NextResponse.json({ ok: true, level: data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+// DELETE { kind:'level'|'distributor', id } -> borra. Un grupo en uso no se puede borrar.
+export async function DELETE(req: Request) {
+  const admin = await getAdminUser()
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  let body: any
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'JSON invalido' }, { status: 400 }) }
+  const kind = body?.kind, id = body?.id
+  if (kind !== 'level' && kind !== 'distributor') return NextResponse.json({ error: 'kind invalido' }, { status: 400 })
+  if (!id) return NextResponse.json({ error: 'id obligatorio' }, { status: 400 })
+  const db = svc()
+  try {
+    if (kind === 'level') {
+      const { count } = await db.from('distributors').select('id', { count: 'exact', head: true }).eq('level_id', id)
+      if (count && count > 0) return NextResponse.json({ error: 'Grupo en uso por ' + count + ' distribuidor(es). Reasígnalos antes de borrar.' }, { status: 409 })
+      const { error } = await db.from('distributor_levels').delete().eq('id', id)
+      if (error) throw new Error(error.message)
+    } else {
+      // Distribuidor: borra también su usuario de acceso (auth) para no dejar cuentas huérfanas.
+      const { data: d } = await db.from('distributors').select('user_id').eq('id', id).maybeSingle()
+      if (d?.user_id) { try { await db.auth.admin.deleteUser(d.user_id) } catch {} }
+      const { error } = await db.from('distributors').delete().eq('id', id)
+      if (error) throw new Error(error.message)
+    }
+    return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

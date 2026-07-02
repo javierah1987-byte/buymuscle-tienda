@@ -16,6 +16,7 @@ export default function AdminDistribuidoresPage() {
   const [loading, setLoading] = useState(true)
   const [editLevel, setEditLevel] = useState(null)
   const [newDist, setNewDist] = useState({ email:'', password:'', company_name:'', level_id:'', phone:'', nif:'' })
+  const [newGroup, setNewGroup] = useState({ name:'', discount_pct:'', min_order_amount:'' })
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [selDist, setSelDist] = useState(null)    // distribuidor seleccionado para ver detalle
@@ -68,6 +69,53 @@ export default function AdminDistribuidoresPage() {
     }
     setSaving(false)
     setTimeout(() => setMsg(''), 2500)
+  }
+
+  async function createGroup() {
+    const name = newGroup.name.trim()
+    if (!name) { setMsg('Ponle un nombre al grupo'); setTimeout(() => setMsg(''), 2500); return }
+    setSaving(true)
+    try {
+      const r = await fetch('/api/admin/distributors', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'level', fields: { name, discount_pct: Number(newGroup.discount_pct) || 0, min_order_amount: Number(newGroup.min_order_amount) || 0 } })
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status))
+      setMsg('Grupo creado')
+      setNewGroup({ name:'', discount_pct:'', min_order_amount:'' })
+      load()
+    } catch (e) { setMsg('Error creando grupo: ' + String(e?.message || e)) }
+    setSaving(false)
+    setTimeout(() => setMsg(''), 2500)
+  }
+
+  async function deleteGroup(id) {
+    if (!confirm('¿Borrar este grupo? No se puede si tiene distribuidores asignados.')) return
+    try {
+      const r = await fetch('/api/admin/distributors', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'level', id })
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status))
+      setMsg('Grupo borrado'); load()
+    } catch (e) { setMsg(String(e?.message || e)) }
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  async function deleteDistributor(id) {
+    if (!confirm('¿Borrar este distribuidor y su acceso? No se puede deshacer.')) return
+    try {
+      const r = await fetch('/api/admin/distributors', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'distributor', id })
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status))
+      setMsg('Distribuidor borrado'); setSelDist(null); setEditDist(null); load()
+    } catch (e) { setMsg('Error: ' + String(e?.message || e)) }
+    setTimeout(() => setMsg(''), 3000)
   }
 
   async function openDetalle(d) {
@@ -204,13 +252,30 @@ export default function AdminDistribuidoresPage() {
                     </div>
                     <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>-{level.discount_pct}% · Min {level.min_order_amount}€</div>
                   </div>
-                  <button onClick={function(){ setEditLevel({...level}) }} style={{ padding:'5px 12px', background:'transparent', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.6)', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
-                    Editar
-                  </button>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button onClick={function(){ setEditLevel({...level}) }} style={{ padding:'5px 12px', background:'transparent', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.6)', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
+                      Editar
+                    </button>
+                    <button onClick={function(){ deleteGroup(level.id) }} title="Borrar grupo" style={{ padding:'5px 9px', background:'transparent', border:'1px solid rgba(239,68,68,0.3)', color:'#ef4444', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
+                      🗑
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           )})}
+
+          <div style={{ background:'rgba(217,180,90,0.04)', border:'1px solid rgba(217,180,90,0.25)', padding:16, borderRadius:4, marginTop:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#d9b45a', marginBottom:12 }}>Nuevo grupo</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              <input value={newGroup.name} onChange={function(e){ setNewGroup(function(p){ return {...p, name:e.target.value} }) }} placeholder="Nombre del grupo *" style={inp}/>
+              <input type="number" value={newGroup.discount_pct} onChange={function(e){ setNewGroup(function(p){ return {...p, discount_pct:e.target.value} }) }} placeholder="Descuento %" style={inp}/>
+              <input type="number" value={newGroup.min_order_amount} onChange={function(e){ setNewGroup(function(p){ return {...p, min_order_amount:e.target.value} }) }} placeholder="Pedido mínimo €" style={inp}/>
+              <button onClick={createGroup} disabled={saving} style={{ padding:'10px', background:'#d9b45a', border:'none', color:'#111', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>
+                {saving ? '...' : 'Crear grupo'}
+              </button>
+            </div>
+          </div>
 
           <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.08)', padding:16, borderRadius:4, marginTop:20 }}>
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>Nuevo distribuidor</div>
@@ -293,6 +358,10 @@ export default function AdminDistribuidoresPage() {
                 <button onClick={function(){ setEditDist({...selDist, level_id: selDist.level_id}) }}
                   style={{ background:'#1a1a1a', border:'1px solid #444', color:'white', padding:'6px 14px', fontSize:12, cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
                   ✏️ Editar
+                </button>
+                <button onClick={function(){ deleteDistributor(selDist.id) }}
+                  style={{ background:'#2a0f0f', border:'1px solid #6b2020', color:'#ef4444', padding:'6px 14px', fontSize:12, cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
+                  🗑 Borrar
                 </button>
                 <button onClick={function(){ setSelDist(null); setEditDist(null) }}
                   style={{ background:'none', border:'none', color:'#888', cursor:'pointer', fontSize:22, lineHeight:1 }}>✕</button>
