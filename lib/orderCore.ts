@@ -91,7 +91,7 @@ async function createHoldedInvoice(order, lines){
 // Calcula líneas y totales autoritativos a partir del carrito del cliente.
 // No persiste nada: sirve también para crear la orden de PayPal por el importe correcto.
 // Devuelve { ok:false, error } o { ok:true, lines, totals, couponRow, discountPct }.
-export async function quoteOrder(db, { items = [], discount_code = '' }){
+export async function quoteOrder(db, { items = [], discount_code = '', distributorDiscountPct = 0 }){
   if(!Array.isArray(items) || items.length === 0)
     return { ok:false, error:'empty_cart', status:400 }
 
@@ -119,6 +119,9 @@ export async function quoteOrder(db, { items = [], discount_code = '' }){
     const vid = Number(it.variant_id) || null
     if(vid && varMap.has(vid)) unit += Number(varMap.get(vid).price_modifier || 0)
     unit = round2(unit)
+    // Precio de distribuidor: descuento del grupo aplicado en SERVIDOR (autoritativo,
+    // nunca aceptado del cliente). Se aplica sobre el precio (IGIC incluido) antes del cupón.
+    if(distributorDiscountPct > 0) unit = round2(unit * (1 - distributorDiscountPct/100))
     lines.push({
       product_id: pid,
       variant_id: vid,
@@ -179,7 +182,7 @@ export async function persistOrder(db, body, opts = {}){
     if(existing) return { ok:true, order_number: existing.order_number, total: Number(existing.total), idempotent:true }
   }
 
-  const quote = await quoteOrder(db, body)
+  const quote = await quoteOrder(db, { ...body, distributorDiscountPct: opts.distributorDiscountPct || 0 })
   if(!quote.ok) return quote
 
   const { lines, couponRow, discountPct, totals } = quote
@@ -205,7 +208,7 @@ export async function persistOrder(db, body, opts = {}){
     tax_amount: totals.taxAmount,
     shipping_cost: totals.shipping,
     total: totals.totalGross,
-    discount_pct: discountPct || 0,
+    discount_pct: opts.distributorDiscountPct || discountPct || 0,
     payment_method,
     status,
     paypal_capture_id: opts.paypal_capture_id || null,

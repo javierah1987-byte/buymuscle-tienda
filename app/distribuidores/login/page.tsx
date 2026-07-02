@@ -64,14 +64,10 @@ export default function LoginDistribuidoresPage() {
 
           {/* Card */}
           <div style={{background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', padding:'2rem'}}>
-            {/* Nivel badges */}
+            {/* Acceso distribuidores */}
             {mode==='login' && (
-              <div style={{display:'flex', gap:'0.5rem', justifyContent:'center', marginBottom:'1.5rem'}}>
-                {[{c:'#cd7f32',l:'Bronze -10%'},{c:'#a8a9ad',l:'Silver -15%'},{c:'#ffd700',l:'Gold -20%'}].map(n => (
-                  <span key={n.l} style={{fontSize:11, fontWeight:700, padding:'3px 10px', border:`1px solid ${n.c}50`, color:n.c, background:`${n.c}10`}}>
-                    {n.l}
-                  </span>
-                ))}
+              <div style={{textAlign:'center', marginBottom:'1.5rem', fontSize:12, color:'rgba(255,255,255,0.4)', letterSpacing:'0.04em'}}>
+                Introduce tus credenciales de distribuidor
               </div>
             )}
 
@@ -148,7 +144,7 @@ export default function LoginDistribuidoresPage() {
           {/* Beneficios rápidos */}
           <div style={{marginTop:'2.5rem', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem'}}>
             {[
-              {i:'💰', t:'Hasta -20% dto.', s:'Según tu nivel'},
+              {i:'💰', t:'Precios exclusivos', s:'Tu tarifa de distribuidor'},
               {i:'📦', t:'Envío gratuito', s:'En pedidos +150 €'},
               {i:'🎯', t:'300+ productos', s:'Marcas exclusivas'},
               {i:'⚡', t:'Gestión 24h', s:'Pedidos rápidos'},

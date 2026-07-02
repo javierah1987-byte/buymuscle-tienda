@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import PayPalButton from '@/components/PayPalButton'
 import { trackBeginCheckout } from '@/lib/analytics'
+import { supabase } from '@/lib/supabase'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -135,9 +136,14 @@ export default function CarritoPage() {
     if(!items.length){ return }
     setOrdering(true)
     try {
+      // Si hay sesión de distribuidor, adjuntamos su token para que el servidor
+      // aplique su descuento de grupo (el % se valida y se calcula en servidor).
+      const { data:{ session } } = await supabase.auth.getSession()
+      const headers = { 'Content-Type':'application/json' }
+      if(session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token
       const r = await fetch('/api/create-order', {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers,
         body: JSON.stringify({
           customer: {
             name: form.name, email: form.email, phone: form.phone,

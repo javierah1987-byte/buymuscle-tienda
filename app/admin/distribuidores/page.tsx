@@ -6,8 +6,9 @@ import { authHeaders } from '@/lib/supabaseBrowser'
 
 const S ='https://awwlbepjxuoxaigztugh.supabase.co'
 
-const LEVEL_COLORS = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
-const LEVEL_ICON = { Bronze:'🥉', Silver:'🥈', Gold:'🥇' }
+// Grupos de distribuidor con nombre libre → acento único, sin medallas de nivel.
+const LEVEL_COLORS: any = new Proxy({}, { get: () => '#d9b45a' })
+const LEVEL_ICON: any = new Proxy({}, { get: () => '' })
 
 export default function AdminDistribuidoresPage() {
   const [levels, setLevels] = useState([])
@@ -55,10 +56,11 @@ export default function AdminDistribuidoresPage() {
     setSaving(true)
     try {
       await patchAdmin('level', editLevel.id, {
+        name: editLevel.name,
         discount_pct: Number(editLevel.discount_pct),
         min_order_amount: Number(editLevel.min_order_amount)
       })
-      setMsg('Nivel actualizado')
+      setMsg('Grupo actualizado')
       setEditLevel(null)
       load()
     } catch (e) {
@@ -169,14 +171,13 @@ export default function AdminDistribuidoresPage() {
       <div style={{ padding:'24px 28px', display:'grid', gridTemplateColumns:'300px 1fr', gap:24 }}>
 
         <div>
-          <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>Niveles de descuento</div>
+          <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>Grupos de descuento</div>
           {levels.map(function(level) { return (
             <div key={level.id} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', padding:'14px 16px', marginBottom:8, borderRadius:4 }}>
               {editLevel && editLevel.id === level.id ? (
                 <div>
-                  <div style={{ fontWeight:700, color:LEVEL_COLORS[level.name]||'white', marginBottom:10 }}>
-                    {LEVEL_ICON[level.name]||''} {level.name}
-                  </div>
+                  <label style={{ fontSize:10, color:'rgba(255,255,255,0.4)', display:'block', marginBottom:4 }}>NOMBRE DEL GRUPO</label>
+                  <input value={editLevel.name||''} onChange={function(e){ setEditLevel(function(p){ return {...p, name: e.target.value} }) }} style={{ ...inp, marginBottom:8 }}/>
                   <label style={{ fontSize:10, color:'rgba(255,255,255,0.4)', display:'block', marginBottom:4 }}>DESCUENTO %</label>
                   <input type="number" value={editLevel.discount_pct}
                     onChange={function(e){ setEditLevel(function(p){ return {...p, discount_pct: e.target.value} }) }}
@@ -220,7 +221,7 @@ export default function AdminDistribuidoresPage() {
               <input value={newDist.phone} onChange={function(e){ setNewDist(function(p){ return {...p, phone:e.target.value} }) }} placeholder="Telefono" style={inp}/>
               <input value={newDist.nif} onChange={function(e){ setNewDist(function(p){ return {...p, nif:e.target.value} }) }} placeholder="NIF/CIF" style={inp}/>
               <select value={newDist.level_id} onChange={function(e){ setNewDist(function(p){ return {...p, level_id:e.target.value} }) }} style={{ ...inp, cursor:'pointer' }}>
-                <option value="">Nivel *</option>
+                <option value="">Grupo *</option>
                 {levels.map(function(l){ return <option key={l.id} value={l.id}>{LEVEL_ICON[l.name]||''} {l.name} (-{l.discount_pct}%)</option> })}
               </select>
               <button onClick={createDistributor} disabled={saving} style={{ padding:'10px', background:'#ff1e41', border:'none', color:'white', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>
@@ -239,7 +240,7 @@ export default function AdminDistribuidoresPage() {
           ) : (
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead><tr>
-                {['Empresa','Email','Nivel','Telefono','Alta','Estado',''].map(function(col){ return (
+                {['Empresa','Email','Grupo','Telefono','Alta','Estado',''].map(function(col){ return (
                   <th key={col} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'rgba(255,255,255,0.4)', borderBottom:'1px solid rgba(255,255,255,0.08)' }}>{col}</th>
                 )})}
               </tr></thead>
@@ -320,7 +321,7 @@ export default function AdminDistribuidoresPage() {
                         style={{ width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
                     </div>
                     <div>
-                      <label style={{ display:'block', fontSize:10, color:'#888', marginBottom:4 }}>NIVEL</label>
+                      <label style={{ display:'block', fontSize:10, color:'#888', marginBottom:4 }}>GRUPO</label>
                       <select value={editDist.level_id} onChange={function(e){ setEditDist(function(p){ return {...p,level_id:Number(e.target.value)} }) }}
                         style={{ width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}>
                         {levels.map(function(l){ return <option key={l.id} value={l.id}>{l.name} (-{l.discount_pct}%)</option> })}
@@ -342,7 +343,7 @@ export default function AdminDistribuidoresPage() {
                 /* Vista de datos */
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
                   {[
-                    { l:'Nivel', v:(LEVEL_ICON[selDist.distributor_levels?.name]||'')+(selDist.distributor_levels?.name||'—')+' (-'+selDist.distributor_levels?.discount_pct+'%)' },
+                    { l:'Grupo', v:(selDist.distributor_levels?.name||'—')+' (-'+selDist.distributor_levels?.discount_pct+'%)' },
                     { l:'Estado', v:selDist.active?'🟢 Activo':'🔴 Inactivo' },
                     { l:'Teléfono', v:selDist.phone||'—' },
                     { l:'NIF/CIF', v:selDist.nif||'—' },

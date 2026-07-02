@@ -214,14 +214,13 @@ export default async function Home() {
                 PORTAL DE <span style={{color:'var(--red)'}}>DISTRIBUIDORES</span>
               </h3>
               <p style={{color:'rgba(255,255,255,0.5)',fontSize:14,lineHeight:1.7,maxWidth:480,marginBottom:'1.5rem'}}>
-                Accede a descuentos exclusivos de hasta un 20% en todos nuestros productos.
+                ¿Tienes una tienda o negocio? Accede con tu cuenta de distribuidor y compra con tu
+                tarifa personalizada. Precios y descuento aplicados automáticamente al entrar.
               </p>
               <div style={{display:'flex',gap:'0.75rem',flexWrap:'wrap'}}>
-                {[['Bronze','-10%','#cd7f32'],['Silver','-15%','#a8a9ad'],['Gold','-20%','#ffd700']].map(([n,d,c])=>(
-                  <div key={n} style={{background:'rgba(255,255,255,0.06)',border:`1px solid ${c}50`,padding:'10px 20px',textAlign:'center'}}>
-                    <div style={{fontSize:12,fontWeight:700,color:c as string,textTransform:'uppercase'}}>{n}</div>
-                    <div style={{fontSize:22,fontWeight:900,color:'white',lineHeight:1}}>{d}</div>
-                    <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>descuento</div>
+                {['Precios exclusivos','Envío prioritario','+300 productos'].map((f)=>(
+                  <div key={f} style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(217,180,90,0.4)',padding:'12px 18px',textAlign:'center'}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#d9b45a',textTransform:'uppercase'}}>{f}</div>
                   </div>
                 ))}
               </div>

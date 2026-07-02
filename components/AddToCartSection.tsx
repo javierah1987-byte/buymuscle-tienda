@@ -14,7 +14,7 @@ interface Props {
   hasVariants: boolean
 }
 
-const LEVEL_COLORS = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
+const DIST_ACCENT = '#d9b45a'
 
 export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants }: Props) {
   const { add } = useCart()
@@ -51,8 +51,8 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
     <div>
       <div style={{ marginBottom:'1rem' }}>
         {isDistributor && discountPct && (
-          <div style={{ fontSize:12, fontWeight:700, color:LEVEL_COLORS[levelName]||'#ffd700', marginBottom:4 }}>
-            🏅 PRECIO DISTRIBUIDOR {levelName?.toUpperCase()} -{discountPct}%
+          <div style={{ fontSize:12, fontWeight:700, color:DIST_ACCENT, marginBottom:4 }}>
+            🏷️ PRECIO DISTRIBUIDOR{levelName ? ' · '+levelName.toUpperCase() : ''} -{discountPct}%
             <span style={{ marginLeft:8, color:'#bbb', textDecoration:'line-through', fontWeight:400 }}>
               PVP: {basePrice.toFixed(2)} €
             </span>

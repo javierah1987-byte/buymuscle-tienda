@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 
-type DistributorLevel = 'Bronze' | 'Silver' | 'Gold' | null
+type DistributorLevel = string | null
 
 type AuthCtx = {
   user: User | null

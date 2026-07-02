@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react'
 import SideCart from '@/components/SideCart'
 import ShippingBar from '@/components/ShippingBar'
 
-const LEVEL_COLORS: Record<string,string> = { Bronze:'#cd7f32', Silver:'#a8a9ad', Gold:'#ffd700' }
+const DIST_ACCENT = '#d9b45a'
 
 const NUTRICION_MEGA = [
   { col:'PROTEINAS', items:[{l:'Proteinas',h:'/tienda?cat=Proteinas'},{l:'Proteina Whey',h:'/tienda?cat=Proteina Whey'},{l:'Proteina Isolatada',h:'/tienda?cat=Proteina Isolatada'},{l:'Proteina Vegetal',h:'/tienda?cat=Proteina Vegetal'},{l:'Caseinas',h:'/tienda?cat=Caseinas'},{l:'Ganadores de Peso',h:'/tienda?cat=Ganadores de Peso'},{l:'Barritas Proteicas',h:'/tienda?cat=Barritas Proteicas'},{l:'Snacks Proteicos',h:'/tienda?cat=Snacks Proteicos'},{l:'Packs',h:'/tienda?cat=Packs'}]},
@@ -86,9 +86,9 @@ export default function Navbar(){
 
   return(
     <>
-      {isDistributor&&levelName&&(
-        <div style={{background:LEVEL_COLORS[levelName],color:'#000',textAlign:'center',padding:'5px',fontSize:12,fontWeight:700,letterSpacing:'0.05em',textTransform:'uppercase'}}>
-          {levelName==='Bronze'?'🥉':levelName==='Silver'?'🥈':'🥇'} Portal Distribuidor {levelName} - -{discountPct}% en todo
+      {isDistributor&&(
+        <div style={{background:DIST_ACCENT,color:'#000',textAlign:'center',padding:'5px',fontSize:12,fontWeight:700,letterSpacing:'0.05em',textTransform:'uppercase'}}>
+          🏷️ Portal Distribuidor{levelName?' · '+levelName:''} · -{discountPct}% en todo
         </div>
       )}
 
@@ -113,10 +113,10 @@ export default function Navbar(){
                 </svg>
               </button>
               <div style={{display:'flex',alignItems:'center',gap:'1rem',flexShrink:0}}>
-                {!loading&&(isDistributor&&levelName?(
+                {!loading&&(isDistributor?(
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{fontSize:12,fontWeight:700,padding:'4px 10px',background:LEVEL_COLORS[levelName]+'25',border:'1px solid '+LEVEL_COLORS[levelName]+'50',color:LEVEL_COLORS[levelName]}}>
-                      {levelName==='Bronze'?'🥉':levelName==='Silver'?'🥈':'🥇'} -{discountPct}%
+                    <span style={{fontSize:12,fontWeight:700,padding:'4px 10px',background:DIST_ACCENT+'25',border:'1px solid '+DIST_ACCENT+'50',color:DIST_ACCENT}}>
+                      🏷️ -{discountPct}%
                     </span>
                     <button onClick={handleSignOut} style={{fontSize:11,color:'rgba(255,255,255,0.4)',background:'none',border:'1px solid rgba(255,255,255,0.15)',padding:'4px 10px',cursor:'pointer',fontFamily:'var(--font-body)'}}>Salir</button>
                   </div>
