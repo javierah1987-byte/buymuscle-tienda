@@ -17,6 +17,12 @@ export default function AdminDistribuidoresPage() {
   const [editLevel, setEditLevel] = useState(null)
   const [newDist, setNewDist] = useState({ email:'', password:'', company_name:'', level_id:'', phone:'', nif:'' })
   const [newGroup, setNewGroup] = useState({ name:'', discount_pct:'', min_order_amount:'' })
+  const [ppGroup, setPpGroup] = useState('')
+  const [ppSearch, setPpSearch] = useState('')
+  const [ppResults, setPpResults] = useState([])
+  const [ppSel, setPpSel] = useState(null)
+  const [ppPct, setPpPct] = useState('')
+  const [ppList, setPpList] = useState([])
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [selDist, setSelDist] = useState(null)    // distribuidor seleccionado para ver detalle
@@ -116,6 +122,46 @@ export default function AdminDistribuidoresPage() {
       setMsg('Distribuidor borrado'); setSelDist(null); setEditDist(null); load()
     } catch (e) { setMsg('Error: ' + String(e?.message || e)) }
     setTimeout(() => setMsg(''), 3000)
+  }
+
+  // ── Precios especiales por producto ──
+  async function ppLoad(levelId) {
+    if (!levelId) { setPpList([]); return }
+    try {
+      const r = await fetch('/api/admin/distributor-prices?level_id=' + levelId)
+      const d = await r.json().catch(() => ({}))
+      setPpList(d.ok ? (d.items || []) : [])
+    } catch { setPpList([]) }
+  }
+  async function ppSearchProducts(term) {
+    setPpSearch(term)
+    if (term.trim().length < 2) { setPpResults([]); return }
+    try {
+      const r = await fetch(S + '/rest/v1/products?select=id,name&name=ilike.' + encodeURIComponent('*' + term.trim() + '*') + '&limit=8', { headers: await authHeaders() })
+      const d = await r.json()
+      setPpResults(Array.isArray(d) ? d : [])
+    } catch { setPpResults([]) }
+  }
+  async function ppSave() {
+    if (!ppGroup || !ppSel) { setMsg('Elige grupo y producto'); setTimeout(() => setMsg(''), 2500); return }
+    try {
+      const r = await fetch('/api/admin/distributor-prices', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level_id: Number(ppGroup), product_id: ppSel.id, discount_pct: Number(ppPct) || 0 })
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status))
+      setMsg('Precio por producto guardado'); setPpSel(null); setPpSearch(''); setPpResults([]); setPpPct(''); ppLoad(ppGroup)
+    } catch (e) { setMsg('Error: ' + String(e?.message || e)) }
+    setTimeout(() => setMsg(''), 2500)
+  }
+  async function ppDel(id) {
+    try {
+      const r = await fetch('/api/admin/distributor-prices', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status))
+      ppLoad(ppGroup)
+    } catch (e) { setMsg('Error: ' + String(e?.message || e)); setTimeout(() => setMsg(''), 2500) }
   }
 
   async function openDetalle(d) {
@@ -340,6 +386,48 @@ export default function AdminDistribuidoresPage() {
               </tbody>
             </table>
           )}
+        </div>
+      </div>
+
+      {/* PRECIOS ESPECIALES POR PRODUCTO */}
+      <div style={{ padding:'0 28px 28px' }}>
+        <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid rgba(217,180,90,0.2)', borderRadius:4, padding:'18px 20px' }}>
+          <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#d9b45a', marginBottom:4 }}>Precios especiales por producto</div>
+          <p style={{ fontSize:12, color:'rgba(255,255,255,0.4)', margin:'0 0 14px' }}>Ponle a un producto un % distinto al general del grupo (manda sobre el % del grupo).</p>
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'flex-start' }}>
+            <select value={ppGroup} onChange={function(e){ setPpGroup(e.target.value); ppLoad(e.target.value); setPpSel(null); setPpSearch(''); setPpResults([]) }} style={{ ...inp, width:200, cursor:'pointer' }}>
+              <option value="">Elige grupo…</option>
+              {levels.map(function(l){ return <option key={l.id} value={l.id}>{l.name} (-{l.discount_pct}%)</option> })}
+            </select>
+            {ppGroup && (
+              <div style={{ position:'relative', width:260 }}>
+                <input value={ppSel ? ppSel.name : ppSearch} onChange={function(e){ setPpSel(null); ppSearchProducts(e.target.value) }} placeholder="Buscar producto…" style={inp}/>
+                {!ppSel && ppResults.length>0 && (
+                  <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'#161616', border:'1px solid #333', zIndex:5, maxHeight:220, overflow:'auto' }}>
+                    {ppResults.map(function(p){ return (
+                      <div key={p.id} onClick={function(){ setPpSel(p); setPpResults([]) }} style={{ padding:'8px 10px', fontSize:12, color:'white', cursor:'pointer', borderBottom:'1px solid #222' }}>{p.name}</div>
+                    )})}
+                  </div>
+                )}
+              </div>
+            )}
+            {ppGroup && <input type="number" value={ppPct} onChange={function(e){ setPpPct(e.target.value) }} placeholder="% dto." style={{ ...inp, width:100 }}/>}
+            {ppGroup && <button onClick={ppSave} style={{ padding:'9px 16px', background:'#d9b45a', border:'none', color:'#111', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>Guardar</button>}
+          </div>
+          {ppGroup && ppList.length>0 && (
+            <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:6, maxWidth:560 }}>
+              {ppList.map(function(it){ return (
+                <div key={it.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', padding:'8px 12px', fontSize:13 }}>
+                  <span style={{ color:'white' }}>{it.products ? it.products.name : ('#'+it.product_id)}</span>
+                  <span style={{ display:'flex', gap:12, alignItems:'center' }}>
+                    <span style={{ color:'#d9b45a', fontWeight:700 }}>-{it.discount_pct}%</span>
+                    <button onClick={function(){ ppDel(it.id) }} title="Quitar" style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:14 }}>🗑</button>
+                  </span>
+                </div>
+              )})}
+            </div>
+          )}
+          {ppGroup && ppList.length===0 && <div style={{ marginTop:12, fontSize:12, color:'rgba(255,255,255,0.3)' }}>Sin precios especiales en este grupo.</div>}
         </div>
       </div>
 

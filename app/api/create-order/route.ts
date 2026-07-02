@@ -21,12 +21,12 @@ async function resolveDistributor(db, req){
     )
     const { data: { user } } = await anon.auth.getUser(token)
     if(!user) return { pct: 0, channel: 'web' }
-    const { data } = await db.from('distributor_profiles')
-      .select('discount_pct,active').eq('user_id', user.id).maybeSingle()
-    if(!data || data.active === false) return { pct: 0, channel: 'web' }
-    const pct = Number(data.discount_pct) || 0
-    return pct > 0 ? { pct, channel: 'distributor' } : { pct: 0, channel: 'web' }
-  }catch{ return { pct: 0, channel: 'web' } }
+    const { data } = await db.from('distributors')
+      .select('level_id,active,distributor_levels(discount_pct)').eq('user_id', user.id).maybeSingle()
+    if(!data || data.active === false) return { pct: 0, levelId: null, channel: 'web' }
+    const pct = Number(data.distributor_levels?.discount_pct) || 0
+    return { pct, levelId: data.level_id ?? null, channel: 'distributor' }
+  }catch{ return { pct: 0, levelId: null, channel: 'web' } }
 }
 
 // POST /api/create-order — checkout web. Crea el pedido como 'pending'
@@ -48,6 +48,7 @@ export async function POST(req){
       payment_method: body.payment_method || 'card',
       channel: dist.channel,
       distributorDiscountPct: dist.pct,
+      distributorLevelId: dist.levelId,
     })
     if(!res.ok) return NextResponse.json(res, { status: res.status || 400 })
     return NextResponse.json({ ok:true, order_number: res.order_number, total: res.total })

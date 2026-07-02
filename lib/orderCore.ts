@@ -91,7 +91,7 @@ async function createHoldedInvoice(order, lines){
 // Calcula líneas y totales autoritativos a partir del carrito del cliente.
 // No persiste nada: sirve también para crear la orden de PayPal por el importe correcto.
 // Devuelve { ok:false, error } o { ok:true, lines, totals, couponRow, discountPct }.
-export async function quoteOrder(db, { items = [], discount_code = '', distributorDiscountPct = 0 }){
+export async function quoteOrder(db, { items = [], discount_code = '', distributorDiscountPct = 0, distributorLevelId = null }){
   if(!Array.isArray(items) || items.length === 0)
     return { ok:false, error:'empty_cart', status:400 }
 
@@ -99,6 +99,14 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
   const { data: prods } = await db.from('products')
     .select('id,name,price_incl_tax,sale_price,on_sale,active').in('id', productIds)
   const prodMap = new Map((prods||[]).map(p => [p.id, p]))
+
+  // Override de % por producto para el grupo del distribuidor (manda sobre el % general).
+  let distOverride = new Map()
+  if(distributorLevelId && productIds.length){
+    const { data: ov } = await db.from('distributor_product_discounts')
+      .select('product_id,discount_pct').eq('level_id', distributorLevelId).in('product_id', productIds)
+    distOverride = new Map((ov||[]).map(o => [Number(o.product_id), Number(o.discount_pct)]))
+  }
 
   const variantIds = [...new Set(items.map(i => Number(i.variant_id)).filter(Boolean))]
   let varMap = new Map()
@@ -119,9 +127,12 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
     const vid = Number(it.variant_id) || null
     if(vid && varMap.has(vid)) unit += Number(varMap.get(vid).price_modifier || 0)
     unit = round2(unit)
-    // Precio de distribuidor: descuento del grupo aplicado en SERVIDOR (autoritativo,
-    // nunca aceptado del cliente). Se aplica sobre el precio (IGIC incluido) antes del cupón.
-    if(distributorDiscountPct > 0) unit = round2(unit * (1 - distributorDiscountPct/100))
+    // Precio de distribuidor: descuento aplicado en SERVIDOR (autoritativo, nunca del cliente).
+    // El % por producto (override del grupo) manda sobre el % general del grupo.
+    {
+      const dpct = distOverride.has(pid) ? distOverride.get(pid) : distributorDiscountPct
+      if(dpct > 0) unit = round2(unit * (1 - dpct/100))
+    }
     lines.push({
       product_id: pid,
       variant_id: vid,
@@ -182,7 +193,7 @@ export async function persistOrder(db, body, opts = {}){
     if(existing) return { ok:true, order_number: existing.order_number, total: Number(existing.total), idempotent:true }
   }
 
-  const quote = await quoteOrder(db, { ...body, distributorDiscountPct: opts.distributorDiscountPct || 0 })
+  const quote = await quoteOrder(db, { ...body, distributorDiscountPct: opts.distributorDiscountPct || 0, distributorLevelId: opts.distributorLevelId || null })
   if(!quote.ok) return quote
 
   const { lines, couponRow, discountPct, totals } = quote
