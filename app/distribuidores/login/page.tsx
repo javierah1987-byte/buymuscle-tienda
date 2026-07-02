@@ -141,23 +141,7 @@ export default function LoginDistribuidoresPage() {
             </p>
           </div>
 
-          {/* Beneficios rápidos */}
-          <div style={{marginTop:'2.5rem', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem'}}>
-            {[
-              {i:'💰', t:'Precios exclusivos', s:'Tu tarifa de distribuidor'},
-              {i:'📦', t:'Envío gratuito', s:'En pedidos +150 €'},
-              {i:'🎯', t:'300+ productos', s:'Marcas exclusivas'},
-              {i:'⚡', t:'Gestión 24h', s:'Pedidos rápidos'},
-            ].map(b => (
-              <div key={b.t} style={{background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', padding:'0.875rem', display:'flex', gap:10, alignItems:'center'}}>
-                <span style={{fontSize:20}}>{b.i}</span>
-                <div>
-                  <div style={{fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.7)', textTransform:'uppercase'}}>{b.t}</div>
-                  <div style={{fontSize:11, color:'rgba(255,255,255,0.35)'}}>{b.s}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Acceso directo: sólo login, sin extras */}
         </div>
       </div>
     </div>

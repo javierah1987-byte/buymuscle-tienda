@@ -201,37 +201,7 @@ export default async function Home() {
         hrefLabel="Ver todos →"
       />
 
-      {/* DISTRIBUIDORES */}
-      <section style={{position:'relative',padding:'3.5rem 0',overflow:'hidden',borderTop:'3px solid var(--red)'}}>
-        <LazyBgVideo src={BG_VIDEO_3}
-          style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',minWidth:'100%',minHeight:'100%',objectFit:'cover',opacity:0.45,filter:'brightness(0.5)'}}/>
-        <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.62)',zIndex:1}}/>
-        <div style={{position:'relative',zIndex:2,maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:'3rem',alignItems:'center'}}>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.14em',marginBottom:'0.6rem'}}>PROGRAMA EXCLUSIVO</div>
-              <h3 style={{fontSize:'clamp(24px,3.5vw,42px)',fontWeight:900,textTransform:'uppercase',color:'white',lineHeight:1.05,marginBottom:'1.25rem'}}>
-                PORTAL DE <span style={{color:'var(--red)'}}>DISTRIBUIDORES</span>
-              </h3>
-              <p style={{color:'rgba(255,255,255,0.5)',fontSize:14,lineHeight:1.7,maxWidth:480,marginBottom:'1.5rem'}}>
-                ¿Tienes una tienda o negocio? Accede con tu cuenta de distribuidor y compra con tu
-                tarifa personalizada. Precios y descuento aplicados automáticamente al entrar.
-              </p>
-              <div style={{display:'flex',gap:'0.75rem',flexWrap:'wrap'}}>
-                {['Precios exclusivos','Envío prioritario','+300 productos'].map((f)=>(
-                  <div key={f} style={{background:'rgba(255,255,255,0.06)',border:'1px solid rgba(217,180,90,0.4)',padding:'12px 18px',textAlign:'center'}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#d9b45a',textTransform:'uppercase'}}>{f}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{display:'flex',flexDirection:'column',gap:'0.75rem',minWidth:200}}>
-              <Link href="/distribuidores/login" style={{background:'var(--red)',color:'white',padding:'14px 28px',fontFamily:'var(--font-body)',fontSize:14,fontWeight:700,textDecoration:'none',textTransform:'uppercase',textAlign:'center',display:'block'}}>Acceder al portal</Link>
-              <Link href="/distribuidores" style={{background:'transparent',color:'rgba(255,255,255,0.6)',padding:'12px 24px',fontFamily:'var(--font-body)',fontSize:12,fontWeight:700,textDecoration:'none',border:'1px solid rgba(255,255,255,0.2)',textTransform:'uppercase',textAlign:'center',display:'block'}}>Mas informacion</Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Distribuidores: sin sección en la home. El acceso está arriba a la derecha ("Distribuidores" → login). */}
 
       {/* PROTEINAS — carrusel */}
       <ProductCarousel

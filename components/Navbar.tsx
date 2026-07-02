@@ -123,7 +123,7 @@ export default function Navbar(){
                 ):(
                   <Link href="/distribuidores/login" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Acceder
+                    Distribuidores
                   </Link>
                 ))}
                 <Link href="/tpv" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.4)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
