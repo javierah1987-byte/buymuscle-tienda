@@ -29,7 +29,7 @@ export default function AdminProductos(){
     if(filter==='inactive') q+='&active=eq.false'
     if(filter==='nostock') q+='&stock=eq.0'
     const[r1,r2]=await Promise.all([
-      fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,stock,active,brand,image_url,category_id,description,hide_from_distributors&order=name.asc'+q+'&limit='+PER+'&offset='+(page*PER),{headers:H}),
+      fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,cost_price,stock,active,brand,image_url,category_id,description,hide_from_distributors&order=name.asc'+q+'&limit='+PER+'&offset='+(page*PER),{headers:H}),
       fetch(S+'/rest/v1/products?select=count'+q,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     ])
     const d=await r1.json()
@@ -74,6 +74,7 @@ export default function AdminProductos(){
           brand:editing.brand,
           price_incl_tax:Number(editing.price_incl_tax),
           sale_price:editing.sale_price?Number(editing.sale_price):null,
+          cost_price:editing.cost_price!==''&&editing.cost_price!=null?Number(editing.cost_price):null,
           stock:editing.stock,
           active:editing.active,
           hide_from_distributors:!!editing.hide_from_distributors,
@@ -151,6 +152,12 @@ export default function AdminProductos(){
               <div>
                 <label style={{display:'block',fontSize:11,color:'#888',marginBottom:4,fontWeight:700,textTransform:'uppercase'}}>Precio oferta (EUR)</label>
                 <input type='number' step='0.01' min='0' value={editing.sale_price||''} onChange={e=>setEditing(v=>({...v,sale_price:e.target.value||null}))} style={inp} placeholder='Vacio = sin oferta'/>
+              </div>
+
+              {/* Precio de coste */}
+              <div>
+                <label style={{display:'block',fontSize:11,color:'#888',marginBottom:4,fontWeight:700,textTransform:'uppercase'}}>Precio de coste (EUR)</label>
+                <input type='number' step='0.01' min='0' value={editing.cost_price??''} onChange={e=>setEditing(v=>({...v,cost_price:e.target.value}))} style={inp} placeholder='Lo que te cuesta a ti'/>
               </div>
 
               {/* Stock general */}

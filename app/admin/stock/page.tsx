@@ -215,6 +215,7 @@ export default function AdminStock() {
     if (changes.stock !== undefined) update.stock = Number(changes.stock)
     if (changes.price !== undefined) update.price_incl_tax = Number(changes.price)
     if (changes.sale_price !== undefined) update.sale_price = changes.sale_price===''?null:Number(changes.sale_price)
+    if (changes.cost_price !== undefined) update.cost_price = changes.cost_price===''?null:Number(changes.cost_price)
     if (changes.active !== undefined) update.active = changes.active
     await db.from('products').update(update).eq('id', p.id)
     setProducts(ps => ps.map(x => x.id===p.id ? {...x,...update} : x))
@@ -225,10 +226,12 @@ export default function AdminStock() {
 
   const lowStock = products.filter(p => p.active && p.stock <= 5).length
 
-  // Valor del stock a día de hoy (a PVP): suma de stock × precio efectivo de cada producto.
+  // Valor del stock a día de hoy. A COSTE (lo que te cuesta a ti) y a PVP (precio de venta).
   const effPrice = p => (p.on_sale && p.sale_price) ? Number(p.sale_price) : Number(p.price_incl_tax || 0)
   const totalUnits = products.reduce((s, p) => s + (Number(p.stock) || 0), 0)
   const stockValue = products.reduce((s, p) => s + (Number(p.stock) || 0) * effPrice(p), 0)
+  const costValue = products.reduce((s, p) => s + (Number(p.stock) || 0) * (Number(p.cost_price) || 0), 0)
+  const noCost = products.filter(p => (Number(p.stock) || 0) > 0 && !(Number(p.cost_price) > 0)).length
   const eur = n => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
@@ -245,15 +248,18 @@ export default function AdminStock() {
           <a href="/" style={{ marginLeft:'auto', fontSize:12, color:'#888', textDecoration:'none' }}>← Tienda</a>
         </div>
 
-        {/* Valor total del stock a día de hoy (a PVP) */}
-        <div style={{ background:'#111', color:'#fff', padding:'1.1rem 1.4rem', borderRadius:6, marginBottom:'1rem', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:16 }}>
+        {/* Valor total del stock a día de hoy — a COSTE y a PVP */}
+        <div style={{ background:'#111', color:'#fff', padding:'1.1rem 1.4rem', borderRadius:6, marginBottom:'1rem', display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:16 }}>
           <div>
-            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>💰 Valor total del stock hoy (a PVP)</div>
-            <div style={{ fontSize:34, fontWeight:900, color:'#22c55e', lineHeight:1 }}>{eur(stockValue)} €</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>💰 Valor del stock hoy · a COSTE</div>
+            <div style={{ fontSize:34, fontWeight:900, color:'#22c55e', lineHeight:1 }}>{eur(costValue)} €</div>
+            {noCost > 0 && <div style={{ fontSize:11, color:'#f59e0b', marginTop:6 }}>⚠ {noCost} producto{noCost>1?'s':''} con stock sin precio de coste (no cuenta{noCost>1?'n':''} aquí)</div>}
           </div>
           <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>Unidades en stock</div>
-            <div style={{ fontSize:26, fontWeight:900 }}>{totalUnits.toLocaleString('es-ES')}</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>a PVP (venta)</div>
+            <div style={{ fontSize:20, fontWeight:800, color:'rgba(255,255,255,0.85)', marginBottom:8 }}>{eur(stockValue)} €</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>Unidades</div>
+            <div style={{ fontSize:18, fontWeight:800 }}>{totalUnits.toLocaleString('es-ES')}</div>
           </div>
         </div>
 
@@ -290,7 +296,7 @@ export default function AdminStock() {
             : <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:'#f9f9f9', borderBottom:'1px solid #e8e8e8' }}>
-                  {['Imagen','Producto','Categoría','Stock','Precio PVP','Precio Oferta','Activo',''].map(h=>(
+                  {['Imagen','Producto','Categoría','Stock','Coste','Precio PVP','Precio Oferta','Activo',''].map(h=>(
                     <th key={h} style={{ padding:'10px 12px', textAlign:'left', fontSize:11, fontWeight:700, textTransform:'uppercase', color:'#888', letterSpacing:'0.05em' }}>{h}</th>
                   ))}
                 </tr>
@@ -316,6 +322,14 @@ export default function AdminStock() {
                         <input type="number" min="0" value={getVal(p,'stock')} onChange={e=>edit(p.id,'stock',e.target.value)}
                           style={{ width:70, padding:'4px 6px', border:'1px solid '+(Number(stock)<=5?'#ef4444':'#ddd'), fontSize:13, fontWeight:700, textAlign:'center', color:Number(stock)===0?'#ef4444':Number(stock)<=5?'#f59e0b':'#111', fontFamily:'inherit' }}/>
                         {Number(stock)<=5 && <div style={{ fontSize:9, color:'#ef4444', marginTop:2 }}>⚠ BAJO</div>}
+                      </td>
+                      <td style={{ padding:'6px 12px' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                          <input type="number" min="0" step="0.01" value={getVal(p,'cost_price')||''} onChange={e=>edit(p.id,'cost_price',e.target.value)}
+                            placeholder="—" title="Precio de coste (lo que te cuesta a ti)"
+                            style={{ width:80, padding:'4px 6px', border:'1px solid '+(getVal(p,'cost_price')?'#3b82f6':'#ddd'), fontSize:12, fontFamily:'inherit' }}/>
+                          <span style={{ fontSize:11, color:'#aaa' }}>€</span>
+                        </div>
                       </td>
                       <td style={{ padding:'6px 12px' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:4 }}>

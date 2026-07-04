@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       category_id: num(p.category_id),
       price_incl_tax: price,
       sale_price: num(p.sale_price),
+      cost_price: num(p.cost_price),
       on_sale: p.on_sale !== undefined ? !!p.on_sale : !!num(p.sale_price),
       image_url: p.image_url ? String(p.image_url).trim() : null,
       stock: intOr(p.stock, 0),

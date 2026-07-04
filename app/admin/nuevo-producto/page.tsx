@@ -15,7 +15,7 @@ export default function NuevoProducto() {
   const [cats,setCats]=useState([])
   const [saving,setSaving]=useState(false)
   const [msg,setMsg]=useState(null)
-  const [form,setForm]=useState({name:'',brand:'BuyMuscle',category_id:'',price_incl_tax:'',sale_price:'',image_url:'',stock:'0',description:'',active:true})
+  const [form,setForm]=useState({name:'',brand:'BuyMuscle',category_id:'',price_incl_tax:'',sale_price:'',cost_price:'',image_url:'',stock:'0',description:'',active:true})
   const [variantes,setVariantes]=useState([])
   const [nv,setNv]=useState({tipo:'Sabor',valor:'',stock:'10',mod:'0'})
 
@@ -47,6 +47,7 @@ export default function NuevoProducto() {
             category_id:form.category_id?Number(form.category_id):null,
             price_incl_tax:Number(form.price_incl_tax),
             sale_price:form.sale_price?Number(form.sale_price):null,
+            cost_price:form.cost_price?Number(form.cost_price):null,
             on_sale:!!form.sale_price,
             image_url:form.image_url.trim()||null,
             stock:Number(form.stock)||0,
@@ -59,7 +60,7 @@ export default function NuevoProducto() {
       const data=await res.json()
       if(!res.ok||!data.ok) throw new Error(data.error||'No se pudo crear el producto')
       setMsg({err:false,text:'Producto #'+data.id+' creado. '+variantes.length+' variantes.'})
-      setForm({name:'',brand:'BuyMuscle',category_id:'',price_incl_tax:'',sale_price:'',image_url:'',stock:'0',description:'',active:true})
+      setForm({name:'',brand:'BuyMuscle',category_id:'',price_incl_tax:'',sale_price:'',cost_price:'',image_url:'',stock:'0',description:'',active:true})
       setVariantes([])
     }catch(e){setMsg({err:true,text:'Error: '+e.message})}
     setSaving(false)
@@ -81,9 +82,10 @@ export default function NuevoProducto() {
             <div style={{marginBottom:14}}><label style={LBL}>Nombre *</label><input style={INP} value={form.name} onChange={e=>set('name',e.target.value)} placeholder="WHEY 80 PROFESSIONAL 2KG MVP"/></div>
             <div style={{marginBottom:14}}><label style={LBL}>Marca</label><select style={INP} value={form.brand} onChange={e=>set('brand',e.target.value)}>{MARCAS.map(m=><option key={m}>{m}</option>)}</select></div>
             <div style={{marginBottom:14}}><label style={LBL}>Categoria</label><select style={INP} value={form.category_id} onChange={e=>set('category_id',e.target.value)}><option value="">Sin categoria</option>{cats.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:14}}>
               <div><label style={LBL}>Precio IVA incl. * (EUR)</label><input style={INP} type="number" step="0.01" min="0" value={form.price_incl_tax} onChange={e=>set('price_incl_tax',e.target.value)} placeholder="29.95"/></div>
               <div><label style={LBL}>Precio oferta (EUR)</label><input style={INP} type="number" step="0.01" min="0" value={form.sale_price} onChange={e=>set('sale_price',e.target.value)} placeholder="Opcional"/></div>
+              <div><label style={LBL}>Precio coste (EUR)</label><input style={INP} type="number" step="0.01" min="0" value={form.cost_price} onChange={e=>set('cost_price',e.target.value)} placeholder="Tu coste"/></div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12,marginBottom:14}}>
               <div><label style={LBL}>URL imagen</label><input style={INP} value={form.image_url} onChange={e=>set('image_url',e.target.value)} placeholder="https://...jpg"/></div>
