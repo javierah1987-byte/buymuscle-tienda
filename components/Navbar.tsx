@@ -8,7 +8,8 @@ import { useState, useEffect } from 'react'
 import SideCart from '@/components/SideCart'
 import ShippingBar from '@/components/ShippingBar'
 
-const DIST_ACCENT = '#d9b45a'
+const DIST_ACCENT = '#d9b45a'          // dorado — botón de acceso en la web retail
+const DIST_BLUE = '#1f6feb'            // azul — tema de la ZONA DISTRIBUIDORES (logueado)
 
 const NUTRICION_MEGA = [
   { col:'PROTEINAS', items:[{l:'Proteinas',h:'/tienda?cat=Proteinas'},{l:'Proteina Whey',h:'/tienda?cat=Proteina Whey'},{l:'Proteina Isolatada',h:'/tienda?cat=Proteina Isolatada'},{l:'Proteina Vegetal',h:'/tienda?cat=Proteina Vegetal'},{l:'Caseinas',h:'/tienda?cat=Caseinas'},{l:'Ganadores de Peso',h:'/tienda?cat=Ganadores de Peso'},{l:'Barritas Proteicas',h:'/tienda?cat=Barritas Proteicas'},{l:'Snacks Proteicos',h:'/tienda?cat=Snacks Proteicos'},{l:'Packs',h:'/tienda?cat=Packs'}]},
@@ -87,13 +88,14 @@ export default function Navbar(){
   return(
     <>
       {isDistributor&&(
-        <div style={{background:DIST_ACCENT,color:'#000',textAlign:'center',padding:'5px',fontSize:12,fontWeight:700,letterSpacing:'0.05em',textTransform:'uppercase'}}>
-          🏷️ Portal Distribuidor{levelName?' · '+levelName:''} · -{discountPct}% en todo
+        <div style={{background:DIST_BLUE,color:'#fff',textAlign:'center',padding:'5px',fontSize:12,fontWeight:700,letterSpacing:'0.05em',textTransform:'uppercase'}}>
+          🏷️ Zona Distribuidores{levelName?' · '+levelName:''} · -{discountPct}% en todo
         </div>
       )}
 
       <ShippingBar/>
-      <header style={{background:'#000',position:'sticky',top:0,zIndex:999,boxShadow:'0 1px 0 rgba(255,255,255,0.06)'}}>
+      {/* En la zona distribuidores todo el acento rojo pasa a AZUL (override de --red) */}
+      <header style={{background:'#000',position:'sticky',top:0,zIndex:999,boxShadow:'0 1px 0 rgba(255,255,255,0.06)',...(isDistributor?{['--red' as any]:DIST_BLUE}:{})}}>
         {/* Fila 1: Logo + buscador + iconos */}
         <div style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
           <div className="container">
@@ -115,7 +117,7 @@ export default function Navbar(){
               <div style={{display:'flex',alignItems:'center',gap:'1rem',flexShrink:0}}>
                 {!loading&&(isDistributor?(
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{fontSize:12,fontWeight:700,padding:'4px 10px',background:DIST_ACCENT+'25',border:'1px solid '+DIST_ACCENT+'50',color:DIST_ACCENT}}>
+                    <span style={{fontSize:12,fontWeight:700,padding:'4px 10px',background:DIST_BLUE+'25',border:'1px solid '+DIST_BLUE+'50',color:'#7cc4ff'}}>
                       🏷️ -{discountPct}%
                     </span>
                     <button onClick={handleSignOut} style={{fontSize:11,color:'rgba(255,255,255,0.4)',background:'none',border:'1px solid rgba(255,255,255,0.15)',padding:'4px 10px',cursor:'pointer',fontFamily:'var(--font-body)'}}>Salir</button>
@@ -227,13 +229,15 @@ export default function Navbar(){
 
               <div style={{flex:1}}/>
 
-              {/* Botones de colores */}
-              <Link href="/distribuidores" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#FBEC96',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM VIP</Link>
-              <Link href="/bm-team" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#00F399',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM TEAM</Link>
-              <Link href="/tienda?cat=Ofertas" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#FF2958',color:'white',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>OFERTAS</Link>
-              <Link href="/streetflavour" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#47DAFF',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>STREETFLAVOUR</Link>
-              <Link href="/objetivos" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#ff8800',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>🎯 OBJETIVOS</Link>
-              <Link href="/comparar" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#888',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>⚖️ COMPARAR</Link>
+              {/* Botones de colores.
+                  En la ZONA DISTRIBUIDORES el socio quiere SOLO "Ofertas" (en azul):
+                  se ocultan BM VIP, BM TEAM, StreetFlavour, Objetivos y Comparar. */}
+              {!isDistributor&&<Link href="/distribuidores" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#FBEC96',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM VIP</Link>}
+              {!isDistributor&&<Link href="/bm-team" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#00F399',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM TEAM</Link>}
+              <Link href="/tienda?cat=Ofertas" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:isDistributor?DIST_BLUE:'#FF2958',color:'white',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>OFERTAS</Link>
+              {!isDistributor&&<Link href="/streetflavour" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#47DAFF',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>STREETFLAVOUR</Link>}
+              {!isDistributor&&<Link href="/objetivos" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#ff8800',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>🎯 OBJETIVOS</Link>}
+              {!isDistributor&&<Link href="/comparar" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#888',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>⚖️ COMPARAR</Link>}
             </div>
           </div>
         </div>

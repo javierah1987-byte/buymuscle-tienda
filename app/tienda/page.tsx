@@ -5,6 +5,7 @@ const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
+import { useAuth } from '@/lib/auth'
 import Link from 'next/link'
 
 const PER_PAGE = 24
@@ -67,6 +68,9 @@ function TiendaContent() {
   const catParam = searchParams.get('cat') || ''
   const pageParam = parseInt(searchParams.get('page') || '1')
   const q = searchParams.get('q') || ''
+  // Si quien mira es un distribuidor, ocultamos los productos marcados como
+  // "no visible a distribuidores" (monodosis suelta, otras marcas, etc.).
+  const { isDistributor } = useAuth()
 
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
@@ -103,6 +107,7 @@ function TiendaContent() {
   const fetchProducts = useCallback(async ()=>{
     setLoading(true)
     let query = supabase.from('products').select(CARD_COLS,{count:'exact'}).eq('active',true).gt('stock',0)
+    if(isDistributor) query = query.eq('hide_from_distributors',false)
     if(catParam){
       // Resolvemos la categoria de forma tolerante a tildes/mayusculas y aceptamos
       // duplicados con el mismo nombre normalizado (p.ej. "Accesorios" y "ACCESORIOS").
@@ -131,7 +136,7 @@ function TiendaContent() {
     setProducts(data||[])
     setTotal(count||0)
     setLoading(false)
-  },[catParam,filtroMarcas,maxPrice,search,sortBy,pageParam])
+  },[catParam,filtroMarcas,maxPrice,search,sortBy,pageParam,isDistributor])
 
   useEffect(()=>{fetchProducts()},[fetchProducts])
 

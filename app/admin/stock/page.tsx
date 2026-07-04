@@ -225,6 +225,12 @@ export default function AdminStock() {
 
   const lowStock = products.filter(p => p.active && p.stock <= 5).length
 
+  // Valor del stock a día de hoy (a PVP): suma de stock × precio efectivo de cada producto.
+  const effPrice = p => (p.on_sale && p.sale_price) ? Number(p.sale_price) : Number(p.price_incl_tax || 0)
+  const totalUnits = products.reduce((s, p) => s + (Number(p.stock) || 0), 0)
+  const stockValue = products.reduce((s, p) => s + (Number(p.stock) || 0) * effPrice(p), 0)
+  const eur = n => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
   return (
     <div style={{ background:'#f5f5f5', minHeight:'100vh', padding:'1.5rem 20px' }}>
       {showFactura && <FacturaModal onClose={()=>setShowFactura(false)} allProducts={products} onStockUpdated={load}/>}
@@ -237,6 +243,18 @@ export default function AdminStock() {
           </button>
           <a href="/admin/pedidos" style={{ background:'#111', color:'white', padding:'6px 14px', fontSize:12, fontWeight:700, textDecoration:'none', textTransform:'uppercase' }}>← Pedidos</a>
           <a href="/" style={{ marginLeft:'auto', fontSize:12, color:'#888', textDecoration:'none' }}>← Tienda</a>
+        </div>
+
+        {/* Valor total del stock a día de hoy (a PVP) */}
+        <div style={{ background:'#111', color:'#fff', padding:'1.1rem 1.4rem', borderRadius:6, marginBottom:'1rem', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:16 }}>
+          <div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>💰 Valor total del stock hoy (a PVP)</div>
+            <div style={{ fontSize:34, fontWeight:900, color:'#22c55e', lineHeight:1 }}>{eur(stockValue)} €</div>
+          </div>
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>Unidades en stock</div>
+            <div style={{ fontSize:26, fontWeight:900 }}>{totalUnits.toLocaleString('es-ES')}</div>
+          </div>
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'0.75rem', marginBottom:'1rem' }}>

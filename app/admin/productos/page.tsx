@@ -29,7 +29,7 @@ export default function AdminProductos(){
     if(filter==='inactive') q+='&active=eq.false'
     if(filter==='nostock') q+='&stock=eq.0'
     const[r1,r2]=await Promise.all([
-      fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,stock,active,brand,image_url,category_id,description&order=name.asc'+q+'&limit='+PER+'&offset='+(page*PER),{headers:H}),
+      fetch(S+'/rest/v1/products?select=id,name,price_incl_tax,sale_price,stock,active,brand,image_url,category_id,description,hide_from_distributors&order=name.asc'+q+'&limit='+PER+'&offset='+(page*PER),{headers:H}),
       fetch(S+'/rest/v1/products?select=count'+q,{headers:{...H,'Prefer':'count=exact','Range':'0-0'}})
     ])
     const d=await r1.json()
@@ -76,6 +76,7 @@ export default function AdminProductos(){
           sale_price:editing.sale_price?Number(editing.sale_price):null,
           stock:editing.stock,
           active:editing.active,
+          hide_from_distributors:!!editing.hide_from_distributors,
           image_url:editing.image_url||null,
           description:editing.description||null,
           category_id:editing.category_id||null
@@ -94,6 +95,14 @@ export default function AdminProductos(){
   async function toggleActive(p){
     await fetch('/api/admin/products',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id:p.id,fields:{active:!p.active}})})
     setProds(ps=>(ps||[]).map(x=>x.id===p.id?{...x,active:!p.active}:x))
+  }
+
+  // Ocultar/mostrar un producto en la ZONA DISTRIBUIDORES (stock sigue siendo el
+  // mismo para todos; esto solo controla si los distribuidores lo ven y lo compran).
+  async function toggleDistrib(p){
+    const nv=!p.hide_from_distributors
+    await fetch('/api/admin/products',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id:p.id,fields:{hide_from_distributors:nv}})})
+    setProds(ps=>(ps||[]).map(x=>x.id===p.id?{...x,hide_from_distributors:nv}:x))
   }
 
   const pages=Math.ceil(total/PER)
@@ -157,6 +166,17 @@ export default function AdminProductos(){
                   style={{padding:'7px 16px',borderRadius:20,border:'none',cursor:'pointer',fontSize:12,fontWeight:700,
                     background:editing.active?'#14532d':'#450a0a',color:editing.active?'#86efac':'#fca5a5'}}>
                   {editing.active?'Activo':'Inactivo'}
+                </button>
+              </div>
+
+              {/* Visibilidad en zona distribuidores */}
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <label style={{fontSize:11,color:'#888',fontWeight:700,textTransform:'uppercase'}}>Distribución</label>
+                <button onClick={()=>setEditing(v=>({...v,hide_from_distributors:!v.hide_from_distributors}))}
+                  title='Si lo ocultas, los distribuidores no lo ven ni lo pueden comprar (el stock no cambia)'
+                  style={{padding:'7px 16px',borderRadius:20,border:'none',cursor:'pointer',fontSize:12,fontWeight:700,
+                    background:editing.hide_from_distributors?'#450a0a':'#0a2540',color:editing.hide_from_distributors?'#fca5a5':'#7cc4ff'}}>
+                  {editing.hide_from_distributors?'Oculto a distribuidores':'Visible a distribuidores'}
                 </button>
               </div>
 
@@ -240,7 +260,7 @@ export default function AdminProductos(){
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
             <tr style={{background:'#0a0a0a',borderBottom:'1px solid #2a2a2a'}}>
-              {['Img','Nombre / ID','Marca','PVP','Oferta','Stock','Estado','Acciones'].map(h=>(
+              {['Img','Nombre / ID','Marca','PVP','Oferta','Stock','Estado','Distrib','Acciones'].map(h=>(
                 <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:10,fontWeight:700,color:'#666',textTransform:'uppercase',letterSpacing:'0.06em'}}>{h}</th>
               ))}
             </tr>
@@ -274,6 +294,14 @@ export default function AdminProductos(){
                     style={{padding:'4px 12px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:700,
                       background:p.active?'#14532d':'#450a0a',color:p.active?'#86efac':'#fca5a5'}}>
                     {p.active?'Activo':'Inactivo'}
+                  </button>
+                </td>
+                <td style={{padding:'8px 12px'}}>
+                  <button onClick={()=>toggleDistrib(p)}
+                    title={p.hide_from_distributors?'Oculto para distribuidores — clic para mostrarlo':'Visible para distribuidores — clic para ocultarlo'}
+                    style={{padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:700,
+                      background:p.hide_from_distributors?'#450a0a':'#0a2540',color:p.hide_from_distributors?'#fca5a5':'#7cc4ff'}}>
+                    {p.hide_from_distributors?'Oculto':'Visible'}
                   </button>
                 </td>
                 <td style={{padding:'8px 12px'}}>

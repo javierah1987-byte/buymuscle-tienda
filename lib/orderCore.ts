@@ -97,7 +97,7 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
 
   const productIds = [...new Set(items.map(i => Number(i.product_id ?? i.id)).filter(Boolean))]
   const { data: prods } = await db.from('products')
-    .select('id,name,price_incl_tax,sale_price,on_sale,active').in('id', productIds)
+    .select('id,name,price_incl_tax,sale_price,on_sale,active,hide_from_distributors').in('id', productIds)
   const prodMap = new Map((prods||[]).map(p => [p.id, p]))
 
   // Override de % por producto para el grupo del distribuidor (manda sobre el % general).
@@ -122,6 +122,10 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
     const p = prodMap.get(pid)
     if(!p || p.active === false)
       return { ok:false, error:'product_unavailable:'+pid, status:400 }
+    // Un distribuidor no puede comprar un producto oculto para distribución
+    // (monodosis suelta, otras marcas…), aunque intente forzar el pedido por API.
+    if(distributorLevelId && p.hide_from_distributors)
+      return { ok:false, error:'no_disponible_distribuidor:'+pid, status:400 }
     const qty = Math.max(1, parseInt(it.qty ?? it.quantity ?? 1))
     let unit = (p.on_sale && p.sale_price) ? Number(p.sale_price) : Number(p.price_incl_tax)
     const vid = Number(it.variant_id) || null

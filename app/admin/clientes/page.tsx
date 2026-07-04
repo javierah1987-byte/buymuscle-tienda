@@ -14,20 +14,30 @@ export default function AdminClientes(){
   const[loading,setLoading]=useState(true)
   useEffect(()=>{
     (async()=>{
-    fetch(S+'/rest/v1/orders?select=customer_email,customer_name,customer_phone,total,status,created_at,channel&order=created_at.desc',{headers:await authHeaders()})
-      .then(r=>r.json()).then(rows=>{
-        if(!Array.isArray(rows)){setLoading(false);return}
-        const map={}
-        rows.forEach(o=>{
-          const e=o.customer_email||'sin-email'
-          if(!map[e]) map[e]={email:e,name:o.customer_name||'',phone:o.customer_phone||'',orders:0,total:0,last:''}
-          map[e].orders++
-          map[e].total+=Number(o.total||0)
-          if(!map[e].last||o.created_at>map[e].last) map[e].last=o.created_at
-        })
-        setClientes(Object.values(map).sort((a,b)=>b.total-a.total))
-        setLoading(false)
+      const hdrs=await authHeaders()
+      // TODOS los clientes = los que han hecho pedidos + los registrados sin pedidos.
+      const [ordRes,custRes]=await Promise.all([
+        fetch(S+'/rest/v1/orders?select=customer_email,customer_name,customer_phone,total,status,created_at,channel&order=created_at.desc',{headers:hdrs}),
+        fetch(S+'/rest/v1/customers?select=email,name,phone,last_order_date',{headers:hdrs}),
+      ])
+      const rows=await ordRes.json().catch(()=>[])
+      const custs=await custRes.json().catch(()=>[])
+      const map={}
+      if(Array.isArray(rows)) rows.forEach(o=>{
+        const e=o.customer_email||'sin-email'
+        if(!map[e]) map[e]={email:e,name:o.customer_name||'',phone:o.customer_phone||'',orders:0,total:0,last:''}
+        map[e].orders++
+        map[e].total+=Number(o.total||0)
+        if(!map[e].last||o.created_at>map[e].last) map[e].last=o.created_at
       })
+      // Registrados sin pedidos (o que completan un nombre/teléfono que faltaba).
+      if(Array.isArray(custs)) custs.forEach(c=>{
+        const e=c.email||''; if(!e) return
+        if(!map[e]) map[e]={email:e,name:c.name||'',phone:c.phone||'',orders:0,total:0,last:c.last_order_date||''}
+        else{ if(!map[e].name&&c.name) map[e].name=c.name; if(!map[e].phone&&c.phone) map[e].phone=c.phone }
+      })
+      setClientes(Object.values(map).sort((a,b)=>b.total-a.total))
+      setLoading(false)
     })()
   },[])
   async function verDetalle(c){
