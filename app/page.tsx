@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
+import { CARD_COLUMNS } from '@/lib/productCard'
 import ProductCarousel from '@/components/ProductCarousel'
 import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
@@ -18,8 +19,10 @@ const BLOG_POSTS = [
   { titulo:'Que tomar antes de entrenar? Opciones naturales y suplementos para energia', href:'/blog/news/que-tomar-antes-de-entrenar-opciones-naturales-y-suplementos-antes-de-entrenar-para-energia', img:'/modules/ph_simpleblog/covers/113-thumb.jpg', fecha:'Febrero 2, 2026', cat:'Pre-entreno' },
 ]
 
-// Columnas que consumen las tarjetas (evita arrastrar description en el payload ISR)
-const CARD_COLS = 'id,name,brand,price_incl_tax,sale_price,on_sale,image_url,stock,category_id,is_new,categories(name)'
+// Columnas que consumen las tarjetas (fuente canónica lib/productCard + categoría).
+// Incluye has_variants para que los productos con variantes enruten a la ficha
+// ("Ver opciones →") en vez de añadirse al carrito sin variante.
+const CARD_COLS = CARD_COLUMNS + ',categories(name)'
 
 async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'id') {
   let q = supabase.from('products').select(CARD_COLS).eq('active',true).gt('stock',0)

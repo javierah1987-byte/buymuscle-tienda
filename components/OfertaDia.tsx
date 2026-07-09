@@ -30,14 +30,14 @@ export default function OfertaDia() {
   useEffect(()=>{
     // Seleccionar producto del día basado en el día del año
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000)
-    fetch(SB+'/rest/v1/products?active=eq.true&on_sale=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand&limit=30',{
+    fetch(SB+'/rest/v1/products?active=eq.true&on_sale=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand,has_variants&limit=30',{
       headers:{apikey:SK,'Authorization':'Bearer '+SK}
     }).then(r=>r.json()).then(prods=>{
       if(Array.isArray(prods)&&prods.length>0){
         setProduct(prods[dayOfYear % prods.length])
       } else {
         // Fallback: producto con descuento cualquiera
-        fetch(SB+'/rest/v1/products?active=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand&limit=1&order=id.asc&offset='+((dayOfYear*7)%300),{
+        fetch(SB+'/rest/v1/products?active=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand,has_variants&limit=1&order=id.asc&offset='+((dayOfYear*7)%300),{
           headers:{apikey:SK,'Authorization':'Bearer '+SK}
         }).then(r=>r.json()).then(p=>{ if(Array.isArray(p)&&p[0]) setProduct(p[0]) })
       }
@@ -98,10 +98,16 @@ export default function OfertaDia() {
           </div>
         </Link>
 
-        {/* CTA */}
-        <button onClick={handleAdd} style={{flexShrink:0,padding:'12px 28px',background:adding?'#22c55e':'#ff1e41',border:'none',borderRadius:4,color:'white',fontWeight:800,fontSize:14,cursor:'pointer',fontFamily:'var(--font-body)',textTransform:'uppercase',letterSpacing:'0.05em',transition:'background 0.2s',whiteSpace:'nowrap'}}>
-          {adding ? '✓ Anadido' : '🛒 Anadir al carrito'}
-        </button>
+        {/* CTA — con variantes NO se puede quick-add (hay que elegir sabor/talla) → enruta a la ficha */}
+        {product.has_variants ? (
+          <Link href={'/producto/'+product.id} style={{flexShrink:0,padding:'12px 28px',background:'#ff1e41',borderRadius:4,color:'white',fontWeight:800,fontSize:14,fontFamily:'var(--font-body)',textTransform:'uppercase',letterSpacing:'0.05em',whiteSpace:'nowrap',textDecoration:'none',display:'inline-block'}}>
+            Ver opciones →
+          </Link>
+        ) : (
+          <button onClick={handleAdd} style={{flexShrink:0,padding:'12px 28px',background:adding?'#22c55e':'#ff1e41',border:'none',borderRadius:4,color:'white',fontWeight:800,fontSize:14,cursor:'pointer',fontFamily:'var(--font-body)',textTransform:'uppercase',letterSpacing:'0.05em',transition:'background 0.2s',whiteSpace:'nowrap'}}>
+            {adding ? '✓ Anadido' : '🛒 Anadir al carrito'}
+          </button>
+        )}
       </div>
     </section>
   )

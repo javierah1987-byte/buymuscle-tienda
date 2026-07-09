@@ -62,6 +62,9 @@ export default function AdminProductos(){
 
   async function save(){
     if(!editing) return
+    // El PVP debe ser > 0: Number('')=0 guardaría el producto a 0€ (se vendería gratis).
+    const pv = Number(editing.price_incl_tax)
+    if(!(pv > 0)){ setMsg('El PVP debe ser un número mayor que 0'); setTimeout(()=>setMsg(''),3000); return }
     setSaving(true)
     await fetch('/api/admin/products',{
       method:'PATCH',
