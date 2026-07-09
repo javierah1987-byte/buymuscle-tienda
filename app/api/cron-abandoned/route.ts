@@ -1,5 +1,6 @@
 // @ts-nocheck
 import{NextResponse}from 'next/server'
+import{denyIfUnauthorizedCron}from '@/lib/cronAuth'
 export const dynamic='force-dynamic'
 const S=process.env.NEXT_PUBLIC_SUPABASE_URL
 // Service role: la tabla abandoned_carts solo permite LECTURA/UPDATE a roles
@@ -7,14 +8,11 @@ const S=process.env.NEXT_PUBLIC_SUPABASE_URL
 // rechazaba en silencio → nunca enviaba ni marcaba nada.
 const SK=process.env.SUPABASE_SERVICE_ROLE_KEY
 const h={apikey:SK,'Authorization':'Bearer '+SK}
-// Secreto del cron configurable por entorno (fallback al legacy para no romper
-// el cron ya programado en vercel.json hasta que se fije CRON_SECRET en Vercel).
-const CRON_SECRET=process.env.CRON_SECRET||'BM_CRON_2025'
-// GET /api/cron-abandoned?key=<secret>  (o cabecera Authorization: Bearer <secret>)
+// GET /api/cron-abandoned  — autorizado por 'Authorization: Bearer <CRON_SECRET>'
+// (lo inyecta Vercel Cron) o, por compat, ?key=<CRON_SECRET>. FAIL-CLOSED: sin
+// CRON_SECRET en el entorno se deniega (ya no hay default committeado).
 export async function GET(req){
-  const{searchParams}=new URL(req.url)
-  const provided=searchParams.get('key')||(req.headers.get('authorization')||'').replace(/^Bearer\s+/i,'')
-  if(provided!==CRON_SECRET) return NextResponse.json({error:'Unauthorized'},{status:401})
+  const denied=denyIfUnauthorizedCron(req); if(denied) return denied
   if(!S||!SK) return NextResponse.json({error:'server_misconfigured'},{status:500})
   try{
     const twoHoursAgo=new Date(Date.now()-2*60*60*1000).toISOString()
