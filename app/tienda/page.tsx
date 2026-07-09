@@ -68,6 +68,7 @@ function TiendaContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const catParam = searchParams.get('cat') || ''
+  const ofertasParam = searchParams.get('ofertas') || ''  // ?ofertas=1 → vista de ofertas (on_sale=true)
   const pageParam = parseInt(searchParams.get('page') || '1')
   const q = searchParams.get('q') || ''
   // Si quien mira es un distribuidor, ocultamos los productos marcados como
@@ -110,7 +111,12 @@ function TiendaContent() {
     setLoading(true)
     let query = supabase.from('products').select(CARD_COLS,{count:'exact'}).eq('active',true).gt('stock',0)
     if(isDistributor) query = query.eq('hide_from_distributors',false)
-    if(catParam){
+    if(ofertasParam){
+      // Vista de ofertas: por on_sale=true (las ofertas se gestionan con ese flag, NO con una
+      // categoría "Ofertas"). Antes el link iba por ?cat=Ofertas → si no existía esa categoría,
+      // el distribuidor (cuyo único acceso es OFERTAS) no veía NADA.
+      query = query.eq('on_sale', true)
+    } else if(catParam){
       // Resolvemos la categoria de forma tolerante a tildes/mayusculas y aceptamos
       // duplicados con el mismo nombre normalizado (p.ej. "Accesorios" y "ACCESORIOS").
       // Las categorías vienen de la cache de módulo (1 sola petición por sesión).
@@ -138,7 +144,7 @@ function TiendaContent() {
     setProducts(data||[])
     setTotal(count||0)
     setLoading(false)
-  },[catParam,filtroMarcas,maxPrice,search,sortBy,pageParam,isDistributor])
+  },[catParam,ofertasParam,filtroMarcas,maxPrice,search,sortBy,pageParam,isDistributor])
 
   useEffect(()=>{fetchProducts()},[fetchProducts])
 

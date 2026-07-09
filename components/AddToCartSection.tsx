@@ -18,13 +18,16 @@ const DIST_ACCENT = '#d9b45a'
 
 export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants }: Props) {
   const { add } = useCart()
-  const { isDistributor, levelName, discountPct } = useAuth()
+  const { isDistributor, levelName, discountPct, overrides } = useAuth()
   const [selected, setSelected] = useState<Record<string,Variant>>({})
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
 
   const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price_incl_tax)
-  const discountedPrice = isDistributor && discountPct ? basePrice * (1 - discountPct / 100) : basePrice
+  // % de distribuidor EFECTIVO: override por producto > % de grupo (igual que el servidor en
+  // orderCore) → el precio mostrado coincide con el cobrado. Sin override, el % de grupo.
+  const effPct = isDistributor ? (overrides?.[product.id] ?? discountPct) : 0
+  const discountedPrice = effPct ? basePrice * (1 - effPct / 100) : basePrice
   const allTypesSelected = hasVariants ? sortedTypes.every(t => selected[t]) : true
 
   const selectedVariant = hasVariants && sortedTypes.length > 0 ? selected[sortedTypes[0]] : null
@@ -51,14 +54,14 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
   return (
     <div>
       <div style={{ marginBottom:'1rem' }}>
-        {isDistributor && discountPct && (
+        {effPct ? (
           <div style={{ fontSize:12, fontWeight:700, color:DIST_ACCENT, marginBottom:4 }}>
-            🏷️ PRECIO DISTRIBUIDOR{levelName ? ' · '+levelName.toUpperCase() : ''} -{discountPct}%
+            🏷️ PRECIO DISTRIBUIDOR{levelName ? ' · '+levelName.toUpperCase() : ''} -{effPct}%
             <span style={{ marginLeft:8, color:'#bbb', textDecoration:'line-through', fontWeight:400 }}>
               PVP: {basePrice.toFixed(2)} €
             </span>
           </div>
-        )}
+        ) : null}
         <div style={{ display:'flex', alignItems:'baseline', gap:10 }}>
           <span style={{ fontSize:38, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em', lineHeight:1 }}>{discountedPrice.toFixed(2)} €</span>
           {product.on_sale && product.sale_price && !isDistributor && (

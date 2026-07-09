@@ -239,31 +239,42 @@ export default function TPVPage() {
       })
       const data = await r.json()
       if (!data.ok) { alert('Error: ' + (data.error || 'No se pudo cerrar la caja')); return }
+      // Imprimir el Z desde los totales AUTORITATIVOS del servidor (canal TPV + devoluciones
+      // ya restadas), NO desde ventasDia (que sumaba pedidos web y no restaba devoluciones).
+      imprimirZ(data.session, data.expected_cash)
     } catch (e) { alert('Error: ' + (e?.message || e)); return }
     setCajaAbierta(null)
     setShowCierre(false)
     setEfectivoCierre('')
     setCierreNotes('')
-    // Imprimir resumen Z
-    imprimirZ()
   }
 
-  const imprimirZ = () => {
+  const imprimirZ = (cierre, expectedCash) => {
+    if (!cierre) return
+    const cashOpen = Number(cierre.cash_open || 0)
+    const efectivo = Number(cierre.total_efectivo || 0)
+    const tarjeta = Number(cierre.total_tarjeta || 0)   // el servidor mete bizum/tarjeta en este bucket
+    const tickets = Number(cierre.num_tickets || 0)
+    const contado = Number(cierre.cash_close || 0)
+    const esperado = expectedCash != null ? Number(expectedCash) : (cashOpen + efectivo)
+    const dif = contado - esperado
+    const notes = cierre.notes || cierreNotes || ''
     const w = window.open('', '', 'width=380,height=500')
-    const dif = Number(efectivoCierre) - cajaAbierta.cash_open - ventasDia.efectivo
+    if (!w) return
     w.document.write(`<html><body style="font-family:monospace;font-size:13px;padding:20px;width:300px">
       <h2 style="text-align:center">CIERRE DE CAJA — Z</h2>
       <p style="text-align:center">${new Date().toLocaleString('es-ES')}</p>
       <hr/>
-      <p>Efectivo apertura: ${Number(cajaAbierta.cash_open).toFixed(2)} €</p>
-      <p>Ventas efectivo: ${ventasDia.efectivo.toFixed(2)} €</p>
-      <p>Ventas tarjeta/Bizum: ${(ventasDia.tarjeta+ventasDia.bizum).toFixed(2)} €</p>
-      <p>Total ventas: ${ventasDia.total.toFixed(2)} €</p>
-      <p>Nº tickets: ${ventasDia.count}</p>
+      <p>Efectivo apertura: ${cashOpen.toFixed(2)} €</p>
+      <p>Ventas efectivo: ${efectivo.toFixed(2)} €</p>
+      <p>Ventas tarjeta/Bizum: ${tarjeta.toFixed(2)} €</p>
+      <p>Total ventas: ${(efectivo+tarjeta).toFixed(2)} €</p>
+      <p>Nº tickets: ${tickets}</p>
       <hr/>
-      <p>Efectivo en caja (contado): ${Number(efectivoCierre).toFixed(2)} €</p>
+      <p>Efectivo esperado en caja: ${esperado.toFixed(2)} €</p>
+      <p>Efectivo en caja (contado): ${contado.toFixed(2)} €</p>
       <p>Diferencia: <b>${dif>=0?'+':''}${dif.toFixed(2)} €</b></p>
-      ${cierreNotes ? '<p>Notas: ' + cierreNotes + '</p>' : ''}
+      ${notes ? '<p>Notas: ' + notes + '</p>' : ''}
     </body></html>`)
     w.print()
   }
