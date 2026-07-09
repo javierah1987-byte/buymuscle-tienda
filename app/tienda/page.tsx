@@ -5,14 +5,16 @@ const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ProductCard from '@/components/ProductCard'
+import { CARD_COLUMNS } from '@/lib/productCard'
 import { useAuth } from '@/lib/auth'
 import Link from 'next/link'
 
 const PER_PAGE = 24
 
-// Columnas que realmente consume ProductCard (evita un select('*') pesado).
-// Nota: la tabla no tiene columna has_variants, por eso no se pide.
-const CARD_COLS = 'id,name,brand,price_incl_tax,sale_price,on_sale,image_url,stock,category_id,is_new,categories(name)'
+// Columnas que consume ProductCard. Fuente canónica (lib/productCard) + la categoría
+// (que este listado sí muestra). Incluye has_variants: sin él, los productos con
+// variantes pintaban "Al carrito" (quick-add sin variante) en vez de "Ver opciones →".
+const CARD_COLS = CARD_COLUMNS + ',categories(name)'
 
 // Cache a nivel de módulo: las categorías se piden UNA sola vez por sesión.
 // Guardamos la promesa (no el resultado) para deduplicar también las

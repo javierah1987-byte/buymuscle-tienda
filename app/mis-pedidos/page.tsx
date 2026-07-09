@@ -124,7 +124,7 @@ export default function MisPedidos() {
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(open === o.id ? null : o.id) } }}
                     onClick={() => setOpen(open === o.id ? null : o.id)}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>Pedido #{o.id?.slice(0, 8).toUpperCase()}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>Pedido #{String(o.id || '').slice(0, 8).toUpperCase()}</div>
                       <div style={{ fontSize: 12, color: '#aaa', marginTop: 2 }}>{fmt(o.created_at)} · {o.order_lines?.length || 0} producto{o.order_lines?.length !== 1 ? 's' : ''}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

@@ -210,18 +210,40 @@ export default function AdminStock() {
 
   async function save(p) {
     const changes = edits[p.id]; if (!changes) return
-    setSaving(s => ({ ...s, [p.id]: true }))
     const update = {}
     if (changes.stock !== undefined) update.stock = Number(changes.stock)
-    if (changes.price !== undefined) update.price_incl_tax = Number(changes.price)
+    // PVP: vacío = NO tocar el precio (Number('')=0 lo vendería a 0€). Si hay valor, debe ser > 0.
+    if (changes.price !== undefined && changes.price !== '') {
+      const pv = Number(changes.price)
+      if (!(pv > 0)) { alert('El PVP debe ser un número mayor que 0.'); return }
+      update.price_incl_tax = pv
+    }
     if (changes.sale_price !== undefined) update.sale_price = changes.sale_price===''?null:Number(changes.sale_price)
     if (changes.cost_price !== undefined) update.cost_price = changes.cost_price===''?null:Number(changes.cost_price)
     if (changes.active !== undefined) update.active = changes.active
-    await db.from('products').update(update).eq('id', p.id)
+    if (Object.keys(update).length === 0) { setEdits(e => { const n={...e}; delete n[p.id]; return n }); return }
+
+    setSaving(s => ({ ...s, [p.id]: true }))
+    // Escribe por la API admin AUTENTICADA (valida getAdminUser), NO por el cliente anon
+    // de esta página: ese cliente no supera la RLS de products, así que la escritura
+    // directa fallaba EN SILENCIO y aun así se pintaba "Guardado". Ahora comprobamos res.ok.
+    let res
+    try {
+      res = await fetch('/api/admin/products', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ id: p.id, fields: update }),
+      })
+    } catch (e) {
+      setSaving(s => ({ ...s, [p.id]: false })); alert('Error de red al guardar: ' + (e?.message || e)); return
+    }
+    setSaving(s => ({ ...s, [p.id]: false }))
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      alert('No se pudo guardar: ' + (d.error || ('HTTP ' + res.status))); return
+    }
     setProducts(ps => ps.map(x => x.id===p.id ? {...x,...update} : x))
     setEdits(e => { const n={...e}; delete n[p.id]; return n })
     setSaved(p.id); setTimeout(()=>setSaved(null), 2000)
-    setSaving(s => ({ ...s, [p.id]: false }))
   }
 
   const lowStock = products.filter(p => p.active && p.stock <= 5).length

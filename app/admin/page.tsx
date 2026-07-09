@@ -234,7 +234,7 @@ export default function AdminDashboard(){
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.85)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                        {o.customer_name||o.customer_email||'BM-'+o.id?.slice(0,6).toUpperCase()}
+                        {o.customer_name||o.customer_email||'BM-'+String(o.id || '').slice(0,6).toUpperCase()}
                       </div>
                       <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>{fmt(o.created_at)}</div>
                     </div>
