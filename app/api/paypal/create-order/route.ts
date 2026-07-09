@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server'
-import { adminDb, quoteOrder } from '@/lib/orderCore'
+import { adminDb, quoteOrder, checkStock } from '@/lib/orderCore'
 import { createPaypalOrder, paypalConfigured } from '@/lib/paypal'
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +19,12 @@ export async function POST(req){
     const db = adminDb()
     const quote = await quoteOrder(db, body)
     if(!quote.ok) return NextResponse.json(quote, { status: quote.status || 400 })
+
+    // Falla YA si no hay stock: no creamos una orden PayPal que el cliente no
+    // podría completar (el chequeo definitivo + refund viven en /capture).
+    const stock = await checkStock(db, quote.lines)
+    if(!stock.ok)
+      return NextResponse.json({ ok:false, error:'sin_stock', detail: stock.detail }, { status: 409 })
 
     const total = quote.totals.totalGross
     if(!(total > 0)) return NextResponse.json({ ok:false, error:'importe_invalido' }, { status:400 })

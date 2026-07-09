@@ -55,3 +55,28 @@ export async function capturePaypalOrder(orderId){
   })
   return await r.json()
 }
+
+// Reembolsa una captura ya cobrada. Se usa cuando el pedido NO se puede completar
+// tras haber capturado (sin stock, importe que no cuadra, error al persistir) para
+// que el cliente nunca quede cobrado sin pedido.
+//   captureId: id de la captura (cap.purchase_units[0].payments.captures[0].id)
+//   amount: importe a reembolsar (EUR). Omitir/null => reembolso TOTAL de la captura.
+// Idempotente por 'PayPal-Request-Id' (reintentar el mismo refund no duplica el abono).
+// Devuelve el JSON de PayPal (status 'COMPLETED' si el refund se aceptó).
+export async function refundPaypalCapture(captureId, amount = null, currency = 'EUR'){
+  if(!captureId) throw new Error('refund_sin_capture_id')
+  const token = await accessToken()
+  const r = await fetch(PAYPAL_BASE + '/v2/payments/captures/' + encodeURIComponent(captureId) + '/refund', {
+    method:'POST',
+    headers:{
+      'Authorization':'Bearer '+token,
+      'Content-Type':'application/json',
+      'PayPal-Request-Id':'refund-'+captureId,
+    },
+    // Sin body = reembolso total; con amount = parcial.
+    body: (amount != null)
+      ? JSON.stringify({ amount:{ value: Number(amount).toFixed(2), currency_code: currency } })
+      : JSON.stringify({}),
+  })
+  return await r.json()
+}
