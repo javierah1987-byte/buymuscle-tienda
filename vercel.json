@@ -1,11 +1,11 @@
 {
   "crons": [
     {
-      "path": "/api/cron-abandoned?key=BM_CRON_2025",
+      "path": "/api/cron-abandoned",
       "schedule": "0 */2 * * *"
     },
     {
-      "path": "/api/cron-stock?key=BM_CRON_2025",
+      "path": "/api/cron-stock",
       "schedule": "0 8 * * *"
     }
   ]

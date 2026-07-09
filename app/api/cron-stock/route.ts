@@ -1,19 +1,16 @@
 // @ts-nocheck
 import{NextResponse}from 'next/server'
+import{denyIfUnauthorizedCron}from '@/lib/cronAuth'
 export const dynamic='force-dynamic'
-// GET /api/cron-stock?key=BM_CRON_2025
-// vercel.json: {"crons":[...,{"path":"/api/cron-stock?key=BM_CRON_2025","schedule":"0 8 * * *"}]}
+// GET /api/cron-stock — autorizado por 'Authorization: Bearer <CRON_SECRET>' (Vercel Cron)
+// o, por compat, ?key=<CRON_SECRET>. FAIL-CLOSED: sin CRON_SECRET se deniega (sin default).
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const h={apikey:K,'Authorization':'Bearer '+K}
-// Secreto del cron configurable por entorno (fallback al legacy para no romper
-// el cron ya programado en vercel.json hasta que se fije CRON_SECRET en Vercel).
-const CRON_SECRET=process.env.CRON_SECRET||'BM_CRON_2025'
 export async function GET(req){
-  const{searchParams}=new URL(req.url)
-  const provided=searchParams.get('key')||(req.headers.get('authorization')||'').replace(/^Bearer\s+/i,'')
-  if(provided!==CRON_SECRET) return NextResponse.json({error:'Unauthorized'},{status:401})
+  const denied=denyIfUnauthorizedCron(req); if(denied) return denied
   try{
+    const{searchParams}=new URL(req.url)
     const threshold=parseInt(searchParams.get('threshold')||'10')
     const r=await fetch(S+'/rest/v1/products?active=eq.true&stock=lte.'+threshold+'&select=id,name,stock,brand&order=stock.asc&limit=50',{headers:h})
     const prods=await r.json()

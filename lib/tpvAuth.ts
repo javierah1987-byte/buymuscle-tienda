@@ -12,11 +12,6 @@ export const TPV_COOKIE = 'bm_tpv'
 
 const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex')
 
-// Fallback final del PIN del TPV (hash sha256 de 'pin:'+PIN). Garantiza acceso
-// aunque no haya fila en app_secrets ni env var TPV_PIN. Para cambiar el PIN:
-// actualizar app_secrets (key='tpv_pin_hash') — tiene prioridad sobre esto.
-const DEFAULT_PIN_HASH = '2228f4c95e218f75c7ec98df86bf8608c4a471fcee112f79a02eccad332d8e30'
-
 async function getPinHash(): Promise<string> {
   // 1) Override en BD (permite cambiar el PIN sin desplegar)
   try {
@@ -30,8 +25,10 @@ async function getPinHash(): Promise<string> {
   } catch { /* cae a env / default */ }
   // 2) Env var
   if (process.env.TPV_PIN) return sha('pin:' + process.env.TPV_PIN)
-  // 3) Default embebido
-  return DEFAULT_PIN_HASH
+  // 3) Sin PIN configurado (ni en app_secrets ni en TPV_PIN) → '' = FAIL-CLOSED: se deniega
+  //    el acceso. Ya NO hay hash por defecto embebido (era un PIN público, forzable por
+  //    fuerza bruta desde el repo). validateTpvPin/tpvToken/tpvAuthorized tratan '' como denegar.
+  return ''
 }
 
 // ¿Hay PIN configurado (BD o env)?
