@@ -181,6 +181,47 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
   }
 }
 
+// Comprobación de stock BEST-EFFORT previa a cobrar (líneas de quoteOrder).
+// Espeja la semántica de process_order_stock (variant-aware: líneas con variante
+// consumen product_variants.stock; sin variante, products.stock) para fallar ANTES
+// de capturar en el caso común (qty>stock, agotado). NO es atómica con la captura
+// posterior (una carrera puede colarse) → el refund post-captura es la red final.
+// Devuelve { ok:true } o { ok:false, error:'sin_stock', status:409, detail }.
+export async function checkStock(db, lines){
+  const byProduct = new Map()  // product_id -> qty requerida (líneas SIN variante)
+  const byVariant = new Map()  // variant_id -> qty requerida
+  for(const l of (lines || [])){
+    const qty = Number(l.qty) || 0
+    if(qty <= 0) continue
+    if(l.variant_id) byVariant.set(l.variant_id, (byVariant.get(l.variant_id) || 0) + qty)
+    else byProduct.set(l.product_id, (byProduct.get(l.product_id) || 0) + qty)
+  }
+
+  if(byProduct.size){
+    const ids = [...byProduct.keys()]
+    const { data: prods } = await db.from('products').select('id,name,stock').in('id', ids)
+    const pmap = new Map((prods || []).map(p => [p.id, p]))
+    for(const [pid, need] of byProduct){
+      const have = Number(pmap.get(pid)?.stock ?? 0)
+      if(have < need)
+        return { ok:false, error:'sin_stock', status:409, detail:{ product_id:pid, name:pmap.get(pid)?.name, need, have } }
+    }
+  }
+
+  if(byVariant.size){
+    const ids = [...byVariant.keys()]
+    const { data: vars } = await db.from('product_variants').select('id,stock,product_id').in('id', ids)
+    const vmap = new Map((vars || []).map(v => [v.id, v]))
+    for(const [vid, need] of byVariant){
+      const have = Number(vmap.get(vid)?.stock ?? 0)
+      if(have < need)
+        return { ok:false, error:'sin_stock', status:409, detail:{ variant_id:vid, need, have } }
+    }
+  }
+
+  return { ok:true }
+}
+
 // Persiste el pedido (orders + order_lines), descuenta stock atómicamente,
 // actualiza cupón/CRM y dispara notificaciones. Devuelve { ok, order_number, total }
 // o { ok:false, error, status }.
