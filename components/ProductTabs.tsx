@@ -2,6 +2,7 @@
 'use client'
 import { useState } from 'react'
 import ProductReviews from '@/components/ProductReviews'
+import { sanitizeHtml } from '@/lib/sanitizeHtml'
 
 export default function ProductTabs({ description, reviews, productId }) {
   const [tab, setTab] = useState('desc')
@@ -41,7 +42,7 @@ export default function ProductTabs({ description, reviews, productId }) {
       <div style={ST.body}>
         {tab === 'desc' && (
           description
-            ? <div dangerouslySetInnerHTML={{__html: description}} />
+            ? <div dangerouslySetInnerHTML={{__html: sanitizeHtml(description)}} />
             : <div style={{ color: '#aaa', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>
                 Sin descripción disponible todavía.<br/>
                 <span style={{ fontSize: 12 }}>Puedes añadirla desde el panel de administración.</span>

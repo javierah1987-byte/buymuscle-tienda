@@ -172,7 +172,7 @@ export default function Navbar(){
                       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'1.5rem'}}>
                         <div style={{borderRight:'1px solid #f0f0f0',paddingRight:'1rem'}}>
                           <div style={{fontSize:11,fontWeight:800,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.75rem'}}>ACCESO RAPIDO</div>
-                          {[{l:'Packs',h:'/tienda?cat=Packs'},{l:'Novedades',h:'/tienda'},{l:'Ofertas',h:'/tienda?cat=Ofertas'},{l:'Mas vendidos',h:'/tienda'}].map(item=>(
+                          {[{l:'Packs',h:'/tienda?cat=Packs'},{l:'Novedades',h:'/tienda'},{l:'Ofertas',h:'/tienda?ofertas=1'},{l:'Mas vendidos',h:'/tienda'}].map(item=>(
                             <Link key={item.l} href={item.h} style={{display:'block',padding:'6px 0',fontSize:13,color:'#333',textDecoration:'none',fontWeight:600}}>{item.l}</Link>
                           ))}
                         </div>
@@ -234,7 +234,7 @@ export default function Navbar(){
                   se ocultan BM VIP, BM TEAM, StreetFlavour, Objetivos y Comparar. */}
               {!isDistributor&&<Link href="/distribuidores" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#FBEC96',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM VIP</Link>}
               {!isDistributor&&<Link href="/bm-team" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#00F399',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM TEAM</Link>}
-              <Link href="/tienda?cat=Ofertas" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:isDistributor?DIST_BLUE:'#FF2958',color:'white',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>OFERTAS</Link>
+              <Link href="/tienda?ofertas=1" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:isDistributor?DIST_BLUE:'#FF2958',color:'white',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>OFERTAS</Link>
               {!isDistributor&&<Link href="/streetflavour" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#47DAFF',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>STREETFLAVOUR</Link>}
               {!isDistributor&&<Link href="/objetivos" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#ff8800',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>🎯 OBJETIVOS</Link>}
               {!isDistributor&&<Link href="/comparar" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontSize:13,fontWeight:700,color:'#888',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>⚖️ COMPARAR</Link>}
@@ -262,7 +262,7 @@ export default function Navbar(){
             {l:'🌱 Veganos', h:'/veganos'},
             {l:'👕 Sport Wear', h:'/sport-wear'},
             {l:'🎽 StreetFlavour', h:'/streetflavour'},
-            {l:'🏆 Ofertas', h:'/tienda?cat=Ofertas'},
+            {l:'🏆 Ofertas', h:'/tienda?ofertas=1'},
             {l:'📰 Blog', h:'/blog'},
             {l:'📞 Distribuidores', h:'/distribuidores'},
           ].map(({l,h})=>(

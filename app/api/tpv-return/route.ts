@@ -78,7 +78,7 @@ export async function POST(req){
     }
 
     // Recalcular importes a partir de precios reales de las líneas (anti-manipulación)
-    const { data: dbLines } = await db.from('order_lines').select('id,product_id,product_name,unit_price,quantity').eq('order_id', order.id)
+    const { data: dbLines } = await db.from('order_lines').select('id,product_id,variant_id,product_name,unit_price,quantity').eq('order_id', order.id)
     const lineMap = new Map((dbLines||[]).map(l => [l.id, l]))
 
     const itemsDev = []
@@ -91,6 +91,7 @@ export async function POST(req){
       itemsDev.push({
         line_id: dbl.id,
         product_id: dbl.product_id,
+        variant_id: dbl.variant_id || null,
         product_name: dbl.product_name,
         qty_dev: qty,
         unit_price: Number(dbl.unit_price),
@@ -114,10 +115,17 @@ export async function POST(req){
     }).select('id').single()
     if(devErr) throw devErr
 
-    // Reponer stock
+    // Reponer stock EN LA MISMA GRANULARIDAD que lo descontó la venta (process_order_stock):
+    // línea con variante → product_variants.stock; sin variante → products.stock. Reponer en
+    // products.stock una línea de variante desviaba el stock (variante en negativo, padre inflado).
     for(const item of itemsDev){
-      const { data: p } = await db.from('products').select('stock').eq('id', item.product_id).maybeSingle()
-      if(p) await db.from('products').update({ stock: Number(p.stock) + item.qty_dev }).eq('id', item.product_id)
+      if(item.variant_id){
+        const { data: v } = await db.from('product_variants').select('stock').eq('id', item.variant_id).maybeSingle()
+        if(v) await db.from('product_variants').update({ stock: Number(v.stock) + item.qty_dev }).eq('id', item.variant_id)
+      } else {
+        const { data: p } = await db.from('products').select('stock').eq('id', item.product_id).maybeSingle()
+        if(p) await db.from('products').update({ stock: Number(p.stock) + item.qty_dev }).eq('id', item.product_id)
+      }
     }
 
     // Rectificativa en Holded (best-effort, no bloquea la devolución)

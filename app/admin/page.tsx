@@ -70,7 +70,7 @@ export default function AdminDashboard(){
       const filt=(all||[]).filter(o=>o.status!=='cancelled')
       const facturacion=filt.reduce((s,o)=>s+Number(o.total||0),0)
       const pendientes=(all||[]).filter(o=>o.status==='pending').length
-      const tpv=(all||[]).filter(o=>o.status==='tpv').length
+      const tpv=(all||[]).filter(o=>o.channel?.includes('tpv')).length
       const ticketMedio=filt.length>0?facturacion/filt.length:0
       setStats({facturacion,pedidos:(all||[]).length,pendientes,tpv,productos:prodCt,stockBajo:stCt,ticketMedio})
       // Ventas 7 dias

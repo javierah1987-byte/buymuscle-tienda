@@ -22,9 +22,12 @@ export async function GET(req){
     let since
     if(sinceParam && !isNaN(Date.parse(sinceParam))) since = new Date(sinceParam)
     else { since = new Date(); since.setHours(0,0,0,0) }
+    // SOLO ventas de los canales TPV (no las web PayPal/transferencia): si no se filtra,
+    // el arqueo de caja física contaba pedidos online y salía inflado.
     const { data: orders } = await db.from('orders')
       .select('total,payment_method')
       .eq('status', 'paid')
+      .in('channel', ['tpv_retail', 'tpv_distributor'])
       .gte('created_at', since.toISOString())
 
     const stats = (orders||[]).reduce((acc, o) => {
@@ -36,6 +39,21 @@ export async function GET(req){
       else acc.tarjeta += Number(o.total)
       return acc
     }, { total:0, count:0, efectivo:0, tarjeta:0, bizum:0 })
+
+    // Restar las devoluciones del periodo según su método (mismo criterio que el cierre Z
+    // de /api/tpv-caja). Los tickets (count) NO se decrementan: la devolución no es una venta.
+    const { data: devs } = await db.from('devoluciones')
+      .select('total_devuelto,method')
+      .gte('created_at', since.toISOString())
+    for(const d of (devs||[])){
+      const amt = Number(d.total_devuelto || 0)
+      stats.total -= amt
+      const m = d.method || ''
+      if (m.includes('efectivo')) stats.efectivo -= amt
+      else if (m.includes('bizum')) stats.bizum -= amt
+      else stats.tarjeta -= amt
+    }
+    for(const k of ['total','efectivo','tarjeta','bizum']) stats[k] = Math.round((stats[k] + Number.EPSILON) * 100) / 100
 
     return NextResponse.json({ ok:true, stats })
   }catch(e){

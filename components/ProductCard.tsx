@@ -20,15 +20,16 @@ function proxyImg(url: string | null | undefined): string {
 
 export default function ProductCard({ product }) {
   const { add } = useCart()
-  const { isDistributor, discountPct } = useAuth()
+  const { isDistributor, discountPct, overrides } = useAuth()
   const [adding, setAdding] = useState(false)
   const cat = product.categories?.name || ''
   const price = Number(product.price_incl_tax)
   const salePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : null
   const displayPrice = salePrice || price
-  // Precio de distribuidor (si hay sesión con grupo). El SERVIDOR revalida el %;
-  // esto sólo alinea lo que ve y lo que se guarda en el carrito.
-  const distPrice = isDistributor && discountPct ? Math.round(displayPrice * (1 - discountPct/100) * 100)/100 : displayPrice
+  // % de distribuidor EFECTIVO: el override por producto manda sobre el % de grupo (igual que el
+  // servidor en orderCore) → el precio mostrado coincide con el cobrado. Sin override, el % de grupo.
+  const effPct = isDistributor ? (overrides?.[product.id] ?? discountPct) : 0
+  const distPrice = effPct ? Math.round(displayPrice * (1 - effPct/100) * 100)/100 : displayPrice
   const hasStock = product.stock > 0
   const lowStock = product.stock > 0 && product.stock <= 5
   const hasVariants = product.has_variants || false
@@ -91,10 +92,10 @@ export default function ProductCard({ product }) {
         </div>
         <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:'0.75rem', flexWrap:'wrap' }}>
           <span className="product-card-price" style={{ fontSize:21, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em' }}>{distPrice.toFixed(2)} €</span>
-          {isDistributor && discountPct
+          {effPct
             ? <span style={{ fontSize:12, color:'#bbb', textDecoration:'line-through' }}>{displayPrice.toFixed(2)} €</span>
             : salePrice ? <span style={{ fontSize:12, color:'#bbb', textDecoration:'line-through' }}>{price.toFixed(2)} €</span> : null}
-          {isDistributor && discountPct ? <span style={{ fontSize:10, fontWeight:800, color:'#b8860b' }}>-{discountPct}% distrib.</span> : null}
+          {effPct ? <span style={{ fontSize:10, fontWeight:800, color:'#b8860b' }}>-{effPct}% distrib.</span> : null}
         </div>
         {hasVariants ? (
           <div className="product-card-btn" style={{ width:'100%', padding:'9px 8px', border:'none', background:'var(--red)', color:'white', fontSize:12, fontWeight:700, textAlign:'center', borderRadius:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>
