@@ -30,18 +30,40 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
 
   function matchProducts(productos) {
     setLoadingMsg('Buscando en catalogo...')
+    const round2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100
     const matched = productos.map(p => {
-      const name = p.nombre.toLowerCase()
+      const name = String(p.nombre || '').toLowerCase()
       const match = allProducts.find(db => {
         const dbName = db.name.toLowerCase()
         const words = name.split(' ').filter(w => w.length > 3)
         return words.filter(w => dbName.includes(w)).length >= Math.min(2, words.length)
       })
-      return { invoiceName: p.nombre, cantidad: p.cantidad, matched: match || null,
-               currentStock: match?.stock ?? null, newStock: match ? (match.stock + p.cantidad) : null, selected: !!match }
+      // Coste unitario de la factura. Robustez: 0 / no numérico → null (NO se toca el cost_price).
+      const cRaw = Number(p.coste_unitario)
+      const costeNuevo = (isFinite(cRaw) && cRaw > 0) ? round2(cRaw) : null
+      // Coste actual del catálogo (0 / null = "sin coste" = hueco a rellenar).
+      const caRaw = match ? Number(match.cost_price) : NaN
+      const costeActual = (isFinite(caRaw) && caRaw > 0) ? round2(caRaw) : null
+      // Tipo de cambio: nuevo (rellena hueco) / subio / bajo / igual / null (sin coste en factura).
+      let costeChange = null
+      if (match && costeNuevo != null) {
+        if (costeActual == null) costeChange = 'nuevo'
+        else if (costeNuevo > costeActual) costeChange = 'subio'
+        else if (costeNuevo < costeActual) costeChange = 'bajo'
+        else costeChange = 'igual'
+      }
+      return {
+        invoiceName: p.nombre, cantidad: p.cantidad, matched: match || null,
+        currentStock: match?.stock ?? null,
+        newStock: match ? (match.stock + p.cantidad) : null,
+        costeNuevo, costeActual, costeChange,
+        selected: !!match,
+      }
     })
     setItems(matched)
-    setResultMsg(matched.length + ' productos detectados · ' + matched.filter(i=>i.matched).length + ' encontrados')
+    const nCambios = matched.filter(i => i.selected && ['nuevo','subio','bajo'].includes(i.costeChange)).length
+    setResultMsg(matched.length + ' productos detectados · ' + matched.filter(i=>i.matched).length + ' encontrados'
+      + (nCambios ? ' · ' + nCambios + ' cambio' + (nCambios===1?'':'s') + ' de coste' : ''))
     setStep('results')
   }
 
@@ -63,17 +85,45 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
     if (!toApply.length) return
     let ok = 0
     for (const item of toApply) {
+      const fields = { stock: item.newStock }
+      // Coste: se escribe SOLO si vino un coste válido de la factura y rellena un hueco o
+      // cambia el valor. Si no vino coste (null) o es 'igual', NO se toca cost_price. NUNCA el PVP.
+      if (item.costeNuevo != null && ['nuevo','subio','bajo'].includes(item.costeChange)) {
+        fields.cost_price = item.costeNuevo
+      }
       const res = await fetch('/api/admin/products', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ id: item.matched.id, fields: { stock: item.newStock } })
+        body: JSON.stringify({ id: item.matched.id, fields })
       })
       if (res.ok) ok++
     }
-    setResultMsg(ok + ' productos actualizados correctamente')
+    const nCoste = toApply.filter(i => i.costeNuevo != null && ['nuevo','subio','bajo'].includes(i.costeChange)).length
+    setResultMsg(ok + ' productos actualizados' + (nCoste ? ' · ' + nCoste + ' con coste nuevo' : ''))
     setStep('success'); onStockUpdated()
   }
+
+  // Resumen de cambios de coste (Parte 3): qué costes suben/bajan/se rellenan con esta factura.
+  // Visible ANTES de aplicar (en 'results') y tras aplicar (en 'success').
+  const costChanges = items.filter(i => i.selected && ['nuevo','subio','bajo'].includes(i.costeChange))
+  const COSTE_META = { subio:{ ico:'▲', txt:'subió', col:'#ef4444' }, bajo:{ ico:'▼', txt:'bajó', col:'#16a34a' }, nuevo:{ ico:'●', txt:'nuevo', col:'#0ea5e9' } }
+  const resumenCostes = costChanges.length ? (
+    <div style={{ border:'1px solid #ffe0a3', background:'#fff8e1', borderRadius:6, padding:'10px 12px', marginBottom:16 }}>
+      <div style={{ fontSize:12, fontWeight:800, color:'#7a5b00', marginBottom:6 }}>💶 Cambios de coste ({costChanges.length})</div>
+      {costChanges.map((it,i) => {
+        const m = COSTE_META[it.costeChange]
+        return (
+          <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, fontSize:12, padding:'3px 0' }}>
+            <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:'#5a4500' }}>{it.matched?.name || it.invoiceName}</span>
+            <span style={{ flexShrink:0, fontWeight:700, color:m.col }}>
+              {it.costeActual != null ? it.costeActual.toFixed(2)+' €' : '—'} → {it.costeNuevo.toFixed(2)} € {m.ico} {m.txt}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  ) : null
 
   const S = {
     overlay: { position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px' },
@@ -122,6 +172,7 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
 
         {step==='results' && <>
           <p style={{fontSize:13,color:'#888',marginBottom:12}}>{resultMsg}</p>
+          {resumenCostes}
           <div style={{border:'1px solid #f0f0f0',borderRadius:6,overflow:'hidden',marginBottom:16}}>
             <div style={{...S.row,padding:'8px 12px',background:'#f9f9f9',borderBottom:'1px solid #e8e8e8'}}>
               <span style={{fontSize:11,color:'#aaa',textTransform:'uppercase',letterSpacing:'0.05em'}}>Producto</span>
@@ -137,6 +188,11 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
                     <div style={{minWidth:0}}>
                       <div style={{fontSize:12,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'#333'}}>{item.matched?.name||item.invoiceName}</div>
                       {!item.matched&&<div style={{fontSize:10,color:'#f59e0b'}}>⚠ No encontrado</div>}
+                      {item.matched&&item.costeNuevo!=null&&(
+                        <div style={{fontSize:10,color:item.costeChange==='subio'?'#ef4444':item.costeChange==='bajo'?'#16a34a':item.costeChange==='nuevo'?'#0ea5e9':'#999'}}>
+                          Coste {item.costeActual!=null?item.costeActual.toFixed(2)+'€':'—'} → {item.costeNuevo.toFixed(2)}€ {item.costeChange==='subio'?'▲':item.costeChange==='bajo'?'▼':item.costeChange==='nuevo'?'●':'='}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <input type="number" min="0" value={item.cantidad} onChange={e=>updateQty(idx,e.target.value)} disabled={!item.matched}
@@ -162,6 +218,7 @@ function FacturaModal({ onClose, allProducts, onStockUpdated }) {
           <div style={{fontSize:56,marginBottom:12}}>✅</div>
           <h3 style={{margin:'0 0 8px',fontSize:18,color:'#333'}}>Stock actualizado</h3>
           <p style={{color:'#888',fontSize:14,marginBottom:20}}>{resultMsg}</p>
+          {resumenCostes && <div style={{textAlign:'left',maxWidth:480,margin:'0 auto 16px'}}>{resumenCostes}</div>}
           <div style={{display:'flex',gap:8,justifyContent:'center'}}>
             <button style={S.btnGray} onClick={()=>{setStep('upload');setManualText('');setItems([])}}>Otra factura</button>
             <button style={S.btnRed} onClick={onClose}>Cerrar</button>
