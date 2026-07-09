@@ -139,10 +139,14 @@ export default function TPVPage() {
   const discount = Math.max(DISCOUNTS[clientType] || 0, discManual || 0)
 
   const addLine = async (product) => {
-    const H = {apikey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,'Authorization':'Bearer '+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}
-    const rv2 = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/product_variants?product_id=eq.'+product.id+'&active=eq.true&stock=gt.0&select=*,attribute_values(value,attribute_types(name))', {headers:H})
-    const variants = await rv2.json()
-    if (variants && variants.length > 0) { setVariantModal({ product, variants }); return }
+    let variants = []
+    try {
+      const H = {apikey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,'Authorization':'Bearer '+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      const rv2 = await fetch('https://awwlbepjxuoxaigztugh.supabase.co/rest/v1/product_variants?product_id=eq.'+product.id+'&active=eq.true&stock=gt.0&select=*,attribute_values(value,attribute_types(name))', {headers:H})
+      const data = await rv2.json()
+      variants = Array.isArray(data) ? data : []
+    } catch { variants = [] }
+    if (variants.length > 0) { setVariantModal({ product, variants }); return }
     _addToLines(product, '')
   }
 
@@ -746,8 +750,9 @@ export default function TPVPage() {
         <Modal titulo={'Elige variante — ' + variantModal.product.name} onClose={()=>setVariantModal(null)}>
           <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
             {variantModal.variants.map(v => {
-              const attrs = v.attribute_values || []
-              const label = attrs.map(a => (a.attribute_types?.name ? a.attribute_types.name+': ' : '') + a.value).join(' · ')
+              const raw = v.attribute_values
+              const attrs = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+              const label = attrs.map(a => (a?.attribute_types?.name ? a.attribute_types.name+': ' : '') + (a?.value ?? '')).filter(Boolean).join(' · ')
               return (
                 <button key={v.id} onClick={()=>_addToLines(variantModal.product, label, v.id)}
                   style={{ padding:'8px 16px', background:'white', border:'1px solid #d1d5db', color:'#111', cursor:'pointer', fontSize:12, fontFamily:'inherit', borderRadius:3 }}>
