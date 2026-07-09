@@ -38,7 +38,7 @@ export default function ProductCard({ product }) {
     e.preventDefault()
     e.stopPropagation()
     if (!hasStock) return
-    add({ id: product.id, name: product.name, price: distPrice, image: product.image_url, variant: '', qty: 1 })
+    add({ id: product.id, name: product.name, price: distPrice, image: product.image_url, variant: '', stock: product.stock, qty: 1 })
     setAdding(true)
     setTimeout(() => setAdding(false), 1500)
   }

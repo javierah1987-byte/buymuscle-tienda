@@ -12,6 +12,16 @@ export type CartItem = {
   qty: number
   variant: string
   variantId?: number | null
+  stock?: number | null   // stock disponible conocido al añadir; capa la cantidad
+}
+
+// Tope de cantidad al stock disponible (defensa en cliente; el servidor revalida
+// y reembolsa si hace falta). Solo capa cuando hay un stock fiable (>=1); mínimo 1.
+function capToStock(qty: number, stock?: number | null): number {
+  const q = Math.max(1, Math.floor(Number(qty) || 1))
+  return (typeof stock === 'number' && Number.isFinite(stock) && stock >= 1)
+    ? Math.min(q, Math.floor(stock))
+    : q
 }
 
 type CartCtx = {
@@ -61,11 +71,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(prev => {
       const key = String(item.id) + (item.variant || '')
       const existing = prev.find(i => String(i.id) + (i.variant || '') === key)
+      // El stock recién informado manda; si no viene, se conserva el ya guardado.
+      const stock = item.stock != null ? item.stock : existing?.stock
       if (existing) {
         return prev.map(i => String(i.id) + (i.variant || '') === key
-          ? { ...i, qty: i.qty + (item.qty || 1) } : i)
+          ? { ...i, qty: capToStock(i.qty + (item.qty || 1), stock), stock: stock ?? i.stock } : i)
       }
-      return [...prev, { ...item, qty: item.qty || 1 }]
+      return [...prev, { ...item, qty: capToStock(item.qty || 1, stock), stock: stock ?? null }]
     })
   }, [])
 
@@ -77,7 +89,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(prev =>
       qty <= 0
         ? prev.filter(i => !(i.id === id && (i.variant || '') === variant))
-        : prev.map(i => i.id === id && (i.variant || '') === variant ? { ...i, qty } : i)
+        : prev.map(i => i.id === id && (i.variant || '') === variant
+            ? { ...i, qty: capToStock(qty, i.stock) } : i)
     )
   }, [])
 

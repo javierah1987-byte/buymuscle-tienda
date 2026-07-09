@@ -30,14 +30,14 @@ export default function OfertaDia() {
   useEffect(()=>{
     // Seleccionar producto del día basado en el día del año
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000)
-    fetch(SB+'/rest/v1/products?active=eq.true&on_sale=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand,has_variants&limit=30',{
+    fetch(SB+'/rest/v1/products?active=eq.true&on_sale=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand,has_variants,stock&limit=30',{
       headers:{apikey:SK,'Authorization':'Bearer '+SK}
     }).then(r=>r.json()).then(prods=>{
       if(Array.isArray(prods)&&prods.length>0){
         setProduct(prods[dayOfYear % prods.length])
       } else {
         // Fallback: producto con descuento cualquiera
-        fetch(SB+'/rest/v1/products?active=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand,has_variants&limit=1&order=id.asc&offset='+((dayOfYear*7)%300),{
+        fetch(SB+'/rest/v1/products?active=eq.true&select=id,name,price_incl_tax,sale_price,image_url,brand,has_variants,stock&limit=1&order=id.asc&offset='+((dayOfYear*7)%300),{
           headers:{apikey:SK,'Authorization':'Bearer '+SK}
         }).then(r=>r.json()).then(p=>{ if(Array.isArray(p)&&p[0]) setProduct(p[0]) })
       }
@@ -51,7 +51,7 @@ export default function OfertaDia() {
   const pct = Math.round((1 - sale/price)*100)
 
   const handleAdd = () => {
-    add({id:product.id, name:product.name, price:sale, image:product.image_url, variant:'', qty:1})
+    add({id:product.id, name:product.name, price:sale, image:product.image_url, variant:'', stock:product.stock, qty:1})
     setAdding(true); setTimeout(()=>setAdding(false),1500)
   }
 
