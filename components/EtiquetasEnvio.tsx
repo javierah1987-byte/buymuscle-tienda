@@ -14,7 +14,7 @@
 // Por eso NO usamos padding de hoja ni flex:1 (que repartiría 91mm y desalinearía):
 // cada etiqueta vive en un SLOT rígido de 99mm que cae justo encima de su pegatina.
 // Un slot vacío se imprime en blanco -> permite reaprovechar un folio a medio usar
-// eligiendo en qué posición (arriba/centro/abajo) empezar.
+// marcando CUALQUIER combinación de posiciones (arriba/centro/abajo) a rellenar.
 import { useState } from 'react'
 
 // Campos del pedido que usa la etiqueta (todos opcionales: robustez ante datos
@@ -92,12 +92,35 @@ const PRINT_CSS = `
 `
 
 export interface PrintEtiquetasOpts {
-  startSlot?: number // 0=arriba, 1=centro, 2=abajo (posición de la 1ª etiqueta)
+  // Slots a RELLENAR en la 1ª hoja (0=arriba, 1=centro, 2=abajo). Cualquier
+  // combinación; por defecto los 3. Las hojas siguientes usan las 3 posiciones.
+  slots?: number[]
+  // Compat: startSlot=k equivale a slots=[k..2] (rellenar desde k hacia abajo).
+  startSlot?: number
+}
+
+// Normaliza la selección de slots de la 1ª hoja a un subconjunto ordenado y no
+// vacío de [0,1,2]. Acepta `slots` (nuevo) o `startSlot` (compat); si nada, los 3.
+function resolveSlots(opts: PrintEtiquetasOpts): number[] {
+  let raw: number[]
+  if (Array.isArray(opts.slots)) {
+    raw = opts.slots
+  } else if (opts.startSlot != null) {
+    const k = Math.min(SLOTS_POR_HOJA - 1, Math.max(0, Math.floor(Number(opts.startSlot) || 0)))
+    raw = []
+    for (let s = k; s < SLOTS_POR_HOJA; s++) raw.push(s)
+  } else {
+    raw = [0, 1, 2]
+  }
+  const nums = raw.map(n => Math.floor(Number(n))).filter(n => n >= 0 && n < SLOTS_POR_HOJA)
+  const uniq = nums.filter((n, i) => nums.indexOf(n) === i).sort((a, b) => a - b) // dedup sin spread de Set
+  return uniq.length ? uniq : [0, 1, 2]
 }
 
 // Genera y abre la vista imprimible de etiquetas para uno o varios pedidos.
-// Las etiquetas se colocan en slots de 99mm empezando en `startSlot`; los slots
-// no usados quedan EN BLANCO (para reaprovechar un folio a medio pegar).
+// La 1ª hoja rellena SOLO los slots marcados (en orden); las hojas siguientes
+// usan las 3 posiciones. Los slots no usados se imprimen EN BLANCO (para
+// reaprovechar un folio a medio pegar, con cualquier combinación de huecos libres).
 export function printEtiquetas(
   orders: EtiquetaPedido[] | EtiquetaPedido,
   opts: PrintEtiquetasOpts = {},
@@ -111,16 +134,27 @@ export function printEtiquetas(
     return
   }
 
-  const startSlot = Math.min(SLOTS_POR_HOJA - 1, Math.max(0, Math.floor(Number(opts.startSlot) || 0)))
-  const totalSlots = startSlot + bloques.length
-  const numPages = Math.ceil(totalSlots / SLOTS_POR_HOJA)
+  const enabled = resolveSlots(opts)
 
-  // Rejilla de páginas × slots; se rellena desde startSlot, el resto en blanco.
+  // Secuencia de posiciones [hoja, slot] en el orden en que se rellenan:
+  // hoja 0 = solo los slots marcados; hojas 1+ = las 3 posiciones.
+  const positions: [number, number][] = []
+  for (const s of enabled) positions.push([0, s])
+  let page = 1
+  while (positions.length < bloques.length) {
+    for (let s = 0; s < SLOTS_POR_HOJA; s++) positions.push([page, s])
+    page++
+  }
+
+  // Nº de hojas = la hoja más alta que recibe una etiqueta, +1 (la hoja 0 siempre existe).
+  const used = positions.slice(0, bloques.length)
+  const numPages = used.reduce((m, [p]) => Math.max(m, p), 0) + 1
+
   const pages: string[][] = Array.from({ length: numPages }, () =>
     Array.from({ length: SLOTS_POR_HOJA }, () => ''))
   bloques.forEach((html, i) => {
-    const s = startSlot + i
-    pages[Math.floor(s / SLOTS_POR_HOJA)][s % SLOTS_POR_HOJA] = html
+    const [p, s] = positions[i]
+    pages[p][s] = html
   })
   const hojasHTML = pages
     .map(slots => `<div class="hoja">${slots.map(h => `<div class="slot">${h}</div>`).join('')}</div>`)
@@ -133,12 +167,12 @@ export function printEtiquetas(
   }
   const n = bloques.length
   const titulo = n === 1 ? 'Etiqueta de envío' : `Etiquetas de envío (${n})`
-  const posTxt = ['arriba', 'centro', 'abajo'][startSlot]
+  const posTxt = enabled.map(i => ['Arriba', 'Centro', 'Abajo'][i]).join(', ')
   w.document.write(
     `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title>` +
     `<style>${PRINT_CSS}</style></head><body>` +
     `<div class="barra"><button onclick="window.print()">🖨️ Imprimir</button>` +
-    `<span>${n} etiqueta${n === 1 ? '' : 's'} · ${numPages} hoja${numPages === 1 ? '' : 's'} A4 · empieza ${posTxt}</span></div>` +
+    `<span>${n} etiqueta${n === 1 ? '' : 's'} · ${numPages} hoja${numPages === 1 ? '' : 's'} A4 · 1ª hoja: ${esc(posTxt)}</span></div>` +
     hojasHTML +
     `</body></html>`,
   )
@@ -148,10 +182,10 @@ export function printEtiquetas(
   setTimeout(() => { try { w.print() } catch { /* el usuario puede usar el botón Imprimir */ } }, 350)
 }
 
-// ── Selector visual de posición (modal) ─────────────────────────────────────
-// Muestra un mini-folio A4 con sus 3 tercios clicables. Al elegir uno imprime.
-// batch=false -> "coloca ESTA etiqueta en …" (1 etiqueta, resto en blanco).
-// batch=true  -> "empieza a colocar en …" (rellena en orden desde ese slot).
+// ── Selector visual de posiciones (modal) ────────────────────────────────────
+// Mini-folio A4 con sus 3 tercios como CASILLAS: marca cualquier combinación de
+// slots a rellenar (por defecto los 3). Los no marcados se imprimen en blanco.
+// La 1ª hoja respeta la selección; en un lote, las hojas siguientes usan las 3.
 const SLOT_LABEL = ['Arriba', 'Centro', 'Abajo']
 
 export function EtiquetaSlotPicker({
@@ -161,18 +195,22 @@ export function EtiquetaSlotPicker({
   batch?: boolean
   onClose: () => void
 }) {
-  const [hover, setHover] = useState<number | null>(null)
+  const [sel, setSel] = useState<boolean[]>([true, true, true]) // por defecto, los 3
+  const chosen = [0, 1, 2].filter(i => sel[i])
   const n = orders.length
 
-  function go(startSlot: number) {
-    printEtiquetas(orders, { startSlot })
+  function toggle(i: number) {
+    setSel(s => s.map((v, idx) => (idx === i ? !v : v)))
+  }
+  function imprimir() {
+    if (!chosen.length) return
+    printEtiquetas(orders, { slots: chosen })
     onClose()
   }
 
-  const titulo = batch ? '¿Desde qué posición empezar?' : '¿En qué posición del folio?'
   const ayuda = batch
-    ? `${n} etiqueta${n === 1 ? '' : 's'} en orden. Empieza arriba para un folio nuevo, o en otra posición para reaprovechar un folio a medio usar.`
-    : 'Elige el hueco libre de tu folio (los otros dos se imprimen en blanco). Útil para reaprovechar un folio con pegatinas ya despegadas.'
+    ? `${n} etiqueta${n === 1 ? '' : 's'} en orden. La 1ª hoja rellena solo los slots marcados; las hojas siguientes usan las 3 posiciones. Marca solo los huecos libres para reaprovechar un folio a medio usar.`
+    : 'Marca los huecos LIBRES de tu folio: las etiquetas se colocan en ellos (en orden) y los no marcados se imprimen en blanco. Reaprovecha un folio con pegatinas ya despegadas.'
 
   return (
     <div
@@ -180,35 +218,44 @@ export function EtiquetaSlotPicker({
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
     >
       <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: 10, padding: '20px 22px', width: '100%', maxWidth: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-        <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>{titulo}</div>
+        <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>¿Qué posiciones rellenar?</div>
         <div style={{ fontSize: 12, color: '#666', marginBottom: 14, lineHeight: 1.5 }}>{ayuda}</div>
 
-        {/* Mini-folio A4 (proporción 210×297): 3 tercios clicables */}
+        {/* Mini-folio A4 (proporción 210×297): 3 tercios como casillas (cualquier combinación) */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
           <div style={{ width: 130, height: 184, border: '1px solid #ccc', display: 'flex', flexDirection: 'column', background: '#fafafa' }}>
             {[0, 1, 2].map(i => {
-              const active = hover === i
-              const primary = batch && i === 0
+              const on = sel[i]
               return (
                 <button
                   key={i}
-                  onClick={() => go(i)}
-                  onMouseEnter={() => setHover(i)}
-                  onMouseLeave={() => setHover(null)}
+                  onClick={() => toggle(i)}
+                  role="checkbox"
+                  aria-checked={on}
+                  aria-label={SLOT_LABEL[i]}
                   style={{
                     flex: 1, border: 'none', borderBottom: i < 2 ? '1px dashed #ccc' : 'none',
                     cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700,
-                    background: active ? '#0ea5e9' : primary ? '#e0f2fe' : 'transparent',
-                    color: active ? 'white' : '#334155', transition: 'background 0.12s',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                    background: on ? '#0ea5e9' : 'transparent', color: on ? 'white' : '#94a3b8', transition: 'background 0.12s',
                   }}
                 >
-                  {SLOT_LABEL[i]}{primary ? ' ✓' : ''}
+                  <span>{on ? '☑' : '☐'} {SLOT_LABEL[i]}</span>
+                  {!on && <span style={{ fontSize: 10, fontWeight: 400 }}>(en blanco)</span>}
                 </button>
               )
             })}
           </div>
         </div>
 
+        <button
+          onClick={imprimir}
+          disabled={!chosen.length}
+          style={{ width: '100%', padding: '10px 12px', background: chosen.length ? '#ff1e41' : '#f3b7c2', color: 'white', border: 'none', borderRadius: 6, fontFamily: 'inherit', fontSize: 14, fontWeight: 700, cursor: chosen.length ? 'pointer' : 'not-allowed', marginBottom: 8 }}
+        >
+          🖨️ Imprimir{chosen.length ? ` (${chosen.length} pos.)` : ''}
+        </button>
+        {!chosen.length && <div style={{ fontSize: 11, color: '#ef4444', textAlign: 'center', marginBottom: 8 }}>Marca al menos una posición.</div>}
         <button onClick={onClose} style={{ width: '100%', padding: '8px 12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, fontFamily: 'inherit', fontSize: 13, cursor: 'pointer' }}>
           Cancelar
         </button>
