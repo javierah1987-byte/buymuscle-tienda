@@ -16,10 +16,15 @@ export async function POST(req){
     if(!key) return NextResponse.json({ ok:false, error:'No ANTHROPIC_API_KEY' }, { status:500 })
 
     const { b64, mediaType, textContent } = await req.json()
+    // Extrae nombre + cantidad (como antes) Y el coste unitario de compra. El coste
+    // es el precio por unidad SIN IVA/IGIC si la factura separa impuestos; si no aparece,
+    // coste_unitario = null (el cliente NO debe tocar el cost_price en ese caso).
+    const jsonEjemplo = '{"productos":[{"nombre":"nombre del producto","cantidad":50,"coste_unitario":12.34}]}'
+    const instruccion = 'Por cada línea/producto extrae: "nombre", "cantidad" (unidades compradas) y "coste_unitario" (precio de COMPRA por unidad, SIN IVA/IGIC si la factura los separa; si no puedes determinar el coste unitario con seguridad, pon null — NO lo inventes). Devuelve SOLO JSON válido con este formato exacto: ' + jsonEjemplo
     const content = b64
       ? [{ type:'image', source:{ type:'base64', media_type:mediaType, data:b64 } },
-         { type:'text', text:'Eres asistente de una tienda de suplementación deportiva en España. Analiza esta factura y extrae productos con cantidades. Devuelve SOLO JSON válido: {"productos":[{"nombre":"nombre","cantidad":50}]}' }]
-      : [{ type:'text', text:'Extrae productos y cantidades de este albarán. Devuelve SOLO JSON: {"productos":[{"nombre":"nombre","cantidad":50}]}\n\n' + (textContent||'') }]
+         { type:'text', text:'Eres asistente de una tienda de suplementación deportiva en España. Analiza esta factura/albarán de proveedor. ' + instruccion }]
+      : [{ type:'text', text:'Analiza este albarán/factura de proveedor. ' + instruccion + '\n\n' + (textContent||'') }]
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
