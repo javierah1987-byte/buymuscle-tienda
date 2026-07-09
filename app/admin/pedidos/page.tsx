@@ -1,7 +1,8 @@
 // @ts-nocheck
 'use client'
 import { sb as db } from '@/lib/supabaseBrowser'
-import { printEtiquetas } from '@/components/EtiquetasEnvio'
+import OrderActions from '@/components/OrderActions'
+import { EtiquetaSlotPicker } from '@/components/EtiquetasEnvio'
 import { useEffect, useState, useCallback } from 'react'
 
 
@@ -22,6 +23,7 @@ export default function AdminPedidos() {
   const [busy, setSaving] = useState(false)
   const [selected, setSelected] = useState([]) // IDs seleccionados para cambio masivo
   const [bulkStatus, setBulkStatus] = useState('shipped')
+  const [showBatchSlot, setShowBatchSlot] = useState(false) // picker de posición para "Generar TODAS"
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -123,6 +125,7 @@ export default function AdminPedidos() {
 
   return (
     <div style={{background:'#f5f5f5',minHeight:'100vh',padding:'1.5rem 20px'}}>
+      {showBatchSlot && <EtiquetaSlotPicker orders={orders} batch onClose={() => setShowBatchSlot(false)} />}
       <div style={{maxWidth:1300,margin:'0 auto'}}>
 
         {/* Header */}
@@ -130,7 +133,7 @@ export default function AdminPedidos() {
           <h1 style={{fontSize:20,fontWeight:900,textTransform:'uppercase',margin:0}}>Admin — Pedidos</h1>
           <button onClick={load} style={{background:'var(--red)',color:'white',border:'none',padding:'6px 14px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textTransform:'uppercase'}}>↻ Actualizar</button>
           <button onClick={exportCSV} style={{background:'#22c55e',color:'white',border:'none',padding:'6px 14px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textTransform:'uppercase'}}>⬇ Exportar CSV</button>
-          <button onClick={() => printEtiquetas(orders)} title="Genera una etiqueta por pedido (3 por hoja A4) lista para imprimir" style={{background:'#0ea5e9',color:'white',border:'none',padding:'6px 14px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textTransform:'uppercase'}}>🏷 Generar TODAS</button>
+          <button onClick={() => { if(!orders.length){alert('No hay pedidos para generar etiquetas.');return} setShowBatchSlot(true) }} title="Genera una etiqueta por pedido (3 por hoja A4), eligiendo desde qué posición del folio empezar" style={{background:'#0ea5e9',color:'white',border:'none',padding:'6px 14px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textTransform:'uppercase'}}>🏷 Generar TODAS</button>
           <a href="/admin/stock" style={{background:'#3b82f6',color:'white',padding:'6px 14px',fontSize:12,fontWeight:700,textDecoration:'none',textTransform:'uppercase'}}>📦 Gestión Stock</a>
           <a href="/" style={{marginLeft:'auto',fontSize:12,color:'#888',textDecoration:'none'}}>← Tienda</a>
         </div>
@@ -195,7 +198,7 @@ export default function AdminPedidos() {
                     <th style={{padding:'8px 10px',textAlign:'left'}}>
                       <input type="checkbox" checked={selected.length===orders.length&&orders.length>0} onChange={toggleAll}/>
                     </th>
-                    {['Pedido','Canal','Cliente','Fecha','Total','Estado','Etiqueta'].map(h => <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',color:'#888',letterSpacing:'0.05em'}}>{h}</th>)}
+                    {['Pedido','Canal','Cliente','Fecha','Total','Estado','Acciones'].map(h => <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',color:'#888',letterSpacing:'0.05em'}}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -216,7 +219,7 @@ export default function AdminPedidos() {
                         <span style={{background:SC[o.status]+'20',color:SC[o.status],padding:'2px 8px',fontSize:10,fontWeight:700,textTransform:'uppercase'}}>{SL[o.status]||o.status}</span>
                       </td>
                       <td style={{padding:'8px 10px'}} onClick={e=>e.stopPropagation()}>
-                        <button onClick={() => printEtiquetas([o])} title="Generar etiqueta de envío de este pedido" style={{background:'white',border:'1px solid #0ea5e9',color:'#0ea5e9',padding:'3px 10px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>🏷 Etiqueta</button>
+                        <OrderActions order={o} variant="row" />
                       </td>
                     </tr>
                   ))}
@@ -241,7 +244,7 @@ export default function AdminPedidos() {
                 <div style={{fontSize:11,color:'#666'}}>{sel.customer_email}</div>
                 {sel.customer_phone&&<div style={{fontSize:11,color:'#666'}}>{sel.customer_phone}</div>}
                 {sel.customer_nif&&<div style={{fontSize:11,color:'#999'}}>NIF: {sel.customer_nif}</div>}
-                <button onClick={() => printEtiquetas([sel])} style={{marginTop:8,background:'#0ea5e9',color:'white',border:'none',padding:'6px 12px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit',textTransform:'uppercase',width:'100%'}}>🏷 Imprimir etiqueta de envío</button>
+                <OrderActions key={sel.id} order={sel} lines={lines} variant="detail" />
               </div>
 
               {sel.shipping_address&&(
