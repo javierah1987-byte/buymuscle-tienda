@@ -330,12 +330,12 @@ export default function AdminStock() {
         {/* Valor total del stock a día de hoy — a COSTE y a PVP */}
         <div style={{ background:'#111', color:'#fff', padding:'1.1rem 1.4rem', borderRadius:6, marginBottom:'1rem', display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:16 }}>
           <div>
-            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>💰 Valor del stock hoy · a COSTE</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>💰 Valor total del inventario · a COSTE</div>
             <div style={{ fontSize:34, fontWeight:900, color:'#22c55e', lineHeight:1 }}>{eur(costValue)} €</div>
             {noCost > 0 && <div style={{ fontSize:11, color:'#f59e0b', marginTop:6 }}>⚠ {noCost} producto{noCost>1?'s':''} con stock sin precio de coste (no cuenta{noCost>1?'n':''} aquí)</div>}
           </div>
           <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>a PVP (venta)</div>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>Valor total · a PVP (venta)</div>
             <div style={{ fontSize:20, fontWeight:800, color:'rgba(255,255,255,0.85)', marginBottom:8 }}>{eur(stockValue)} €</div>
             <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:4 }}>Unidades</div>
             <div style={{ fontSize:18, fontWeight:800 }}>{totalUnits.toLocaleString('es-ES')}</div>
