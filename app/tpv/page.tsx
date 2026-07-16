@@ -150,21 +150,35 @@ export default function TPVPage() {
     _addToLines(product, '')
   }
 
-  const _addToLines = (product, variantLabel, variantId = null) => {
+  const _addToLines = (product, variantLabel, variantId = null, stockAvail = null) => {
     const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price_incl_tax)
     const unitPrice = basePrice * (1 - discount / 100)
+    // Stock disponible de ESTE producto/variante. Avisamos AL TICAR, no al cobrar.
+    const avail = Number(stockAvail != null ? stockAvail : product.stock) || 0
+    const key = product.id + '|' + variantLabel
+    const yaEnCarrito = lines.find(l => l.key === key)?.qty || 0
+    if (yaEnCarrito + 1 > avail) {
+      alert('⚠️ Sin stock de "' + product.name + (variantLabel ? ' – ' + variantLabel : '') + '": solo ' + (avail === 1 ? 'queda 1' : 'quedan ' + avail) + (yaEnCarrito ? ' y ya tienes ' + yaEnCarrito + ' en el ticket' : '') + '.')
+      setVariantModal(null)
+      return
+    }
     setLines(prev => {
-      const key = product.id + '|' + variantLabel
       const ex = prev.find(l => l.key === key)
       if (ex) return prev.map(l => l.key === key ? { ...l, qty: l.qty + 1 } : l)
-      return [...prev, { key, product, qty: 1, unitPrice, variantLabel, variantId }]
+      return [...prev, { key, product, qty: 1, unitPrice, variantLabel, variantId, stockAvail: avail }]
     })
     setVariantModal(null)
   }
 
   const updateQty = (key, qty) => {
-    if (qty <= 0) setLines(prev => prev.filter(l => l.key !== key))
-    else setLines(prev => prev.map(l => l.key === key ? { ...l, qty } : l))
+    if (qty <= 0) { setLines(prev => prev.filter(l => l.key !== key)); return }
+    const line = lines.find(l => l.key === key)
+    const avail = Number(line?.stockAvail != null ? line.stockAvail : line?.product?.stock) || 0
+    if (line && qty > avail) {
+      alert('⚠️ Sin stock: solo ' + (avail === 1 ? 'queda 1' : 'quedan ' + avail) + ' de "' + line.product.name + (line.variantLabel ? ' – ' + line.variantLabel : '') + '".')
+      return
+    }
+    setLines(prev => prev.map(l => l.key === key ? { ...l, qty } : l))
   }
 
   // Los precios (unitPrice) llevan el IGIC INCLUIDO (PVP). Desglosamos hacia dentro:
@@ -765,7 +779,7 @@ export default function TPVPage() {
               const attrs = Array.isArray(raw) ? raw : (raw ? [raw] : [])
               const label = attrs.map(a => (a?.attribute_types?.name ? a.attribute_types.name+': ' : '') + (a?.value ?? '')).filter(Boolean).join(' · ')
               return (
-                <button key={v.id} onClick={()=>_addToLines(variantModal.product, label, v.id)}
+                <button key={v.id} onClick={()=>_addToLines(variantModal.product, label, v.id, v.stock)}
                   style={{ padding:'8px 16px', background:'white', border:'1px solid #d1d5db', color:'#111', cursor:'pointer', fontSize:12, fontFamily:'inherit', borderRadius:3 }}>
                   {label}<div style={{ fontSize:9, color:'#888', marginTop:2 }}>Stock: {v.stock}</div>
                 </button>
