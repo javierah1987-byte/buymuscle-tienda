@@ -6,6 +6,22 @@ import TicketTPV from '@/components/TicketTPV'
 const DISCOUNTS = { particular:0, bronze:10, silver:15, gold:20 }
 const CLIENT_COLORS = { particular:'#555', bronze:'#cd7f32', silver:'#aaa', gold:'#ffd700' }
 
+// Imagen de producto con fallback: si la URL está rota o vacía, muestra 📦 (evita el icono de "imagen rota").
+// Además sirve una MINIATURA al vuelo (transformación de Supabase, ~200px, WebP en navegador) en lugar del
+// JPG original (hasta 2 MB) → la rejilla carga muchísimo más rápida.
+function thumbUrl(url) {
+  if (!url) return url
+  return url.includes('/object/public/')
+    ? url.replace('/object/public/', '/render/image/public/') + '?width=200&quality=60'
+    : url
+}
+function ProdImg({ url }) {
+  const [err, setErr] = useState(false)
+  return (url && !err)
+    ? <img src={thumbUrl(url)} alt="" loading="lazy" decoding="async" onError={()=>setErr(true)} style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}/>
+    : <span style={{ fontSize:24, opacity:.3 }}>📦</span>
+}
+
 export default function TPVPage() {
   // ── Productos y catálogo ──────────────────────────────
   const [products, setProducts] = useState([])
@@ -129,7 +145,7 @@ export default function TPVPage() {
   // Teclado rápido
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') { setLines([]); setSearch(''); searchRef.current?.focus() }
+      if (e.key === 'Escape') { setLines([]); setSearch(''); if (searchRef.current) { searchRef.current.value = ''; searchRef.current.focus() } }
       if (e.key === 'Enter' && lines.length > 0 && !saving && !showApertura && !showCierre && !showDevolucion) cobrar()
     }
     window.addEventListener('keydown', handler)
@@ -152,7 +168,8 @@ export default function TPVPage() {
 
   const _addToLines = (product, variantLabel, variantId = null, stockAvail = null) => {
     const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price_incl_tax)
-    const unitPrice = basePrice * (1 - discount / 100)
+    // Guardamos basePrice (PVP sin descuento). El descuento se aplica EN VIVO al mostrar y al cobrar,
+    // así cambiar de nivel (particular/bronze/silver/gold) recalcula el total al momento.
     // Stock disponible de ESTE producto/variante. Avisamos AL TICAR, no al cobrar.
     const avail = Number(stockAvail != null ? stockAvail : product.stock) || 0
     const key = product.id + '|' + variantLabel
@@ -165,7 +182,7 @@ export default function TPVPage() {
     setLines(prev => {
       const ex = prev.find(l => l.key === key)
       if (ex) return prev.map(l => l.key === key ? { ...l, qty: l.qty + 1 } : l)
-      return [...prev, { key, product, qty: 1, unitPrice, variantLabel, variantId, stockAvail: avail }]
+      return [...prev, { key, product, qty: 1, basePrice, variantLabel, variantId, stockAvail: avail }]
     })
     setVariantModal(null)
   }
@@ -181,8 +198,11 @@ export default function TPVPage() {
     setLines(prev => prev.map(l => l.key === key ? { ...l, qty } : l))
   }
 
-  // Los precios (unitPrice) llevan el IGIC INCLUIDO (PVP). Desglosamos hacia dentro:
-  const total = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+  // Precios (basePrice) con IGIC INCLUIDO (PVP). El descuento se aplica EN VIVO, reactivo al nivel
+  // de cliente (bronze/silver/gold) y al dto manual → si cambias de nivel, el total se recalcula.
+  const brutoTotal = lines.reduce((s, l) => s + l.basePrice * l.qty, 0)
+  const subtotalPVP = brutoTotal / 1.07
+  const total = brutoTotal * (1 - discount / 100)
   const subtotal = total / 1.07
   const igic = total - subtotal
 
@@ -215,7 +235,7 @@ export default function TPVPage() {
         throw new Error(data.error || 'Error al procesar la venta')
       }
 
-      setTicket({ num: data.order_number, lines: [...lines], total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
+      setTicket({ num: data.order_number, lines: lines.map(l => ({ ...l, unitPrice: l.basePrice * (1 - discount / 100) })), total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
       setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0)
       await recargarVentas(cajaAbierta?.opened_at)
     } catch (e) { alert('Error al cobrar: ' + e.message) }
@@ -600,8 +620,8 @@ export default function TPVPage() {
         {/* Header */}
         <div style={ST.header}>
           <a href="/" style={{ color:'#ff1e41', fontWeight:900, fontSize:18, textDecoration:'none' }}>BM</a>
-          <input ref={searchRef} style={ST.searchInput} placeholder="Buscar producto..." value={search}
-            onChange={e=>{ const v=e.target.value; clearTimeout(searchTimer.current); searchTimer.current=setTimeout(()=>setSearch(v),200) }} autoFocus/>
+          <input ref={searchRef} style={ST.searchInput} placeholder="Buscar producto..." defaultValue={search}
+            onChange={e=>{ const v=e.target.value; clearTimeout(searchTimer.current); searchTimer.current=setTimeout(()=>setSearch(v),120) }} autoFocus/>
           <span style={{ fontSize:10, color:'#555', whiteSpace:'nowrap' }}>{filtered.length} prods</span>
           {/* Botones rápidos de caja */}
           <div style={{ display:'flex', gap:4 }}>
@@ -651,7 +671,7 @@ export default function TPVPage() {
           <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', color:'#555' }}>Cargando...</div>
         ) : (
           <div style={ST.grid}>
-            {filtered.map(p => {
+            {filtered.slice(0, 90).map(p => {
               const price = p.on_sale && p.sale_price ? Number(p.sale_price) : Number(p.price_incl_tax)
               const cat = p.categories?.name || ''
               return (
@@ -660,7 +680,7 @@ export default function TPVPage() {
                   onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 12px rgba(255,30,65,0.3)'}
                   onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.3)'}>
                   <div style={{ width:'100%', height:130, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:4, marginBottom:6, overflow:'hidden' }}>
-                    {p.image_url ? <img src={p.image_url} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}/> : <span style={{ fontSize:24, opacity:.3 }}>📦</span>}
+                    <ProdImg url={p.image_url}/>
                   </div>
                   <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
                   <div style={{ fontSize:13, fontWeight:900, color:'#ff1e41', marginTop:'auto', padding:'4px 0 6px' }}>{price.toFixed(2)}€</div>
@@ -668,6 +688,11 @@ export default function TPVPage() {
                 </div>
               )
             })}
+            {filtered.length > 90 && (
+              <div style={{ gridColumn:'1 / -1', flexBasis:'100%', width:'100%', textAlign:'center', color:'#94a3b8', fontSize:11, padding:'10px 0' }}>
+                Mostrando 90 de {filtered.length} · escribe en el buscador para afinar
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -707,14 +732,14 @@ export default function TPVPage() {
                   <div style={{ fontSize:12, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500 }}>
                     {l.product.name}{l.variantLabel?' – '+l.variantLabel:''}
                   </div>
-                  <div style={{ fontSize:10, color:'#6b7280' }}>{l.unitPrice.toFixed(2)}€/ud</div>
+                  <div style={{ fontSize:10, color:'#6b7280' }}>{(l.basePrice*(1-discount/100)).toFixed(2)}€/ud</div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
                   <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
                   <span style={{ width:20, textAlign:'center', fontSize:13, fontWeight:700, color:'#111' }}>{l.qty}</span>
                   <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
                 </div>
-                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:56, textAlign:'right', flexShrink:0 }}>{(l.unitPrice*l.qty).toFixed(2)}€</span>
+                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:56, textAlign:'right', flexShrink:0 }}>{(l.basePrice*(1-discount/100)*l.qty).toFixed(2)}€</span>
                 <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'#9ca3af', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
               </div>
             ))
@@ -744,10 +769,10 @@ export default function TPVPage() {
           {lines.length > 0 && (
             <div style={{ display:'flex', flexDirection:'column', gap:2, marginBottom:8 }}>
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#555' }}>
-                <span>Subtotal</span><span>{subtotal.toFixed(2)} €</span>
+                <span>Subtotal</span><span>{subtotalPVP.toFixed(2)} €</span>
               </div>
               {discount > 0 && <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#f59e0b' }}>
-                <span>Descuento {discount}%</span><span>-{(subtotal*discount/100).toFixed(2)} €</span>
+                <span>Descuento {discount}%</span><span>-{(subtotalPVP*discount/100).toFixed(2)} €</span>
               </div>}
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#555' }}>
                 <span>IGIC 7%</span><span>{igic.toFixed(2)} €</span>
