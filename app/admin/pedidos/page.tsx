@@ -221,11 +221,11 @@ export default function AdminPedidos() {
                       <td style={{padding:'8px 10px',fontWeight:700,color:'var(--red)',fontSize:12}} onClick={()=>open(o)}>{o.order_number}</td>
                       <td style={{padding:'8px 10px',fontSize:11,color:'#666'}} onClick={()=>open(o)}>{CHANNELS[o.channel]||o.channel}</td>
                       <td style={{padding:'8px 10px',fontSize:12}} onClick={()=>open(o)}>
-                        <div style={{fontWeight:600}}>{o.customer_name}</div>
+                        <div style={{fontWeight:600,color:'#111'}}>{o.customer_name}</div>
                         <div style={{fontSize:10,color:'#aaa'}}>{o.customer_email}</div>
                       </td>
                       <td style={{padding:'8px 10px',fontSize:11,color:'#999'}} onClick={()=>open(o)}>{fmt(o.created_at)}</td>
-                      <td style={{padding:'8px 10px',fontSize:13,fontWeight:800}} onClick={()=>open(o)}>{Number(o.total).toFixed(2)} €</td>
+                      <td style={{padding:'8px 10px',fontSize:13,fontWeight:800,color:'#111'}} onClick={()=>open(o)}>{Number(o.total).toFixed(2)} €</td>
                       <td style={{padding:'8px 10px'}} onClick={()=>open(o)}>
                         <div style={{display:'inline-flex',flexDirection:'column',gap:4,alignItems:'flex-start'}}>
                           {Pill(payOf(o.payment_method))}
@@ -288,7 +288,7 @@ export default function AdminPedidos() {
                   {lines.map(l=>(
                     <div key={l.id} style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:5,padding:'5px 0',borderBottom:'1px solid #f5f5f5'}}>
                       <span style={{flex:1,marginRight:8,color:'#555'}}>{l.product_name} <span style={{color:'#aaa'}}>×{l.quantity}</span></span>
-                      <span style={{fontWeight:700}}>{(l.unit_price*l.quantity).toFixed(2)} €</span>
+                      <span style={{fontWeight:700,color:'#111'}}>{(l.unit_price*l.quantity).toFixed(2)} €</span>
                     </div>
                   ))}
                 </div>

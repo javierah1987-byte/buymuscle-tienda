@@ -4,6 +4,6 @@
 export function thumbUrl(url?: string | null, width = 200, quality = 60): string {
   if (!url) return (url as any) || ''
   return url.includes('/object/public/')
-    ? url.replace('/object/public/', '/render/image/public/') + `?width=${width}&quality=${quality}`
+    ? url.replace('/object/public/', '/render/image/public/') + `?width=${width}&quality=${quality}&resize=contain`
     : url
 }
