@@ -37,6 +37,7 @@ export default function TPVPage() {
   const [lines, setLines] = useState([])
   const [clientType, setClientType] = useState('particular')
   const [level, setLevel] = useState('') // '' | bronze | silver | gold — solo para Particular
+  const [lineDisc, setLineDisc] = useState({}) // descuento % individual por línea (key -> %)
   const [payMethod, setPayMethod] = useState('tarjeta')
   const [customerName, setCustomerName] = useState('')
   const [customerNif, setCustomerNif] = useState('')
@@ -202,11 +203,18 @@ export default function TPVPage() {
 
   // Precios (basePrice) con IGIC INCLUIDO (PVP). El descuento se aplica EN VIVO, reactivo al nivel
   // de cliente (bronze/silver/gold) y al dto manual → si cambias de nivel, el total se recalcula.
+  // Descuento EFECTIVO de una línea: si tiene descuento individual puesto, ese manda;
+  // si no, se aplica el descuento global (nivel del cliente o DTO% manual).
+  const effDisc = (l) => {
+    const d = lineDisc[l.key]
+    return (d !== undefined && d !== '') ? Math.min(100, Math.max(0, Number(d) || 0)) : discount
+  }
   const brutoTotal = lines.reduce((s, l) => s + l.basePrice * l.qty, 0)
   const subtotalPVP = brutoTotal / 1.07
-  const total = brutoTotal * (1 - discount / 100)
+  const total = lines.reduce((s, l) => s + l.basePrice * l.qty * (1 - effDisc(l) / 100), 0)
   const subtotal = total / 1.07
   const igic = total - subtotal
+  const descTotal = subtotalPVP - subtotal // importe total descontado (base sin IGIC)
 
   // ── COBRAR ─────────────────────────────────────────────
   const cobrar = async () => {
@@ -224,6 +232,7 @@ export default function TPVPage() {
             variant_id: l.variantId || null,
             qty: l.qty,
             variant: l.variantLabel || '',
+            discount_pct: effDisc(l),
           })),
           discount_pct: discount,
           payment_method: payMethod,
@@ -237,8 +246,8 @@ export default function TPVPage() {
         throw new Error(data.error || 'Error al procesar la venta')
       }
 
-      setTicket({ num: data.order_number, lines: lines.map(l => ({ ...l, unitPrice: l.basePrice * (1 - discount / 100) })), total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
-      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0); setEntregado('')
+      setTicket({ num: data.order_number, lines: lines.map(l => ({ ...l, unitPrice: l.basePrice * (1 - effDisc(l) / 100) })), total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
+      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0); setLineDisc({}); setEntregado('')
       await recargarVentas(cajaAbierta?.opened_at)
     } catch (e) { alert('Error al cobrar: ' + e.message) }
     setSaving(false)
@@ -748,14 +757,20 @@ export default function TPVPage() {
                   <div style={{ fontSize:12, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500 }}>
                     {l.product.name}{l.variantLabel?' – '+l.variantLabel:''}
                   </div>
-                  <div style={{ fontSize:10, color:'#6b7280' }}>{(l.basePrice*(1-discount/100)).toFixed(2)}€/ud</div>
+                  <div style={{ fontSize:10, color:'#6b7280' }}>
+                    {(l.basePrice*(1-effDisc(l)/100)).toFixed(2)}€/ud
+                    {effDisc(l)>0 && <span style={{ color:'#f59e0b', fontWeight:700 }}> −{effDisc(l)}%</span>}
+                  </div>
                 </div>
-                <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
-                  <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
-                  <span style={{ width:20, textAlign:'center', fontSize:13, fontWeight:700, color:'#111' }}>{l.qty}</span>
-                  <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
+                <div style={{ display:'flex', alignItems:'center', gap:2, flexShrink:0 }}>
+                  <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:24, height:24, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
+                  <span style={{ width:18, textAlign:'center', fontSize:13, fontWeight:700, color:'#111' }}>{l.qty}</span>
+                  <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:24, height:24, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
                 </div>
-                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:56, textAlign:'right', flexShrink:0 }}>{(l.basePrice*(1-discount/100)*l.qty).toFixed(2)}€</span>
+                <input type="number" min="0" max="100" value={lineDisc[l.key] ?? ''} onChange={e=>setLineDisc(d=>({...d,[l.key]:e.target.value}))}
+                  placeholder="%" title="Descuento solo de esta línea (vacío = usa el descuento general)"
+                  style={{ width:36, background:(lineDisc[l.key]!==undefined&&lineDisc[l.key]!=='')?'#fff7ed':'white', border:'1px solid '+((lineDisc[l.key]!==undefined&&lineDisc[l.key]!=='')?'#f59e0b':'#d1d5db'), color:'#111', padding:'3px 2px', fontSize:11, textAlign:'center', fontFamily:'inherit', outline:'none', borderRadius:3, flexShrink:0 }}/>
+                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:54, textAlign:'right', flexShrink:0 }}>{(l.basePrice*(1-effDisc(l)/100)*l.qty).toFixed(2)}€</span>
                 <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'#9ca3af', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
               </div>
             ))
@@ -787,8 +802,8 @@ export default function TPVPage() {
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#555' }}>
                 <span>Subtotal</span><span>{subtotalPVP.toFixed(2)} €</span>
               </div>
-              {discount > 0 && <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#f59e0b' }}>
-                <span>Descuento {discount}%</span><span>-{(subtotalPVP*discount/100).toFixed(2)} €</span>
+              {descTotal > 0.005 && <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#f59e0b' }}>
+                <span>Descuento{discount>0?' '+discount+'% general':''}</span><span>-{descTotal.toFixed(2)} €</span>
               </div>}
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#555' }}>
                 <span>IGIC 7%</span><span>{igic.toFixed(2)} €</span>
