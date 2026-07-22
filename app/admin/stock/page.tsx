@@ -5,6 +5,92 @@ const db = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process.env.N
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { thumbUrl } from '@/lib/thumb'
 
+// Modal de FICHA COMPLETA: edita TODOS los campos del producto (nombre, marca, categoría,
+// descripción, foto, precios, stock, activo). Se abre con el botón ✏️ de cada fila.
+function ProductEditModal({ p, catList, onClose, onSaved }) {
+  const [f, setF] = useState({
+    name: p.name || '', brand: p.brand || '', category_id: p.category_id ?? '',
+    short_description: p.short_description || '', description: p.description || '',
+    image_url: p.image_url || '', price_incl_tax: p.price_incl_tax ?? '',
+    cost_price: p.cost_price ?? '', sale_price: p.sale_price ?? '',
+    stock: p.stock ?? 0, active: !!p.active,
+  })
+  const [saving, setSaving] = useState(false)
+  const set = (k, v) => setF(s => ({ ...s, [k]: v }))
+  const lbl = { display:'block', fontSize:11, fontWeight:700, textTransform:'uppercase', color:'#888', marginBottom:4, letterSpacing:'0.04em' }
+  const inp = { width:'100%', padding:'8px 10px', border:'1px solid #ddd', borderRadius:4, fontSize:13, fontFamily:'inherit', boxSizing:'border-box' }
+  async function save() {
+    if (!String(f.name).trim()) { alert('El nombre es obligatorio.'); return }
+    const pv = Number(f.price_incl_tax)
+    if (!(pv > 0)) { alert('El PVP debe ser un número mayor que 0.'); return }
+    const fields = {
+      name: String(f.name).trim(), brand: f.brand ? String(f.brand).trim() : null,
+      category_id: f.category_id === '' ? null : Number(f.category_id),
+      short_description: f.short_description || null, description: f.description || null,
+      image_url: f.image_url ? String(f.image_url).trim() : null,
+      price_incl_tax: pv,
+      cost_price: f.cost_price === '' ? null : Number(f.cost_price),
+      sale_price: f.sale_price === '' ? null : Number(f.sale_price),
+      stock: Number(f.stock) || 0, active: !!f.active,
+    }
+    setSaving(true)
+    let res
+    try {
+      res = await fetch('/api/admin/products', { method:'PATCH', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body: JSON.stringify({ id: p.id, fields }) })
+    } catch (e) { setSaving(false); alert('Error de red: ' + (e?.message || e)); return }
+    setSaving(false)
+    if (!res.ok) { const d = await res.json().catch(()=>({})); alert('No se pudo guardar: ' + (d.error || ('HTTP ' + res.status))); return }
+    onSaved(fields)
+  }
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:1000, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'3vh 16px', overflowY:'auto' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:'white', borderRadius:8, maxWidth:640, width:'100%', boxShadow:'0 10px 40px rgba(0,0,0,0.3)' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1rem 1.4rem', borderBottom:'1px solid #eee' }}>
+          <h2 style={{ margin:0, fontSize:16, fontWeight:900, textTransform:'uppercase' }}>✏️ Editar ficha · #{p.id}</h2>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'#999', lineHeight:1 }}>×</button>
+        </div>
+        <div style={{ padding:'1.4rem', display:'flex', flexDirection:'column', gap:14 }}>
+          <div style={{ display:'flex', gap:14, alignItems:'flex-start' }}>
+            {f.image_url
+              ? <img src={thumbUrl(f.image_url, 200)} alt="" style={{ width:90, height:90, objectFit:'contain', borderRadius:6, border:'1px solid #eee', flexShrink:0 }} onError={e=>e.target.style.display='none'}/>
+              : <div style={{ width:90, height:90, background:'#f0f0f0', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:34, flexShrink:0 }}>📦</div>}
+            <div style={{ flex:1 }}>
+              <label style={lbl}>Nombre</label>
+              <input value={f.name} onChange={e=>set('name',e.target.value)} style={inp}/>
+            </div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <div><label style={lbl}>Marca</label><input value={f.brand} onChange={e=>set('brand',e.target.value)} style={inp}/></div>
+            <div><label style={lbl}>Categoría</label>
+              <select value={f.category_id} onChange={e=>set('category_id',e.target.value)} style={inp}>
+                <option value="">— sin categoría —</option>
+                {catList.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div><label style={lbl}>URL de la foto</label><input value={f.image_url} onChange={e=>set('image_url',e.target.value)} style={inp} placeholder="https://..."/></div>
+          <div><label style={lbl}>Descripción corta</label><textarea value={f.short_description} onChange={e=>set('short_description',e.target.value)} style={{...inp, minHeight:50, resize:'vertical'}}/></div>
+          <div><label style={lbl}>Descripción completa</label><textarea value={f.description} onChange={e=>set('description',e.target.value)} style={{...inp, minHeight:90, resize:'vertical'}}/></div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:12 }}>
+            <div><label style={lbl}>PVP (€)</label><input type="number" step="0.01" value={f.price_incl_tax} onChange={e=>set('price_incl_tax',e.target.value)} style={inp}/></div>
+            <div><label style={lbl}>Coste (€)</label><input type="number" step="0.01" value={f.cost_price} onChange={e=>set('cost_price',e.target.value)} style={inp}/></div>
+            <div><label style={lbl}>Oferta (€)</label><input type="number" step="0.01" value={f.sale_price} onChange={e=>set('sale_price',e.target.value)} style={inp}/></div>
+            <div><label style={lbl}>Stock</label><input type="number" value={f.stock} onChange={e=>set('stock',e.target.value)} style={inp}/></div>
+          </div>
+          <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:13, fontWeight:600 }}>
+            <input type="checkbox" checked={f.active} onChange={e=>set('active',e.target.checked)} style={{ width:18, height:18 }}/>
+            Producto activo (visible en la tienda)
+          </label>
+        </div>
+        <div style={{ display:'flex', justifyContent:'flex-end', gap:10, padding:'1rem 1.4rem', borderTop:'1px solid #eee' }}>
+          <button onClick={onClose} style={{ padding:'9px 18px', background:'white', color:'#666', border:'1px solid #ddd', borderRadius:4, fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>Cancelar</button>
+          <button onClick={save} disabled={saving} style={{ padding:'9px 22px', background:'#ff1e41', color:'white', border:'none', borderRadius:4, fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>{saving?'⏳ Guardando...':'💾 Guardar ficha'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 function FacturaModal({ onClose, allProducts, onStockUpdated }) {
   const [step, setStep] = useState('upload')
@@ -245,6 +331,7 @@ export default function AdminStock() {
   const [expanded, setExpanded] = useState({})
   const [catList, setCatList] = useState([])
   const [deleting, setDeleting] = useState({})
+  const [editModal, setEditModal] = useState(null)
   // Ediciones de stock por VARIANTE (sabor), indexadas por variantId — independientes
   // de las de producto (edits/saving/saved), para editar cada sabor por separado.
   const [vEdits, setVEdits] = useState({})
@@ -412,6 +499,7 @@ export default function AdminStock() {
   return (
     <div style={{ background:'#f5f5f5', minHeight:'100vh', padding:'1.5rem 20px' }}>
       {showFactura && <FacturaModal onClose={()=>setShowFactura(false)} allProducts={products} onStockUpdated={load}/>}
+      {editModal && <ProductEditModal p={editModal} catList={catList} onClose={()=>setEditModal(null)} onSaved={(fields)=>{ setProducts(ps=>ps.map(x=>x.id===editModal.id?{...x,...fields, categories: fields.category_id!==undefined ? {name: catList.find(c=>c.id===Number(fields.category_id))?.name || null} : x.categories}:x)); setEditModal(null) }}/>}
       <div style={{ maxWidth:1200, margin:'0 auto' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.25rem', flexWrap:'wrap' }}>
           <h1 style={{ fontSize:20, fontWeight:900, textTransform:'uppercase', margin:0 }}>📦 Gestión de Stock</h1>
@@ -424,10 +512,10 @@ export default function AdminStock() {
         </div>
 
         {/* Valor total del stock a día de hoy — a COSTE y a PVP */}
-        <div style={{ background:'#111', color:'#fff', padding:'1.1rem 1.4rem', borderRadius:6, marginBottom:'1rem', display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:16 }}>
+        <div style={{ background:'linear-gradient(135deg,#ff1e41,#d4132f)', color:'#fff', padding:'1.1rem 1.4rem', borderRadius:6, marginBottom:'1rem', display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:16 }}>
           <div>
             <div style={{ fontSize:11, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:6 }}>💰 Valor total del inventario · a COSTE</div>
-            <div style={{ fontSize:34, fontWeight:900, color:'#22c55e', lineHeight:1 }}>{eur(costValue)} €</div>
+            <div style={{ fontSize:34, fontWeight:900, color:'#fff', lineHeight:1 }}>{eur(costValue)} €</div>
             {noCost > 0 && <div style={{ fontSize:11, color:'#f59e0b', marginTop:6 }}>⚠ {noCost} producto{noCost>1?'s':''} con stock sin precio de coste (no cuenta{noCost>1?'n':''} aquí)</div>}
           </div>
           <div style={{ textAlign:'right' }}>
@@ -513,10 +601,11 @@ export default function AdminStock() {
                             {p.active?'✓ ACTIVO':'✗ INACT.'}
                           </span>
                         </td>
-                        <td style={{ padding:'6px 12px', fontSize:11, color:'#bbb', fontWeight:700, whiteSpace:'nowrap' }}>
-                          <span style={{ marginRight:8 }}>{isOpen?'▲ cerrar':'▼ ver'}</span>
+                        <td style={{ padding:'6px 12px', whiteSpace:'nowrap', textAlign:'right' }}>
+                          <button onClick={e=>{e.stopPropagation();setEditModal(p)}} title="Editar ficha completa"
+                            style={{ padding:'5px 9px', background:'white', color:'#2563eb', border:'1px solid #c7d7f0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3, marginRight:6 }}>✏️</button>
                           <button onClick={e=>{e.stopPropagation();del(p)}} disabled={deleting[p.id]} title="Eliminar producto"
-                            style={{ padding:'4px 8px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:12, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
+                            style={{ padding:'5px 9px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
                             {deleting[p.id]?'⏳':'🗑️'}
                           </button>
                         </td>
@@ -626,17 +715,17 @@ export default function AdminStock() {
                           {isActive?'✓ ACTIVO':'✗ INACT.'}
                         </button>
                       </td>
-                      <td style={{ padding:'6px 12px', whiteSpace:'nowrap' }}>
-                        {isSavedNow
-                          ? <span style={{ fontSize:11, color:'#22c55e', fontWeight:700 }}>✓</span>
-                          : hasEdits
-                          ? <button onClick={()=>save(p)} disabled={saving[p.id]}
-                              style={{ padding:'5px 12px', background:'#ff1e41', color:'white', border:'none', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
-                              {saving[p.id]?'⏳':'💾'}
-                            </button>
-                          : null}
+                      <td style={{ padding:'6px 12px', whiteSpace:'nowrap', textAlign:'right' }}>
+                        <button onClick={()=>setEditModal(p)} title="Editar ficha completa"
+                          style={{ padding:'5px 9px', background:'white', color:'#2563eb', border:'1px solid #c7d7f0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3, marginRight:6 }}>✏️</button>
+                        {isSavedNow && <span style={{ fontSize:11, color:'#22c55e', fontWeight:700, marginRight:6 }}>✓</span>}
+                        {hasEdits && !isSavedNow &&
+                          <button onClick={()=>save(p)} disabled={saving[p.id]}
+                            style={{ padding:'5px 12px', background:'#ff1e41', color:'white', border:'none', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit', borderRadius:3, marginRight:6 }}>
+                            {saving[p.id]?'⏳':'💾'}
+                          </button>}
                         <button onClick={()=>del(p)} disabled={deleting[p.id]} title="Eliminar producto"
-                          style={{ marginLeft:6, padding:'5px 9px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
+                          style={{ padding:'5px 9px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
                           {deleting[p.id]?'⏳':'🗑️'}
                         </button>
                       </td>
