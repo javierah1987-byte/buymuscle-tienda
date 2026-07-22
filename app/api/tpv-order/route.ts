@@ -93,7 +93,9 @@ export async function POST(req){
       let unit = (p.on_sale && p.sale_price) ? Number(p.sale_price) : Number(p.price_incl_tax)
       const vid = Number(it.variant_id) || null
       if(vid && varMap.has(vid)) unit += Number(varMap.get(vid).price_modifier || 0)
-      unit = round2(unit * (1 - disc / 100))
+      // Descuento por LÍNEA si viene (sobreescribe el global); clampado igual que el global.
+      const lineDiscPct = it.discount_pct != null ? Math.min(MAX_TPV_DISCOUNT, Math.max(0, Number(it.discount_pct) || 0)) : disc
+      unit = round2(unit * (1 - lineDiscPct / 100))
       // Validación: si el cliente envió un precio y no coincide con el autoritativo, log (posible manipulación)
       const clientUnit = Number(it.unit_price ?? it.price)
       if(!isNaN(clientUnit) && Math.abs(round2(clientUnit) - unit) > 0.01)
