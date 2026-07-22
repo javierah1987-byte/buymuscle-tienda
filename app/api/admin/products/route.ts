@@ -128,8 +128,10 @@ export async function PATCH(req: Request) {
   const db = svc()
 
   try {
-    const { error: ue } = await db.from('products').update(fields).eq('id', id)
-    if (ue) throw new Error(ue.message)
+    if (fields && Object.keys(fields).length > 0) {
+      const { error: ue } = await db.from('products').update(fields).eq('id', id)
+      if (ue) throw new Error(ue.message)
+    }
 
     for (const v of variants) {
       if (v?.id === undefined || v?.id === null || v?.id === '') continue

@@ -242,6 +242,11 @@ export default function AdminStock() {
   const [saved, setSaved] = useState(null)
   const [showFactura, setShowFactura] = useState(false)
   const [variantsByProduct, setVariantsByProduct] = useState({})
+  // Ediciones de stock por VARIANTE (sabor), indexadas por variantId — independientes
+  // de las de producto (edits/saving/saved), para editar cada sabor por separado.
+  const [vEdits, setVEdits] = useState({})
+  const [vSaving, setVSaving] = useState({})
+  const [vSaved, setVSaved] = useState(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -254,9 +259,9 @@ export default function AdminStock() {
         setLoading(false)
       })
     // Variantes por SABOR: mismo cliente anon y misma query que el TPV. Se traen todas
-    // las variantes activas y se agrupan por product_id para pintar el desglose por sabor.
+    // las variantes activas y se agrupan por product_id; cada sabor será su propia fila.
     db.from('product_variants')
-      .select('product_id,stock,price_modifier,attribute_values(value,attribute_types(name))')
+      .select('id,product_id,stock,price_modifier,attribute_values(value,attribute_types(name))')
       .eq('active', true)
       .then(({ data }) => {
         const map = {}
@@ -271,7 +276,7 @@ export default function AdminStock() {
           }
           if (!flavor) continue
           if (!map[v.product_id]) map[v.product_id] = []
-          map[v.product_id].push({ flavor, stock: Number(v.stock) || 0, mod: Number(v.price_modifier) || 0 })
+          map[v.product_id].push({ id: v.id, flavor, stock: Number(v.stock) || 0, mod: Number(v.price_modifier) || 0 })
         }
         for (const pid in map) map[pid].sort((a,b) => String(a.flavor).localeCompare(String(b.flavor)))
         setVariantsByProduct(map)
@@ -289,6 +294,10 @@ export default function AdminStock() {
 
   function edit(id, field, val) { setEdits(e => ({ ...e, [id]: { ...(e[id]||{}), [field]: val } })) }
   function getVal(p, field) { return edits[p.id]?.[field] !== undefined ? edits[p.id][field] : p[field] }
+
+  // Edición de stock por VARIANTE (sabor): estado propio indexado por variantId.
+  function editV(vid, val) { setVEdits(e => ({ ...e, [vid]: val })) }
+  function getValV(v) { return vEdits[v.id] !== undefined ? vEdits[v.id] : v.stock }
 
   async function save(p) {
     const changes = edits[p.id]; if (!changes) return
@@ -328,6 +337,34 @@ export default function AdminStock() {
     setSaved(p.id); setTimeout(()=>setSaved(null), 2000)
   }
 
+  // Guardado de una VARIANTE (sabor): manda SOLO el stock del sabor por la MISMA API admin
+  // autenticada (fields:{} vacío + variants con el id del sabor). Coste/PVP/oferta/activo son
+  // del producto y en las filas de variante van en solo-lectura, así que NO se tocan aquí.
+  async function saveV(p, v) {
+    const raw = vEdits[v.id]; if (raw === undefined) return
+    const newStock = Number(raw)
+    if (!Number.isFinite(newStock) || newStock < 0) { alert('El stock del sabor debe ser un número ≥ 0.'); return }
+    setVSaving(s => ({ ...s, [v.id]: true }))
+    let res
+    try {
+      res = await fetch('/api/admin/products', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ id: p.id, fields: {}, variants: [{ id: v.id, stock: newStock, price_modifier: v.mod }] }),
+      })
+    } catch (e) {
+      setVSaving(s => ({ ...s, [v.id]: false })); alert('Error de red al guardar: ' + (e?.message || e)); return
+    }
+    setVSaving(s => ({ ...s, [v.id]: false }))
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      alert('No se pudo guardar el sabor: ' + (d.error || ('HTTP ' + res.status))); return
+    }
+    // Refleja el nuevo stock del sabor en el estado local y limpia la edición pendiente.
+    setVariantsByProduct(m => ({ ...m, [p.id]: (m[p.id] || []).map(x => x.id===v.id ? { ...x, stock: newStock } : x) }))
+    setVEdits(e => { const n={...e}; delete n[v.id]; return n })
+    setVSaved(v.id); setTimeout(()=>setVSaved(null), 2000)
+  }
+
   const lowStock = products.filter(p => p.active && p.stock <= 5).length
 
   // Valor del stock a día de hoy. A COSTE (lo que te cuesta a ti) y a PVP (precio de venta).
@@ -337,6 +374,12 @@ export default function AdminStock() {
   const costValue = products.reduce((s, p) => s + (Number(p.stock) || 0) * (Number(p.cost_price) || 0), 0)
   const noCost = products.filter(p => (Number(p.stock) || 0) > 0 && !(Number(p.cost_price) > 0)).length
   const eur = n => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  // Aplanado para la tabla: cada producto CON variantes genera 1 fila por sabor; los que
+  // no tienen variantes, 1 fila normal. Así cada sabor pasa a ser su propia fila completa.
+  const rows = filtered.flatMap(p =>
+    variantsByProduct[p.id]?.length ? variantsByProduct[p.id].map(v => ({ p, v })) : [{ p, v: null }]
+  )
 
   return (
     <div style={{ background:'#f5f5f5', minHeight:'100vh', padding:'1.5rem 20px' }}>
@@ -406,13 +449,66 @@ export default function AdminStock() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(p=>{
+                {rows.map(({p,v})=>{
+                  const rowKey = p.id + '-' + (v?.id || 'base')
+
+                  // ── FILA DE VARIANTE (sabor): su propia fila completa con las mismas
+                  //    columnas que las demás. Solo el STOCK del sabor es editable (estado
+                  //    vEdits, por variantId); coste, PVP, oferta y activo se muestran del
+                  //    producto en solo-lectura.
+                  if (v) {
+                    const vStock = getValV(v)
+                    const vHasEdits = vEdits[v.id] !== undefined
+                    const vIsSavedNow = vSaved === v.id
+                    const pvp = Number(p.price_incl_tax || 0) + (v.mod || 0)
+                    const cost = Number(p.cost_price) || 0
+                    return (
+                      <tr key={rowKey} style={{ borderBottom:'1px solid #f5f5f5', background:vIsSavedNow?'#f0fff4':vHasEdits?'#fffbf0':'white' }}>
+                        <td style={{ padding:'6px 12px', width:84 }}>
+                          {p.image_url
+                            ? <img src={thumbUrl(p.image_url, 150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
+                            : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
+                        </td>
+                        <td style={{ padding:'6px 12px', maxWidth:220 }}>
+                          <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3, color:'#111' }}>
+                            {p.name} <span style={{ color:'#ff1e41', fontWeight:700 }}>— {v.flavor}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding:'6px 12px', fontSize:11, color:'#888' }}>{p.categories?.name||'—'}</td>
+                        <td style={{ padding:'6px 12px' }}>
+                          <input type="number" min="0" value={vStock} onChange={e=>editV(v.id,e.target.value)}
+                            style={{ width:70, padding:'4px 6px', border:'1px solid '+(Number(vStock)<=5?'#ef4444':'#ddd'), fontSize:13, fontWeight:700, textAlign:'center', color:Number(vStock)===0?'#ef4444':Number(vStock)<=5?'#f59e0b':'#111', fontFamily:'inherit' }}/>
+                          {Number(vStock)<=5 && <div style={{ fontSize:9, color:'#ef4444', marginTop:2 }}>⚠ BAJO</div>}
+                        </td>
+                        <td style={{ padding:'6px 12px', fontSize:12, color:'#666' }} title="Coste (a nivel producto)">{cost>0 ? cost.toFixed(2)+' €' : '—'}</td>
+                        <td style={{ padding:'6px 12px', fontSize:12, color:'#666' }}>{pvp.toFixed(2)} €</td>
+                        <td style={{ padding:'6px 12px', fontSize:12, color:'#666' }}>{p.sale_price ? Number(p.sale_price).toFixed(2)+' €' : '—'}</td>
+                        <td style={{ padding:'6px 12px' }}>
+                          <span style={{ display:'inline-block', padding:'4px 10px', background:p.active?'#eafaf0':'#f0f0f0', color:p.active?'#16a34a':'#999', fontSize:11, fontWeight:700, borderRadius:20 }}>
+                            {p.active?'✓ ACTIVO':'✗ INACT.'}
+                          </span>
+                        </td>
+                        <td style={{ padding:'6px 12px' }}>
+                          {vIsSavedNow
+                            ? <span style={{ fontSize:11, color:'#22c55e', fontWeight:700 }}>✓ Guardado</span>
+                            : vHasEdits
+                            ? <button onClick={()=>saveV(p,v)} disabled={vSaving[v.id]}
+                                style={{ padding:'5px 14px', background:'#ff1e41', color:'white', border:'none', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+                                {vSaving[v.id]?'⏳':'💾 Guardar'}
+                              </button>
+                            : <span style={{ fontSize:11, color:'#ddd' }}>—</span>}
+                        </td>
+                      </tr>
+                    )
+                  }
+
+                  // ── FILA DE PRODUCTO SIN VARIANTES: comportamiento ORIGINAL (todo editable).
                   const hasEdits = !!edits[p.id]
                   const isActive = edits[p.id]?.active !== undefined ? edits[p.id].active : p.active
                   const stock = getVal(p,'stock')
                   const isSavedNow = saved === p.id
                   return (
-                    <tr key={p.id} style={{ borderBottom:'1px solid #f5f5f5', background:isSavedNow?'#f0fff4':hasEdits?'#fffbf0':'white' }}>
+                    <tr key={rowKey} style={{ borderBottom:'1px solid #f5f5f5', background:isSavedNow?'#f0fff4':hasEdits?'#fffbf0':'white' }}>
                       <td style={{ padding:'6px 12px', width:84 }}>
                         {p.image_url
                           ? <img src={thumbUrl(p.image_url, 150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
@@ -420,22 +516,6 @@ export default function AdminStock() {
                       </td>
                       <td style={{ padding:'6px 12px', maxWidth:220 }}>
                         <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3, color:'#111' }}>{p.name}</div>
-                        {variantsByProduct[p.id]?.length > 0 && (
-                          <div style={{ marginTop:4, display:'flex', flexDirection:'column', gap:2 }}>
-                            {variantsByProduct[p.id].map((v,i)=>{
-                              const base = (p.on_sale && p.sale_price ? Number(p.sale_price) : Number(p.price_incl_tax)) + (v.mod||0)
-                              const cost = Number(p.cost_price)||0
-                              return (
-                                <div key={i} style={{ fontSize:10, color:'#555', display:'flex', gap:6, flexWrap:'wrap', alignItems:'center', background:'#f1f5f9', borderRadius:3, padding:'2px 6px' }}>
-                                  <span style={{ fontWeight:700, color:'#111' }}>{v.flavor}</span>
-                                  <span style={{ color: v.stock<=5?'#dc2626':'#16a34a', fontWeight:700 }}>{v.stock} uds</span>
-                                  {cost>0 && <span>· {cost.toFixed(2)}€ coste</span>}
-                                  <span>· {base.toFixed(2)}€ venta</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
                       </td>
                       <td style={{ padding:'6px 12px', fontSize:11, color:'#888' }}>{p.categories?.name||'—'}</td>
                       <td style={{ padding:'6px 12px' }}>
