@@ -242,6 +242,7 @@ export default function AdminStock() {
   const [saved, setSaved] = useState(null)
   const [showFactura, setShowFactura] = useState(false)
   const [variantsByProduct, setVariantsByProduct] = useState({})
+  const [expanded, setExpanded] = useState({})
   // Ediciones de stock por VARIANTE (sabor), indexadas por variantId — independientes
   // de las de producto (edits/saving/saved), para editar cada sabor por separado.
   const [vEdits, setVEdits] = useState({})
@@ -375,11 +376,9 @@ export default function AdminStock() {
   const noCost = products.filter(p => (Number(p.stock) || 0) > 0 && !(Number(p.cost_price) > 0)).length
   const eur = n => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-  // Aplanado para la tabla: cada producto CON variantes genera 1 fila por sabor; los que
-  // no tienen variantes, 1 fila normal. Así cada sabor pasa a ser su propia fila completa.
-  const rows = filtered.flatMap(p =>
-    variantsByProduct[p.id]?.length ? variantsByProduct[p.id].map(v => ({ p, v })) : [{ p, v: null }]
-  )
+  // Acordeón: cada producto CON sabores => 1 fila PADRE (nombre + stock TOTAL sumado) que,
+  // al pulsarla, despliega sus sabores como sub-filas (stock editable por sabor). Los productos
+  // SIN sabores => 1 fila normal editable de siempre. Ver render del <tbody>.
 
   return (
     <div style={{ background:'#f5f5f5', minHeight:'100vh', padding:'1.5rem 20px' }}>
@@ -449,29 +448,61 @@ export default function AdminStock() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({p,v})=>{
-                  const rowKey = p.id + '-' + (v?.id || 'base')
-
-                  // ── FILA DE VARIANTE (sabor): su propia fila completa con las mismas
-                  //    columnas que las demás. Solo el STOCK del sabor es editable (estado
-                  //    vEdits, por variantId); coste, PVP, oferta y activo se muestran del
-                  //    producto en solo-lectura.
-                  if (v) {
-                    const vStock = getValV(v)
-                    const vHasEdits = vEdits[v.id] !== undefined
-                    const vIsSavedNow = vSaved === v.id
-                    const pvp = Number(p.price_incl_tax || 0) + (v.mod || 0)
-                    const cost = Number(p.cost_price) || 0
-                    return (
-                      <tr key={rowKey} style={{ borderBottom:'1px solid #f5f5f5', background:vIsSavedNow?'#f0fff4':vHasEdits?'#fffbf0':'white' }}>
+                {filtered.flatMap(p=>{
+                  const vars = variantsByProduct[p.id]
+                  // ── PRODUCTO CON SABORES: fila PADRE (nombre + stock TOTAL sumado) que al
+                  //    pulsarla despliega los sabores como sub-filas (stock editable por sabor).
+                  if (vars?.length) {
+                    const isOpen = !!expanded[p.id]
+                    const totalStock = vars.reduce((s,x)=>s+(Number(getValV(x))||0),0)
+                    const lowT = totalStock<=5
+                    const pcost = Number(p.cost_price)||0
+                    const out = [
+                      <tr key={p.id+'-parent'} onClick={()=>setExpanded(e=>({...e,[p.id]:!e[p.id]}))} style={{ borderBottom:'1px solid #eee', background:isOpen?'#f7f7fb':'white', cursor:'pointer' }}>
+                        <td style={{ padding:'6px 12px', width:84 }}>
+                          {p.image_url
+                            ? <img src={thumbUrl(p.image_url,150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
+                            : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
+                        </td>
+                        <td style={{ padding:'6px 12px', maxWidth:240 }}>
+                          <div style={{ fontSize:13, fontWeight:800, lineHeight:1.3, color:'#111', display:'flex', alignItems:'center', gap:7 }}>
+                            <span style={{ fontSize:10, color:'#ff1e41', display:'inline-block', transform:isOpen?'rotate(90deg)':'none', transition:'transform .15s' }}>▶</span>
+                            <span>{p.name}</span>
+                            <span style={{ fontSize:10, fontWeight:700, color:'#666', background:'#eee', borderRadius:10, padding:'1px 8px', whiteSpace:'nowrap' }}>{vars.length} sabores</span>
+                          </div>
+                        </td>
+                        <td style={{ padding:'6px 12px', fontSize:11, color:'#888' }}>{p.categories?.name||'—'}</td>
+                        <td style={{ padding:'6px 12px' }}>
+                          <span style={{ fontSize:16, fontWeight:900, color:totalStock===0?'#ef4444':lowT?'#f59e0b':'#111' }}>{totalStock}</span>
+                          <span style={{ fontSize:10, color:'#aaa', marginLeft:4, textTransform:'uppercase' }}>total</span>
+                        </td>
+                        <td style={{ padding:'6px 12px', fontSize:12, color:'#666' }}>{pcost>0?pcost.toFixed(2)+' €':'—'}</td>
+                        <td style={{ padding:'6px 12px', fontSize:12, color:'#666' }}>{Number(p.price_incl_tax||0).toFixed(2)} €</td>
+                        <td style={{ padding:'6px 12px', fontSize:12, color:'#666' }}>{p.sale_price?Number(p.sale_price).toFixed(2)+' €':'—'}</td>
+                        <td style={{ padding:'6px 12px' }}>
+                          <span style={{ display:'inline-block', padding:'4px 10px', background:p.active?'#eafaf0':'#f0f0f0', color:p.active?'#16a34a':'#999', fontSize:11, fontWeight:700, borderRadius:20 }}>
+                            {p.active?'✓ ACTIVO':'✗ INACT.'}
+                          </span>
+                        </td>
+                        <td style={{ padding:'6px 12px', fontSize:11, color:'#bbb', fontWeight:700, whiteSpace:'nowrap' }}>{isOpen?'▲ cerrar':'▼ ver'}</td>
+                      </tr>
+                    ]
+                    if (isOpen) vars.forEach(v=>{
+                      const vStock = getValV(v)
+                      const vHasEdits = vEdits[v.id] !== undefined
+                      const vIsSavedNow = vSaved === v.id
+                      const pvp = Number(p.price_incl_tax || 0) + (v.mod || 0)
+                      const cost = Number(p.cost_price) || 0
+                      out.push(
+                      <tr key={p.id+'-'+v.id} style={{ borderBottom:'1px solid #f5f5f5', background:vIsSavedNow?'#f0fff4':vHasEdits?'#fffbf0':'#fcfcfe' }}>
                         <td style={{ padding:'6px 12px', width:84 }}>
                           {p.image_url
                             ? <img src={thumbUrl(p.image_url, 150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
                             : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
                         </td>
-                        <td style={{ padding:'6px 12px', maxWidth:220 }}>
-                          <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3, color:'#111' }}>
-                            {p.name} <span style={{ color:'#ff1e41', fontWeight:700 }}>— {v.flavor}</span>
+                        <td style={{ padding:'6px 12px', maxWidth:240 }}>
+                          <div style={{ fontSize:12, fontWeight:700, lineHeight:1.3, color:'#111', paddingLeft:22, borderLeft:'3px solid #ffd9df', marginLeft:2 }}>
+                            <span style={{ color:'#ff1e41', fontWeight:700 }}>{v.flavor}</span>
                           </div>
                         </td>
                         <td style={{ padding:'6px 12px', fontSize:11, color:'#888' }}>{p.categories?.name||'—'}</td>
@@ -499,7 +530,9 @@ export default function AdminStock() {
                             : <span style={{ fontSize:11, color:'#ddd' }}>—</span>}
                         </td>
                       </tr>
-                    )
+                      )
+                    })
+                    return out
                   }
 
                   // ── FILA DE PRODUCTO SIN VARIANTES: comportamiento ORIGINAL (todo editable).
@@ -508,7 +541,7 @@ export default function AdminStock() {
                   const stock = getVal(p,'stock')
                   const isSavedNow = saved === p.id
                   return (
-                    <tr key={rowKey} style={{ borderBottom:'1px solid #f5f5f5', background:isSavedNow?'#f0fff4':hasEdits?'#fffbf0':'white' }}>
+                    <tr key={p.id} style={{ borderBottom:'1px solid #f5f5f5', background:isSavedNow?'#f0fff4':hasEdits?'#fffbf0':'white' }}>
                       <td style={{ padding:'6px 12px', width:84 }}>
                         {p.image_url
                           ? <img src={thumbUrl(p.image_url, 150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
