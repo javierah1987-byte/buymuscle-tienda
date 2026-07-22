@@ -809,7 +809,7 @@ export default function TPVPage() {
               </div>
               <div style={{ display:'flex', gap:4 }}>
                 {[[5,'#8d9499','#e0e3e6'],[10,'#d9534f','#f6d9d8'],[20,'#3b7bbf','#d6e6f5'],[50,'#e58a2b','#f7e3cd']].map(([b,c,light]) => (
-                  <button key={b} onClick={()=>setEntregado(String(b))} title={b+' €'}
+                  <button key={b} onClick={()=>setEntregado(pv => String((Number(pv)||0)+b))} title={b+' €'}
                     style={{ flex:1, position:'relative', padding:'9px 0', background:`linear-gradient(135deg, ${c} 0%, ${c} 55%, ${light} 100%)`, color:'white', border:`1px solid ${c}`, borderRadius:5, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 1px 2px rgba(0,0,0,0.18)', overflow:'hidden', lineHeight:1 }}>
                     <span style={{ position:'absolute', top:2, left:4, fontSize:7, fontWeight:800, opacity:.85 }}>€</span>
                     <span style={{ fontSize:16, fontWeight:900, textShadow:'0 1px 1px rgba(0,0,0,0.25)' }}>{b}</span>
@@ -817,6 +817,7 @@ export default function TPVPage() {
                   </button>
                 ))}
                 <button onClick={()=>setEntregado(total.toFixed(2))} style={{ flex:1, padding:'7px 0', fontSize:12, fontWeight:700, background:'#dcfce7', color:'#166534', border:'1px solid #bbf7d0', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>Exacto</button>
+                <button onClick={()=>setEntregado('')} title="Borrar" style={{ padding:'7px 10px', fontSize:13, fontWeight:800, background:'#fee2e2', color:'#b91c1c', border:'1px solid #fecaca', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>C</button>
               </div>
               {entregado!=='' && !isNaN(Number(entregado)) && (
                 Number(entregado) >= total ? (
