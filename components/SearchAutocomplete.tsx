@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { thumbUrl } from '@/lib/thumb'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -132,7 +133,7 @@ export default function SearchAutocomplete({ placeholder = 'Buscar...' }) {
               onMouseEnter={() => setSel(i)}
             >
               {p.image_url ? (
-                <img src={p.image_url} alt="" loading="lazy" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 4, background: '#f5f5f5', flexShrink: 0 }} />
+                <img src={thumbUrl(p.image_url, 80)} alt="" loading="lazy" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 4, background: '#f5f5f5', flexShrink: 0 }} />
               ) : (
                 <div style={{ width: 44, height: 44, background: '#f5f5f5', borderRadius: 4, flexShrink: 0 }} />
               )}
