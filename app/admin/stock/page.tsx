@@ -275,7 +275,9 @@ export default function AdminStock() {
           for (const av of avs) {
             const at = av?.attribute_types
             const atName = Array.isArray(at) ? at[0]?.name : at?.name
-            if (atName === 'Sabor') { flavor = av?.value; break }
+            // Muestra cualquier atributo (Sabor / Talla / Formato / Color). Para los que
+            // no son sabor, se prefija el tipo ("Talla: M") para que quede claro.
+            if (av?.value) { flavor = (atName && atName !== 'Sabor' ? atName + ': ' : '') + av.value; break }
           }
           if (!flavor) continue
           if (!map[v.product_id]) map[v.product_id] = []
