@@ -808,8 +808,13 @@ export default function TPVPage() {
                   style={{ width:110, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 8px', fontSize:16, textAlign:'right', fontWeight:700, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
               </div>
               <div style={{ display:'flex', gap:4 }}>
-                {[[5,'#9e9e9e'],[10,'#e53935'],[20,'#1e88e5'],[50,'#fb8c00']].map(([b,c]) => (
-                  <button key={b} onClick={()=>setEntregado(String(b))} style={{ flex:1, padding:'7px 0', fontSize:13, fontWeight:800, background:c, color:'white', border:'none', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>{b} €</button>
+                {[[5,'#8d9499','#e0e3e6'],[10,'#d9534f','#f6d9d8'],[20,'#3b7bbf','#d6e6f5'],[50,'#e58a2b','#f7e3cd']].map(([b,c,light]) => (
+                  <button key={b} onClick={()=>setEntregado(String(b))} title={b+' €'}
+                    style={{ flex:1, position:'relative', padding:'9px 0', background:`linear-gradient(135deg, ${c} 0%, ${c} 55%, ${light} 100%)`, color:'white', border:`1px solid ${c}`, borderRadius:5, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 1px 2px rgba(0,0,0,0.18)', overflow:'hidden', lineHeight:1 }}>
+                    <span style={{ position:'absolute', top:2, left:4, fontSize:7, fontWeight:800, opacity:.85 }}>€</span>
+                    <span style={{ fontSize:16, fontWeight:900, textShadow:'0 1px 1px rgba(0,0,0,0.25)' }}>{b}</span>
+                    <span style={{ position:'absolute', bottom:2, right:4, fontSize:7, fontWeight:800, opacity:.85 }}>€</span>
+                  </button>
                 ))}
                 <button onClick={()=>setEntregado(total.toFixed(2))} style={{ flex:1, padding:'7px 0', fontSize:12, fontWeight:700, background:'#dcfce7', color:'#166534', border:'1px solid #bbf7d0', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>Exacto</button>
               </div>
