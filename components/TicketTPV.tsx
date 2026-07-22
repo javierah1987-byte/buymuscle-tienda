@@ -29,7 +29,7 @@ export default function TicketTPV({
     const w = window.open('', '_blank', 'width=380,height=600')
     if (!w || !ref.current) return
     w.document.write('<html><head><title>Ticket BuyMuscle</title><style>')
-    w.document.write('*{box-sizing:border-box;margin:0;padding:0}body{font-family:monospace;font-size:12px;padding:12px;max-width:300px}hr{border:none;border-top:1px dashed #000;margin:8px 0}.center{text-align:center}.right{text-align:right}.bold{font-weight:bold}.row{display:flex;justify-content:space-between;margin:3px 0}.logo{font-size:18px;font-weight:bold;text-align:center;margin-bottom:4px}')
+    w.document.write('@page{size:80mm auto;margin:0}*{box-sizing:border-box;margin:0;padding:0}body{font-family:monospace;font-size:12px;padding:3mm;width:80mm;max-width:80mm}hr{border:none;border-top:1px dashed #000;margin:8px 0}.center{text-align:center}.right{text-align:right}.bold{font-weight:bold}.row{display:flex;justify-content:space-between;margin:3px 0}.logo{font-size:18px;font-weight:bold;text-align:center;margin-bottom:4px}')
     w.document.write('</style></head><body>')
     w.document.write(ref.current.innerHTML)
     w.document.write('</body></html>')

@@ -12,7 +12,7 @@ const CLIENT_COLORS = { particular:'#555', bronze:'#cd7f32', silver:'#aaa', gold
 function thumbUrl(url) {
   if (!url) return url
   return url.includes('/object/public/')
-    ? url.replace('/object/public/', '/render/image/public/') + '?width=200&quality=60'
+    ? url.replace('/object/public/', '/render/image/public/') + '?width=200&quality=60&resize=contain'
     : url
 }
 function ProdImg({ url }) {
@@ -389,7 +389,7 @@ export default function TPVPage() {
     if (!ticket) return
     const rows = ticket.lines.map(l => `<tr><td>${l.product.name}${l.variantLabel?'–'+l.variantLabel:''}</td><td>${l.qty}</td><td style="text-align:right">${(l.unitPrice*l.qty).toFixed(2)}€</td></tr>`).join('')
     const w = window.open('','','width=380,height=600')
-    w.document.write(`<html><head><style>body{font-family:monospace;font-size:12px;width:300px;padding:10px}table{width:100%}hr{border-top:1px dashed}</style></head>
+    w.document.write(`<html><head><style>@page{size:80mm auto;margin:0}body{font-family:monospace;font-size:12px;width:80mm;padding:3mm}table{width:100%}hr{border-top:1px dashed}</style></head>
     <body><h3 style="text-align:center">BUYMUSCLE</h3><p style="text-align:center;font-size:10px">${new Date().toLocaleString('es-ES')}</p><hr/>
     <table><thead><tr><th>Producto</th><th>Ud</th><th>€</th></tr></thead><tbody>${rows}</tbody></table><hr/>
     ${ticket.discount>0?'<p>Dto '+ticket.discount+'%</p>':''}
@@ -685,7 +685,7 @@ export default function TPVPage() {
                   </div>
                   <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
                   <div style={{ fontSize:13, fontWeight:900, color:'#ff1e41', marginTop:'auto', padding:'4px 0 6px' }}>{price.toFixed(2)}€</div>
-                  {p.stock <= 5 && <div style={{ fontSize:8, color:'#f59e0b', marginTop:0, paddingBottom:4 }}>⚠️ Stock: {p.stock}</div>}
+                  <div style={{ fontSize:9, fontWeight:700, color: p.stock<=5?'#dc2626':'#16a34a', marginTop:0, paddingBottom:4 }}>{p.stock<=5?'⚠️ ':''}Quedan {p.stock}</div>
                 </div>
               )
             })}
