@@ -36,6 +36,7 @@ export default function TPVPage() {
   // ── Ticket actual ─────────────────────────────────────
   const [lines, setLines] = useState([])
   const [clientType, setClientType] = useState('particular')
+  const [level, setLevel] = useState('') // '' | bronze | silver | gold — solo para Particular
   const [payMethod, setPayMethod] = useState('tarjeta')
   const [customerName, setCustomerName] = useState('')
   const [customerNif, setCustomerNif] = useState('')
@@ -153,7 +154,7 @@ export default function TPVPage() {
     return () => window.removeEventListener('keydown', handler)
   }, [lines, saving, showApertura, showCierre, showDevolucion])
 
-  const discount = Math.max(DISCOUNTS[clientType] || 0, discManual || 0)
+  const discount = Math.max(clientType === 'particular' ? (DISCOUNTS[level] || 0) : 0, discManual || 0)
 
   const addLine = async (product) => {
     let variants = []
@@ -226,7 +227,7 @@ export default function TPVPage() {
           })),
           discount_pct: discount,
           payment_method: payMethod,
-          channel: clientType !== 'particular' ? 'tpv_distributor' : 'tpv_retail',
+          channel: clientType === 'distribuidor' ? 'tpv_distributor' : 'tpv_retail',
           customer: { name: customerName || '', nif: customerNif || '' },
         }),
       })
@@ -707,16 +708,16 @@ export default function TPVPage() {
               onClick={()=>{ setClientType('particular'); setDiscManual(0) }}>
               👤 Particular
             </button>
-            <button style={ST.tipoBtn(clientType!=='particular', '#334155')}
-              onClick={()=>{ if (clientType==='particular') setClientType('bronze'); setDiscManual(0) }}>
+            <button style={ST.tipoBtn(clientType==='distribuidor', '#334155')}
+              onClick={()=>{ setClientType('distribuidor'); setLevel(''); setDiscManual(0) }}>
               🏢 Distribuidor
             </button>
           </div>
-          {clientType!=='particular' && (
+          {clientType==='particular' && (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, marginTop:6 }}>
               {[['bronze','🥉 Bronce'],['silver','🥈 Plata'],['gold','🥇 Oro']].map(([t,label]) => (
-                <button key={t} style={ST.nivelBtn(clientType===t, t)}
-                  onClick={()=>{ setClientType(t); setDiscManual(0) }}>
+                <button key={t} style={ST.nivelBtn(level===t, t)}
+                  onClick={()=>{ setLevel(level===t ? '' : t); setDiscManual(0) }}>
                   {label}<br/><span style={{ fontSize:11, opacity:.9 }}>−{DISCOUNTS[t]}%</span>
                 </button>
               ))}
