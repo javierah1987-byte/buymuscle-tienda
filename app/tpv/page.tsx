@@ -808,8 +808,8 @@ export default function TPVPage() {
                   style={{ width:110, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 8px', fontSize:16, textAlign:'right', fontWeight:700, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
               </div>
               <div style={{ display:'flex', gap:4 }}>
-                {[5,10,20,50].map(b => (
-                  <button key={b} onClick={()=>setEntregado(String(b))} style={{ flex:1, padding:'7px 0', fontSize:13, fontWeight:700, background:'#eef2ff', color:'#3730a3', border:'1px solid #c7d2fe', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>{b} €</button>
+                {[[5,'#9e9e9e'],[10,'#e53935'],[20,'#1e88e5'],[50,'#fb8c00']].map(([b,c]) => (
+                  <button key={b} onClick={()=>setEntregado(String(b))} style={{ flex:1, padding:'7px 0', fontSize:13, fontWeight:800, background:c, color:'white', border:'none', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>{b} €</button>
                 ))}
                 <button onClick={()=>setEntregado(total.toFixed(2))} style={{ flex:1, padding:'7px 0', fontSize:12, fontWeight:700, background:'#dcfce7', color:'#166534', border:'1px solid #bbf7d0', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>Exacto</button>
               </div>
