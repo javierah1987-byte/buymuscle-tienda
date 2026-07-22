@@ -40,6 +40,7 @@ export default function TPVPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerNif, setCustomerNif] = useState('')
   const [discManual, setDiscManual] = useState(0)
+  const [entregado, setEntregado] = useState('') // efectivo entregado por el cliente (para calcular cambio)
   const [saving, setSaving] = useState(false)
   const [ticket, setTicket] = useState(null)
   const [variantModal, setVariantModal] = useState(null)
@@ -145,7 +146,7 @@ export default function TPVPage() {
   // Teclado rápido
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') { setLines([]); setSearch(''); if (searchRef.current) { searchRef.current.value = ''; searchRef.current.focus() } }
+      if (e.key === 'Escape') { setLines([]); setSearch(''); setEntregado(''); if (searchRef.current) { searchRef.current.value = ''; searchRef.current.focus() } }
       if (e.key === 'Enter' && lines.length > 0 && !saving && !showApertura && !showCierre && !showDevolucion) cobrar()
     }
     window.addEventListener('keydown', handler)
@@ -236,7 +237,7 @@ export default function TPVPage() {
       }
 
       setTicket({ num: data.order_number, lines: lines.map(l => ({ ...l, unitPrice: l.basePrice * (1 - discount / 100) })), total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
-      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0)
+      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0); setEntregado('')
       await recargarVentas(cajaAbierta?.opened_at)
     } catch (e) { alert('Error al cobrar: ' + e.message) }
     setSaving(false)
@@ -373,8 +374,8 @@ export default function TPVPage() {
     grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, padding:8, background:'#e2e8f0', alignContent:'start' },
     card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:'8px 6px', alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, boxShadow:'0 2px 8px rgba(0,0,0,0.08)', border:'1px solid #e2e8f0' },
     right: { display:'flex', flexDirection:'column', background:'white', borderLeft:'1px solid #e2e8f0' },
-    clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'#f1f5f9', flexShrink:0 },
-    clientBtn: (active, type) => ({ padding:'7px 4px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?CLIENT_COLORS[type]:'#f8fafc', color:active?'white':'#374151', fontFamily:'inherit' }),
+    tipoBtn: (active, activeColor) => ({ padding:'14px 8px', fontSize:14, fontWeight:800, textTransform:'uppercase', letterSpacing:0.5, border:'2px solid '+(active?(activeColor||'#ff1e41'):'#e2e8f0'), cursor:'pointer', background:active?(activeColor||'#ff1e41'):'white', color:active?'white':'#374151', fontFamily:'inherit', borderRadius:8, transition:'all 0.15s', boxShadow:active?'0 2px 8px rgba(0,0,0,0.15)':'none' }),
+    nivelBtn: (active, type) => ({ padding:'10px 4px', fontSize:12, fontWeight:800, textTransform:'uppercase', lineHeight:1.3, border:'2px solid '+(active?CLIENT_COLORS[type]:'#e2e8f0'), cursor:'pointer', background:active?CLIENT_COLORS[type]:'white', color:active?(type==='bronze'?'white':'#111'):'#374151', fontFamily:'inherit', borderRadius:8, transition:'all 0.15s' }),
     ticket: { flex:1, overflowY:'auto', padding:'12px', background:'#fafafa' },
     lineRow: { display:'flex', alignItems:'center', gap:6, padding:'7px 0', borderBottom:'1px solid #f1f5f9' },
     footer: { borderTop:'1px solid #e2e8f0', padding:'12px', background:'white' },
@@ -679,7 +680,7 @@ export default function TPVPage() {
                   onClick={() => addLine(p)}
                   onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 12px rgba(255,30,65,0.3)'}
                   onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.3)'}>
-                  <div style={{ width:'100%', height:130, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:4, marginBottom:6, overflow:'hidden' }}>
+                  <div style={{ width:'100%', height:160, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:4, marginBottom:6, overflow:'hidden' }}>
                     <ProdImg url={p.image_url}/>
                   </div>
                   <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
@@ -699,14 +700,28 @@ export default function TPVPage() {
 
       {/* ══ PANEL DERECHO — TICKET ═════════════════════ */}
       <div style={ST.right}>
-        {/* Tipo de cliente */}
-        <div style={ST.clientRow}>
-          {['particular','bronze','silver','gold'].map(t => (
-            <button key={t} style={ST.clientBtn(clientType===t, t)} onClick={()=>{ setClientType(t); setDiscManual(0) }}>
-              {t==='particular'?'👤':t==='bronze'?'🥉':t==='silver'?'🥈':'🥇'}<br/>{t.toUpperCase()}<br/>
-              <span style={{ fontSize:8, opacity:.7 }}>{DISCOUNTS[t]>0?'-'+DISCOUNTS[t]+'%':'PVP'}</span>
+        {/* Tipo de cliente: PARTICULAR / DISTRIBUIDOR */}
+        <div style={{ padding:8, background:'#f1f5f9', borderBottom:'1px solid #e2e8f0', flexShrink:0 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+            <button style={ST.tipoBtn(clientType==='particular')}
+              onClick={()=>{ setClientType('particular'); setDiscManual(0) }}>
+              👤 Particular
             </button>
-          ))}
+            <button style={ST.tipoBtn(clientType!=='particular', '#334155')}
+              onClick={()=>{ if (clientType==='particular') setClientType('bronze'); setDiscManual(0) }}>
+              🏢 Distribuidor
+            </button>
+          </div>
+          {clientType!=='particular' && (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, marginTop:6 }}>
+              {[['bronze','🥉 Bronce'],['silver','🥈 Plata'],['gold','🥇 Oro']].map(([t,label]) => (
+                <button key={t} style={ST.nivelBtn(clientType===t, t)}
+                  onClick={()=>{ setClientType(t); setDiscManual(0) }}>
+                  {label}<br/><span style={{ fontSize:11, opacity:.9 }}>−{DISCOUNTS[t]}%</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Nombre cliente + NIF en una fila */}
@@ -780,6 +795,29 @@ export default function TPVPage() {
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:17, fontWeight:900, color:'#ff1e41', borderTop:'1px solid #333', paddingTop:6, marginTop:4 }}>
                 <span>TOTAL</span><span>{total.toFixed(2)} €</span>
               </div>
+            </div>
+          )}
+
+          {/* Cambio en efectivo — solo con pago en efectivo */}
+          {payMethod==='efectivo' && lines.length>0 && (
+            <div style={{ marginBottom:8, padding:'8px 10px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:6, display:'flex', flexDirection:'column', gap:5 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+                <span style={{ fontSize:11, color:'#555', textTransform:'uppercase', fontWeight:700 }}>Entregado €</span>
+                <input type="number" min="0" step="0.01" value={entregado} onChange={e=>setEntregado(e.target.value)}
+                  placeholder="0.00"
+                  style={{ width:110, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 8px', fontSize:16, textAlign:'right', fontWeight:700, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+              </div>
+              {entregado!=='' && !isNaN(Number(entregado)) && (
+                Number(entregado) >= total ? (
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:900, color:'#16a34a' }}>
+                    <span>Cambio</span><span>{(Number(entregado)-total).toFixed(2)} €</span>
+                  </div>
+                ) : (
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:14, fontWeight:800, color:'#ef4444' }}>
+                    <span>Falta</span><span>{(total-Number(entregado)).toFixed(2)} €</span>
+                  </div>
+                )
+              )}
             </div>
           )}
 
