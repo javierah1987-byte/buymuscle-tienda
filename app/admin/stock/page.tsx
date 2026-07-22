@@ -256,7 +256,7 @@ export default function AdminStock() {
     // Variantes por SABOR: mismo cliente anon y misma query que el TPV. Se traen todas
     // las variantes activas y se agrupan por product_id para pintar el desglose por sabor.
     db.from('product_variants')
-      .select('product_id,stock,attribute_values(value,attribute_types(name))')
+      .select('product_id,stock,price_modifier,attribute_values(value,attribute_types(name))')
       .eq('active', true)
       .then(({ data }) => {
         const map = {}
@@ -271,7 +271,7 @@ export default function AdminStock() {
           }
           if (!flavor) continue
           if (!map[v.product_id]) map[v.product_id] = []
-          map[v.product_id].push({ flavor, stock: Number(v.stock) || 0 })
+          map[v.product_id].push({ flavor, stock: Number(v.stock) || 0, mod: Number(v.price_modifier) || 0 })
         }
         for (const pid in map) map[pid].sort((a,b) => String(a.flavor).localeCompare(String(b.flavor)))
         setVariantsByProduct(map)
@@ -421,13 +421,19 @@ export default function AdminStock() {
                       <td style={{ padding:'6px 12px', maxWidth:220 }}>
                         <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3, color:'#111' }}>{p.name}</div>
                         {variantsByProduct[p.id]?.length > 0 && (
-                          <div style={{ fontSize:10, color:'#999', lineHeight:1.4, marginTop:3 }}>
-                            {variantsByProduct[p.id].map((v,i)=>(
-                              <span key={i}>
-                                {i>0 && ' · '}
-                                {v.flavor}: <span style={{ color:'#555', fontWeight:700 }}>{v.stock}</span>
-                              </span>
-                            ))}
+                          <div style={{ marginTop:4, display:'flex', flexDirection:'column', gap:2 }}>
+                            {variantsByProduct[p.id].map((v,i)=>{
+                              const base = (p.on_sale && p.sale_price ? Number(p.sale_price) : Number(p.price_incl_tax)) + (v.mod||0)
+                              const cost = Number(p.cost_price)||0
+                              return (
+                                <div key={i} style={{ fontSize:10, color:'#555', display:'flex', gap:6, flexWrap:'wrap', alignItems:'center', background:'#f1f5f9', borderRadius:3, padding:'2px 6px' }}>
+                                  <span style={{ fontWeight:700, color:'#111' }}>{v.flavor}</span>
+                                  <span style={{ color: v.stock<=5?'#dc2626':'#16a34a', fontWeight:700 }}>{v.stock} uds</span>
+                                  {cost>0 && <span>· {cost.toFixed(2)}€ coste</span>}
+                                  <span>· {base.toFixed(2)}€ venta</span>
+                                </div>
+                              )
+                            })}
                           </div>
                         )}
                       </td>
