@@ -2,6 +2,7 @@
 'use client'
 import{useCart}from'@/lib/cart'
 import Link from'next/link'
+import { thumbUrl } from '@/lib/thumb'
 import{useEffect}from'react'
 export default function SideCart({open,onClose}){
   const{items,remove,updateQty}=useCart()
@@ -36,7 +37,7 @@ export default function SideCart({open,onClose}){
         :items.map(i=>(
           <div key={i.id+(i.variant||'')} style={{display:'flex',gap:12,padding:'14px 0',borderBottom:'1px solid #f5f5f5',alignItems:'center'}}>
             <Link href={'/producto/'+i.id} onClick={onClose}>
-              {i.image?<img src={i.image} alt={i.name} style={{width:60,height:60,objectFit:'contain',background:'#f9f9f9',flexShrink:0}}/>
+              {i.image?<img src={thumbUrl(i.image, 120)} alt={i.name} style={{width:60,height:60,objectFit:'contain',background:'#f9f9f9',flexShrink:0}}/>
               :<div style={{width:60,height:60,background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>📦</div>}
             </Link>
             <div style={{flex:1,minWidth:0}}>

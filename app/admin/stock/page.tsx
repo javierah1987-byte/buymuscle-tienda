@@ -3,6 +3,7 @@
 import { createClient } from '@supabase/supabase-js'
 const db = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { thumbUrl } from '@/lib/thumb'
 
 
 function FacturaModal({ onClose, allProducts, onStockUpdated }) {
@@ -414,7 +415,7 @@ export default function AdminStock() {
                     <tr key={p.id} style={{ borderBottom:'1px solid #f5f5f5', background:isSavedNow?'#f0fff4':hasEdits?'#fffbf0':'white' }}>
                       <td style={{ padding:'6px 12px', width:84 }}>
                         {p.image_url
-                          ? <img src={p.image_url} alt="" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
+                          ? <img src={thumbUrl(p.image_url, 150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
                           : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
                       </td>
                       <td style={{ padding:'6px 12px', maxWidth:220 }}>
