@@ -240,6 +240,7 @@ export default function AdminStock() {
   const [showLow, setShowLow] = useState(false)
   const [saved, setSaved] = useState(null)
   const [showFactura, setShowFactura] = useState(false)
+  const [variantsByProduct, setVariantsByProduct] = useState({})
 
   const load = useCallback(() => {
     setLoading(true)
@@ -250,6 +251,29 @@ export default function AdminStock() {
         const cats = ['Todos', ...new Set(prods.map(p => p.categories?.name).filter(Boolean).sort())]
         setCategories(cats)
         setLoading(false)
+      })
+    // Variantes por SABOR: mismo cliente anon y misma query que el TPV. Se traen todas
+    // las variantes activas y se agrupan por product_id para pintar el desglose por sabor.
+    db.from('product_variants')
+      .select('product_id,stock,attribute_values(value,attribute_types(name))')
+      .eq('active', true)
+      .then(({ data }) => {
+        const map = {}
+        for (const v of (data || [])) {
+          // attribute_values puede venir como array (varios atributos por variante) u objeto.
+          const avs = Array.isArray(v.attribute_values) ? v.attribute_values : (v.attribute_values ? [v.attribute_values] : [])
+          let flavor = null
+          for (const av of avs) {
+            const at = av?.attribute_types
+            const atName = Array.isArray(at) ? at[0]?.name : at?.name
+            if (atName === 'Sabor') { flavor = av?.value; break }
+          }
+          if (!flavor) continue
+          if (!map[v.product_id]) map[v.product_id] = []
+          map[v.product_id].push({ flavor, stock: Number(v.stock) || 0 })
+        }
+        for (const pid in map) map[pid].sort((a,b) => String(a.flavor).localeCompare(String(b.flavor)))
+        setVariantsByProduct(map)
       })
   }, [])
 
@@ -388,13 +412,23 @@ export default function AdminStock() {
                   const isSavedNow = saved === p.id
                   return (
                     <tr key={p.id} style={{ borderBottom:'1px solid #f5f5f5', background:isSavedNow?'#f0fff4':hasEdits?'#fffbf0':'white' }}>
-                      <td style={{ padding:'6px 12px', width:48 }}>
+                      <td style={{ padding:'6px 12px', width:84 }}>
                         {p.image_url
-                          ? <img src={p.image_url} alt="" style={{ width:40, height:40, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
-                          : <div style={{ width:40, height:40, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>📦</div>}
+                          ? <img src={p.image_url} alt="" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
+                          : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
                       </td>
                       <td style={{ padding:'6px 12px', maxWidth:220 }}>
-                        <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3 }}>{p.name}</div>
+                        <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3, color:'#111' }}>{p.name}</div>
+                        {variantsByProduct[p.id]?.length > 0 && (
+                          <div style={{ fontSize:10, color:'#999', lineHeight:1.4, marginTop:3 }}>
+                            {variantsByProduct[p.id].map((v,i)=>(
+                              <span key={i}>
+                                {i>0 && ' · '}
+                                {v.flavor}: <span style={{ color:'#555', fontWeight:700 }}>{v.stock}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding:'6px 12px', fontSize:11, color:'#888' }}>{p.categories?.name||'—'}</td>
                       <td style={{ padding:'6px 12px' }}>

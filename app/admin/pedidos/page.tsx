@@ -10,6 +10,17 @@ const SL = { pending:'Pendiente', paid:'Pagado', processing:'Procesando', shippe
 const SC = { pending:'#f59e0b', paid:'#22c55e', processing:'#3b82f6', shipped:'#8b5cf6', delivered:'#22c55e', cancelled:'#ef4444', completed:'#22c55e' }
 const CHANNELS = { online_retail:'🌐 Tienda', online_distributor:'🤝 Dist.Online', tpv_retail:'🏪 TPV', tpv_distributor:'🏪 Dist.TPV' }
 
+// Método de pago → etiqueta (emoji + label + color). Fondo suave vía color+'20' (mismo patrón que SC/estado).
+const PAY = {
+  tarjeta:       { emoji:'💳', label:'Tarjeta',       color:'#4f46e5' },
+  efectivo:      { emoji:'💵', label:'Efectivo',      color:'#059669' },
+  bizum:         { emoji:'📱', label:'Bizum',         color:'#0891b2' },
+  transferencia: { emoji:'🏦', label:'Transferencia', color:'#b45309' },
+}
+const payOf  = m  => PAY[String(m ?? '').toLowerCase()] || { emoji:'—', label:'Pago', color:'#9ca3af' }
+const chanOf = ch => String(ch ?? '').startsWith('tpv_') ? { emoji:'🏪', label:'TPV', color:'#6b7280' } : { emoji:'🌐', label:'Online', color:'#2563eb' }
+const Pill   = d  => <span style={{display:'inline-flex',alignItems:'center',gap:4,background:d.color+'20',color:d.color,padding:'2px 8px',fontSize:10,fontWeight:700,textTransform:'uppercase',whiteSpace:'nowrap'}}>{d.emoji} {d.label}</span>
+
 export default function AdminPedidos() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -198,7 +209,7 @@ export default function AdminPedidos() {
                     <th style={{padding:'8px 10px',textAlign:'left'}}>
                       <input type="checkbox" checked={selected.length===orders.length&&orders.length>0} onChange={toggleAll}/>
                     </th>
-                    {['Pedido','Canal','Cliente','Fecha','Total','Estado','Acciones'].map(h => <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',color:'#888',letterSpacing:'0.05em'}}>{h}</th>)}
+                    {['Pedido','Canal','Cliente','Fecha','Total','Pago','Estado','Acciones'].map(h => <th key={h} style={{padding:'8px 10px',textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',color:'#888',letterSpacing:'0.05em'}}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -215,6 +226,12 @@ export default function AdminPedidos() {
                       </td>
                       <td style={{padding:'8px 10px',fontSize:11,color:'#999'}} onClick={()=>open(o)}>{fmt(o.created_at)}</td>
                       <td style={{padding:'8px 10px',fontSize:13,fontWeight:800}} onClick={()=>open(o)}>{Number(o.total).toFixed(2)} €</td>
+                      <td style={{padding:'8px 10px'}} onClick={()=>open(o)}>
+                        <div style={{display:'inline-flex',flexDirection:'column',gap:4,alignItems:'flex-start'}}>
+                          {Pill(payOf(o.payment_method))}
+                          {Pill(chanOf(o.channel))}
+                        </div>
+                      </td>
                       <td style={{padding:'8px 10px'}} onClick={()=>open(o)}>
                         <span style={{background:SC[o.status]+'20',color:SC[o.status],padding:'2px 8px',fontSize:10,fontWeight:700,textTransform:'uppercase'}}>{SL[o.status]||o.status}</span>
                       </td>
@@ -258,7 +275,11 @@ export default function AdminPedidos() {
 
               <div style={{marginBottom:'0.75rem'}}>
                 <div style={{fontSize:10,color:'#999',textTransform:'uppercase',marginBottom:3}}>Pago</div>
-                <div style={{fontSize:11,color:'#555'}}>{sel.payment_method||'—'} {sel.discount_pct>0&&<span style={{color:'#f59e0b',fontWeight:700}}>(-{sel.discount_pct}%)</span>}</div>
+                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                  {Pill(payOf(sel.payment_method))}
+                  {Pill(chanOf(sel.channel))}
+                  {sel.discount_pct>0&&<span style={{color:'#f59e0b',fontWeight:700,fontSize:11}}>(-{sel.discount_pct}%)</span>}
+                </div>
               </div>
 
               {lines.length>0&&(

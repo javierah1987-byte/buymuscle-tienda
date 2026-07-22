@@ -6,6 +6,22 @@ import TicketTPV from '@/components/TicketTPV'
 const DISCOUNTS = { particular:0, bronze:10, silver:15, gold:20 }
 const CLIENT_COLORS = { particular:'#555', bronze:'#cd7f32', silver:'#aaa', gold:'#ffd700' }
 
+// Imagen de producto con fallback: si la URL está rota o vacía, muestra 📦 (evita el icono de "imagen rota").
+// Además sirve una MINIATURA al vuelo (transformación de Supabase, ~200px, WebP en navegador) en lugar del
+// JPG original (hasta 2 MB) → la rejilla carga muchísimo más rápida.
+function thumbUrl(url) {
+  if (!url) return url
+  return url.includes('/object/public/')
+    ? url.replace('/object/public/', '/render/image/public/') + '?width=200&quality=60'
+    : url
+}
+function ProdImg({ url }) {
+  const [err, setErr] = useState(false)
+  return (url && !err)
+    ? <img src={thumbUrl(url)} alt="" loading="lazy" decoding="async" onError={()=>setErr(true)} style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}/>
+    : <span style={{ fontSize:24, opacity:.3 }}>📦</span>
+}
+
 export default function TPVPage() {
   // ── Productos y catálogo ──────────────────────────────
   const [products, setProducts] = useState([])
@@ -24,6 +40,7 @@ export default function TPVPage() {
   const [customerName, setCustomerName] = useState('')
   const [customerNif, setCustomerNif] = useState('')
   const [discManual, setDiscManual] = useState(0)
+  const [entregado, setEntregado] = useState('') // efectivo entregado por el cliente (para calcular cambio)
   const [saving, setSaving] = useState(false)
   const [ticket, setTicket] = useState(null)
   const [variantModal, setVariantModal] = useState(null)
@@ -129,7 +146,7 @@ export default function TPVPage() {
   // Teclado rápido
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') { setLines([]); setSearch(''); searchRef.current?.focus() }
+      if (e.key === 'Escape') { setLines([]); setSearch(''); setEntregado(''); if (searchRef.current) { searchRef.current.value = ''; searchRef.current.focus() } }
       if (e.key === 'Enter' && lines.length > 0 && !saving && !showApertura && !showCierre && !showDevolucion) cobrar()
     }
     window.addEventListener('keydown', handler)
@@ -152,7 +169,8 @@ export default function TPVPage() {
 
   const _addToLines = (product, variantLabel, variantId = null, stockAvail = null) => {
     const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price_incl_tax)
-    const unitPrice = basePrice * (1 - discount / 100)
+    // Guardamos basePrice (PVP sin descuento). El descuento se aplica EN VIVO al mostrar y al cobrar,
+    // así cambiar de nivel (particular/bronze/silver/gold) recalcula el total al momento.
     // Stock disponible de ESTE producto/variante. Avisamos AL TICAR, no al cobrar.
     const avail = Number(stockAvail != null ? stockAvail : product.stock) || 0
     const key = product.id + '|' + variantLabel
@@ -165,7 +183,7 @@ export default function TPVPage() {
     setLines(prev => {
       const ex = prev.find(l => l.key === key)
       if (ex) return prev.map(l => l.key === key ? { ...l, qty: l.qty + 1 } : l)
-      return [...prev, { key, product, qty: 1, unitPrice, variantLabel, variantId, stockAvail: avail }]
+      return [...prev, { key, product, qty: 1, basePrice, variantLabel, variantId, stockAvail: avail }]
     })
     setVariantModal(null)
   }
@@ -181,8 +199,11 @@ export default function TPVPage() {
     setLines(prev => prev.map(l => l.key === key ? { ...l, qty } : l))
   }
 
-  // Los precios (unitPrice) llevan el IGIC INCLUIDO (PVP). Desglosamos hacia dentro:
-  const total = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0)
+  // Precios (basePrice) con IGIC INCLUIDO (PVP). El descuento se aplica EN VIVO, reactivo al nivel
+  // de cliente (bronze/silver/gold) y al dto manual → si cambias de nivel, el total se recalcula.
+  const brutoTotal = lines.reduce((s, l) => s + l.basePrice * l.qty, 0)
+  const subtotalPVP = brutoTotal / 1.07
+  const total = brutoTotal * (1 - discount / 100)
   const subtotal = total / 1.07
   const igic = total - subtotal
 
@@ -215,8 +236,8 @@ export default function TPVPage() {
         throw new Error(data.error || 'Error al procesar la venta')
       }
 
-      setTicket({ num: data.order_number, lines: [...lines], total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
-      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0)
+      setTicket({ num: data.order_number, lines: lines.map(l => ({ ...l, unitPrice: l.basePrice * (1 - discount / 100) })), total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
+      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0); setEntregado('')
       await recargarVentas(cajaAbierta?.opened_at)
     } catch (e) { alert('Error al cobrar: ' + e.message) }
     setSaving(false)
@@ -353,8 +374,8 @@ export default function TPVPage() {
     grid: { flex:1, overflowY:'auto', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, padding:8, background:'#e2e8f0', alignContent:'start' },
     card: { background:'white', cursor:'pointer', display:'flex', flexDirection:'column', padding:'8px 6px', alignItems:'center', textAlign:'center', transition:'all 0.15s', borderRadius:8, boxShadow:'0 2px 8px rgba(0,0,0,0.08)', border:'1px solid #e2e8f0' },
     right: { display:'flex', flexDirection:'column', background:'white', borderLeft:'1px solid #e2e8f0' },
-    clientRow: { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:1, background:'#f1f5f9', flexShrink:0 },
-    clientBtn: (active, type) => ({ padding:'7px 4px', fontSize:10, fontWeight:700, textTransform:'uppercase', border:'none', cursor:'pointer', background:active?CLIENT_COLORS[type]:'#f8fafc', color:active?'white':'#374151', fontFamily:'inherit' }),
+    tipoBtn: (active, activeColor) => ({ padding:'14px 8px', fontSize:14, fontWeight:800, textTransform:'uppercase', letterSpacing:0.5, border:'2px solid '+(active?(activeColor||'#ff1e41'):'#e2e8f0'), cursor:'pointer', background:active?(activeColor||'#ff1e41'):'white', color:active?'white':'#374151', fontFamily:'inherit', borderRadius:8, transition:'all 0.15s', boxShadow:active?'0 2px 8px rgba(0,0,0,0.15)':'none' }),
+    nivelBtn: (active, type) => ({ padding:'10px 4px', fontSize:12, fontWeight:800, textTransform:'uppercase', lineHeight:1.3, border:'2px solid '+(active?CLIENT_COLORS[type]:'#e2e8f0'), cursor:'pointer', background:active?CLIENT_COLORS[type]:'white', color:active?(type==='bronze'?'white':'#111'):'#374151', fontFamily:'inherit', borderRadius:8, transition:'all 0.15s' }),
     ticket: { flex:1, overflowY:'auto', padding:'12px', background:'#fafafa' },
     lineRow: { display:'flex', alignItems:'center', gap:6, padding:'7px 0', borderBottom:'1px solid #f1f5f9' },
     footer: { borderTop:'1px solid #e2e8f0', padding:'12px', background:'white' },
@@ -600,8 +621,8 @@ export default function TPVPage() {
         {/* Header */}
         <div style={ST.header}>
           <a href="/" style={{ color:'#ff1e41', fontWeight:900, fontSize:18, textDecoration:'none' }}>BM</a>
-          <input ref={searchRef} style={ST.searchInput} placeholder="Buscar producto..." value={search}
-            onChange={e=>{ const v=e.target.value; clearTimeout(searchTimer.current); searchTimer.current=setTimeout(()=>setSearch(v),200) }} autoFocus/>
+          <input ref={searchRef} style={ST.searchInput} placeholder="Buscar producto..." defaultValue={search}
+            onChange={e=>{ const v=e.target.value; clearTimeout(searchTimer.current); searchTimer.current=setTimeout(()=>setSearch(v),120) }} autoFocus/>
           <span style={{ fontSize:10, color:'#555', whiteSpace:'nowrap' }}>{filtered.length} prods</span>
           {/* Botones rápidos de caja */}
           <div style={{ display:'flex', gap:4 }}>
@@ -651,7 +672,7 @@ export default function TPVPage() {
           <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', color:'#555' }}>Cargando...</div>
         ) : (
           <div style={ST.grid}>
-            {filtered.map(p => {
+            {filtered.slice(0, 90).map(p => {
               const price = p.on_sale && p.sale_price ? Number(p.sale_price) : Number(p.price_incl_tax)
               const cat = p.categories?.name || ''
               return (
@@ -659,8 +680,8 @@ export default function TPVPage() {
                   onClick={() => addLine(p)}
                   onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 12px rgba(255,30,65,0.3)'}
                   onMouseLeave={e=>e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.3)'}>
-                  <div style={{ width:'100%', height:130, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:4, marginBottom:6, overflow:'hidden' }}>
-                    {p.image_url ? <img src={p.image_url} alt="" loading="lazy" style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}/> : <span style={{ fontSize:24, opacity:.3 }}>📦</span>}
+                  <div style={{ width:'100%', height:160, background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:4, marginBottom:6, overflow:'hidden' }}>
+                    <ProdImg url={p.image_url}/>
                   </div>
                   <div style={{ fontSize:10, color:'#64748b', marginBottom:2, lineHeight:1.2, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{p.name}</div>
                   <div style={{ fontSize:13, fontWeight:900, color:'#ff1e41', marginTop:'auto', padding:'4px 0 6px' }}>{price.toFixed(2)}€</div>
@@ -668,20 +689,39 @@ export default function TPVPage() {
                 </div>
               )
             })}
+            {filtered.length > 90 && (
+              <div style={{ gridColumn:'1 / -1', flexBasis:'100%', width:'100%', textAlign:'center', color:'#94a3b8', fontSize:11, padding:'10px 0' }}>
+                Mostrando 90 de {filtered.length} · escribe en el buscador para afinar
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* ══ PANEL DERECHO — TICKET ═════════════════════ */}
       <div style={ST.right}>
-        {/* Tipo de cliente */}
-        <div style={ST.clientRow}>
-          {['particular','bronze','silver','gold'].map(t => (
-            <button key={t} style={ST.clientBtn(clientType===t, t)} onClick={()=>{ setClientType(t); setDiscManual(0) }}>
-              {t==='particular'?'👤':t==='bronze'?'🥉':t==='silver'?'🥈':'🥇'}<br/>{t.toUpperCase()}<br/>
-              <span style={{ fontSize:8, opacity:.7 }}>{DISCOUNTS[t]>0?'-'+DISCOUNTS[t]+'%':'PVP'}</span>
+        {/* Tipo de cliente: PARTICULAR / DISTRIBUIDOR */}
+        <div style={{ padding:8, background:'#f1f5f9', borderBottom:'1px solid #e2e8f0', flexShrink:0 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+            <button style={ST.tipoBtn(clientType==='particular')}
+              onClick={()=>{ setClientType('particular'); setDiscManual(0) }}>
+              👤 Particular
             </button>
-          ))}
+            <button style={ST.tipoBtn(clientType!=='particular', '#334155')}
+              onClick={()=>{ if (clientType==='particular') setClientType('bronze'); setDiscManual(0) }}>
+              🏢 Distribuidor
+            </button>
+          </div>
+          {clientType!=='particular' && (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, marginTop:6 }}>
+              {[['bronze','🥉 Bronce'],['silver','🥈 Plata'],['gold','🥇 Oro']].map(([t,label]) => (
+                <button key={t} style={ST.nivelBtn(clientType===t, t)}
+                  onClick={()=>{ setClientType(t); setDiscManual(0) }}>
+                  {label}<br/><span style={{ fontSize:11, opacity:.9 }}>−{DISCOUNTS[t]}%</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Nombre cliente + NIF en una fila */}
@@ -707,14 +747,14 @@ export default function TPVPage() {
                   <div style={{ fontSize:12, color:'#111', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500 }}>
                     {l.product.name}{l.variantLabel?' – '+l.variantLabel:''}
                   </div>
-                  <div style={{ fontSize:10, color:'#6b7280' }}>{l.unitPrice.toFixed(2)}€/ud</div>
+                  <div style={{ fontSize:10, color:'#6b7280' }}>{(l.basePrice*(1-discount/100)).toFixed(2)}€/ud</div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:3, flexShrink:0 }}>
                   <button onClick={()=>updateQty(l.key, l.qty-1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>−</button>
                   <span style={{ width:20, textAlign:'center', fontSize:13, fontWeight:700, color:'#111' }}>{l.qty}</span>
                   <button onClick={()=>updateQty(l.key, l.qty+1)} style={{ width:26, height:26, border:'1px solid #d1d5db', background:'white', color:'#111', cursor:'pointer', fontSize:14, padding:0, borderRadius:4 }}>+</button>
                 </div>
-                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:56, textAlign:'right', flexShrink:0 }}>{(l.unitPrice*l.qty).toFixed(2)}€</span>
+                <span style={{ fontSize:13, fontWeight:700, color:'#111', width:56, textAlign:'right', flexShrink:0 }}>{(l.basePrice*(1-discount/100)*l.qty).toFixed(2)}€</span>
                 <button onClick={()=>updateQty(l.key, 0)} style={{ background:'none', border:'none', color:'#9ca3af', cursor:'pointer', fontSize:16, padding:0, flexShrink:0 }}>✕</button>
               </div>
             ))
@@ -744,10 +784,10 @@ export default function TPVPage() {
           {lines.length > 0 && (
             <div style={{ display:'flex', flexDirection:'column', gap:2, marginBottom:8 }}>
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#555' }}>
-                <span>Subtotal</span><span>{subtotal.toFixed(2)} €</span>
+                <span>Subtotal</span><span>{subtotalPVP.toFixed(2)} €</span>
               </div>
               {discount > 0 && <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#f59e0b' }}>
-                <span>Descuento {discount}%</span><span>-{(subtotal*discount/100).toFixed(2)} €</span>
+                <span>Descuento {discount}%</span><span>-{(subtotalPVP*discount/100).toFixed(2)} €</span>
               </div>}
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#555' }}>
                 <span>IGIC 7%</span><span>{igic.toFixed(2)} €</span>
@@ -755,6 +795,29 @@ export default function TPVPage() {
               <div style={{ display:'flex', justifyContent:'space-between', fontSize:17, fontWeight:900, color:'#ff1e41', borderTop:'1px solid #333', paddingTop:6, marginTop:4 }}>
                 <span>TOTAL</span><span>{total.toFixed(2)} €</span>
               </div>
+            </div>
+          )}
+
+          {/* Cambio en efectivo — solo con pago en efectivo */}
+          {payMethod==='efectivo' && lines.length>0 && (
+            <div style={{ marginBottom:8, padding:'8px 10px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:6, display:'flex', flexDirection:'column', gap:5 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+                <span style={{ fontSize:11, color:'#555', textTransform:'uppercase', fontWeight:700 }}>Entregado €</span>
+                <input type="number" min="0" step="0.01" value={entregado} onChange={e=>setEntregado(e.target.value)}
+                  placeholder="0.00"
+                  style={{ width:110, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 8px', fontSize:16, textAlign:'right', fontWeight:700, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+              </div>
+              {entregado!=='' && !isNaN(Number(entregado)) && (
+                Number(entregado) >= total ? (
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:900, color:'#16a34a' }}>
+                    <span>Cambio</span><span>{(Number(entregado)-total).toFixed(2)} €</span>
+                  </div>
+                ) : (
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:14, fontWeight:800, color:'#ef4444' }}>
+                    <span>Falta</span><span>{(total-Number(entregado)).toFixed(2)} €</span>
+                  </div>
+                )
+              )}
             </div>
           )}
 
