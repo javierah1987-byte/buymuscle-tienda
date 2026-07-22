@@ -27,7 +27,7 @@ export default function AdminPedidos() {
   const [sel, setSel] = useState(null)
   const [lines, setLines] = useState([])
   const [filter, setFilter] = useState('all')
-  const [tab, setTab] = useState('online') // online | tpv
+  const [tab, setTab] = useState('todos') // todos | online | particular | distribuidor
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -39,9 +39,10 @@ export default function AdminPedidos() {
   const load = useCallback(async () => {
     setLoading(true)
     setSel(null); setSelected([])
-    const channels = tab === 'online'
-      ? ['online_retail','online_distributor']
-      : ['tpv_retail','tpv_distributor']
+    const channels = tab === 'todos' ? ['online_retail','online_distributor','tpv_retail','tpv_distributor']
+      : tab === 'online' ? ['online_retail','online_distributor']
+      : tab === 'particular' ? ['tpv_retail']
+      : ['tpv_distributor']
 
     let q = db.from('orders').select('*').in('channel', channels).order('created_at',{ascending:false}).limit(200)
     if (filter !== 'all') q = q.eq('status', filter)
@@ -151,7 +152,7 @@ export default function AdminPedidos() {
 
         {/* Tabs online/TPV */}
         <div style={{display:'flex',gap:0,marginBottom:'1rem',borderBottom:'2px solid #e8e8e8'}}>
-          {[['online','🌐 Online'],['tpv','🏪 TPV']].map(([k,l]) => (
+          {[['todos','📋 Todos'],['online','🌐 Online'],['particular','🏪 TPV Particulares'],['distribuidor','🤝 TPV Distribuidores']].map(([k,l]) => (
             <button key={k} onClick={() => setTab(k)} style={{padding:'8px 20px',border:'none',background:'none',fontWeight:tab===k?900:400,borderBottom:tab===k?'2px solid var(--red)':'2px solid transparent',color:tab===k?'var(--red)':'#888',cursor:'pointer',fontFamily:'inherit',fontSize:13,marginBottom:-2}}>
               {l}
             </button>
