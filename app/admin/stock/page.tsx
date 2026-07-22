@@ -243,6 +243,8 @@ export default function AdminStock() {
   const [showFactura, setShowFactura] = useState(false)
   const [variantsByProduct, setVariantsByProduct] = useState({})
   const [expanded, setExpanded] = useState({})
+  const [catList, setCatList] = useState([])
+  const [deleting, setDeleting] = useState({})
   // Ediciones de stock por VARIANTE (sabor), indexadas por variantId — independientes
   // de las de producto (edits/saving/saved), para editar cada sabor por separado.
   const [vEdits, setVEdits] = useState({})
@@ -282,6 +284,8 @@ export default function AdminStock() {
         for (const pid in map) map[pid].sort((a,b) => String(a.flavor).localeCompare(String(b.flavor)))
         setVariantsByProduct(map)
       })
+    // Lista de categorías (id + nombre) para el desplegable editable de cada fila.
+    db.from('categories').select('id,name').order('name').then(({ data }) => setCatList(data || []))
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -313,6 +317,8 @@ export default function AdminStock() {
     if (changes.sale_price !== undefined) update.sale_price = changes.sale_price===''?null:Number(changes.sale_price)
     if (changes.cost_price !== undefined) update.cost_price = changes.cost_price===''?null:Number(changes.cost_price)
     if (changes.active !== undefined) update.active = changes.active
+    if (changes.name !== undefined && String(changes.name).trim()) update.name = String(changes.name).trim()
+    if (changes.category_id !== undefined) update.category_id = changes.category_id===''?null:Number(changes.category_id)
     if (Object.keys(update).length === 0) { setEdits(e => { const n={...e}; delete n[p.id]; return n }); return }
 
     setSaving(s => ({ ...s, [p.id]: true }))
@@ -333,9 +339,30 @@ export default function AdminStock() {
       const d = await res.json().catch(() => ({}))
       alert('No se pudo guardar: ' + (d.error || ('HTTP ' + res.status))); return
     }
-    setProducts(ps => ps.map(x => x.id===p.id ? {...x,...update} : x))
+    setProducts(ps => ps.map(x => x.id===p.id ? {...x,...update, categories: update.category_id!==undefined ? {name: catList.find(c=>c.id===Number(update.category_id))?.name || null} : x.categories} : x))
     setEdits(e => { const n={...e}; delete n[p.id]; return n })
     setSaved(p.id); setTimeout(()=>setSaved(null), 2000)
+  }
+
+  // Eliminar producto: la API borra, o desactiva si tiene ventas/movimientos (conserva historial).
+  async function del(p) {
+    if (!confirm(`¿Eliminar "${p.name}"?\n\nSi tiene ventas registradas se DESACTIVARÁ en su lugar (para no perder el historial).`)) return
+    setDeleting(s => ({ ...s, [p.id]: true }))
+    let res
+    try {
+      res = await fetch('/api/admin/products?id=' + p.id, { method: 'DELETE', credentials: 'same-origin' })
+    } catch (e) {
+      setDeleting(s => ({ ...s, [p.id]: false })); alert('Error de red al eliminar: ' + (e?.message || e)); return
+    }
+    setDeleting(s => ({ ...s, [p.id]: false }))
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) { alert('No se pudo eliminar: ' + (d.error || ('HTTP ' + res.status))); return }
+    if (d.softDeleted) {
+      alert(`"${p.name}" tenía ventas → se ha DESACTIVADO (no borrado) para conservar el historial.`)
+      setProducts(ps => ps.map(x => x.id===p.id ? { ...x, active: false } : x))
+    } else {
+      setProducts(ps => ps.filter(x => x.id !== p.id))
+    }
   }
 
   // Guardado de una VARIANTE (sabor): manda SOLO el stock del sabor por la MISMA API admin
@@ -484,7 +511,13 @@ export default function AdminStock() {
                             {p.active?'✓ ACTIVO':'✗ INACT.'}
                           </span>
                         </td>
-                        <td style={{ padding:'6px 12px', fontSize:11, color:'#bbb', fontWeight:700, whiteSpace:'nowrap' }}>{isOpen?'▲ cerrar':'▼ ver'}</td>
+                        <td style={{ padding:'6px 12px', fontSize:11, color:'#bbb', fontWeight:700, whiteSpace:'nowrap' }}>
+                          <span style={{ marginRight:8 }}>{isOpen?'▲ cerrar':'▼ ver'}</span>
+                          <button onClick={e=>{e.stopPropagation();del(p)}} disabled={deleting[p.id]} title="Eliminar producto"
+                            style={{ padding:'4px 8px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:12, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
+                            {deleting[p.id]?'⏳':'🗑️'}
+                          </button>
+                        </td>
                       </tr>
                     ]
                     if (isOpen) vars.forEach(v=>{
@@ -547,10 +580,17 @@ export default function AdminStock() {
                           ? <img src={thumbUrl(p.image_url, 150)} alt="" loading="lazy" decoding="async" style={{ width:64, height:64, objectFit:'contain', borderRadius:4 }} onError={e=>e.target.style.display='none'}/>
                           : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
                       </td>
-                      <td style={{ padding:'6px 12px', maxWidth:220 }}>
-                        <div style={{ fontSize:12, fontWeight:600, lineHeight:1.3, color:'#111' }}>{p.name}</div>
+                      <td style={{ padding:'6px 12px', maxWidth:240 }}>
+                        <input value={getVal(p,'name')||''} onChange={e=>edit(p.id,'name',e.target.value)} title="Nombre del producto"
+                          style={{ width:'100%', minWidth:160, padding:'4px 6px', border:'1px solid '+(edits[p.id]?.name!==undefined?'#3b82f6':'#eee'), fontSize:12, fontWeight:600, color:'#111', fontFamily:'inherit', borderRadius:3 }}/>
                       </td>
-                      <td style={{ padding:'6px 12px', fontSize:11, color:'#888' }}>{p.categories?.name||'—'}</td>
+                      <td style={{ padding:'6px 12px' }}>
+                        <select value={getVal(p,'category_id')??''} onChange={e=>edit(p.id,'category_id',e.target.value)} title="Categoría"
+                          style={{ maxWidth:140, padding:'4px', border:'1px solid '+(edits[p.id]?.category_id!==undefined?'#3b82f6':'#eee'), fontSize:11, color:'#555', fontFamily:'inherit', borderRadius:3, background:'white' }}>
+                          <option value="">— sin categoría —</option>
+                          {catList.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </td>
                       <td style={{ padding:'6px 12px' }}>
                         <input type="number" min="0" value={getVal(p,'stock')} onChange={e=>edit(p.id,'stock',e.target.value)}
                           style={{ width:70, padding:'4px 6px', border:'1px solid '+(Number(stock)<=5?'#ef4444':'#ddd'), fontSize:13, fontWeight:700, textAlign:'center', color:Number(stock)===0?'#ef4444':Number(stock)<=5?'#f59e0b':'#111', fontFamily:'inherit' }}/>
@@ -584,15 +624,19 @@ export default function AdminStock() {
                           {isActive?'✓ ACTIVO':'✗ INACT.'}
                         </button>
                       </td>
-                      <td style={{ padding:'6px 12px' }}>
+                      <td style={{ padding:'6px 12px', whiteSpace:'nowrap' }}>
                         {isSavedNow
-                          ? <span style={{ fontSize:11, color:'#22c55e', fontWeight:700 }}>✓ Guardado</span>
+                          ? <span style={{ fontSize:11, color:'#22c55e', fontWeight:700 }}>✓</span>
                           : hasEdits
                           ? <button onClick={()=>save(p)} disabled={saving[p.id]}
-                              style={{ padding:'5px 14px', background:'#ff1e41', color:'white', border:'none', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
-                              {saving[p.id]?'⏳':'💾 Guardar'}
+                              style={{ padding:'5px 12px', background:'#ff1e41', color:'white', border:'none', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
+                              {saving[p.id]?'⏳':'💾'}
                             </button>
-                          : <span style={{ fontSize:11, color:'#ddd' }}>—</span>}
+                          : null}
+                        <button onClick={()=>del(p)} disabled={deleting[p.id]} title="Eliminar producto"
+                          style={{ marginLeft:6, padding:'5px 9px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
+                          {deleting[p.id]?'⏳':'🗑️'}
+                        </button>
                       </td>
                     </tr>
                   )

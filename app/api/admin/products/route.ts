@@ -147,3 +147,30 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+// DELETE -> borrar producto. Si tiene ventas (order_lines) o movimientos de stock
+// (FK RESTRICT), NO se puede borrar sin perder historial => se DESACTIVA en su lugar.
+export async function DELETE(req: Request) {
+  const admin = await getAdminUser()
+  if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id obligatorio' }, { status: 400 })
+
+  const db = svc()
+  try {
+    const { count: sales } = await db.from('order_lines').select('product_id', { count: 'exact', head: true }).eq('product_id', id)
+    const { count: movs } = await db.from('stock_movements').select('product_id', { count: 'exact', head: true }).eq('product_id', id)
+    if ((sales || 0) > 0 || (movs || 0) > 0) {
+      const { error } = await db.from('products').update({ active: false }).eq('id', id)
+      if (error) throw new Error(error.message)
+      return NextResponse.json({ ok: true, softDeleted: true })
+    }
+    const { error } = await db.from('products').delete().eq('id', id)
+    if (error) throw new Error(error.message)
+    return NextResponse.json({ ok: true, deleted: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
