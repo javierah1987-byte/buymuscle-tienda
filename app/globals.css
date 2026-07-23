@@ -317,16 +317,23 @@ table { width: 100%; overflow-x: auto; display: block; }
 }
 
 /* ── HOME REDESIGN (hero zone + paneles editoriales + tiles) ── */
-/* S1 · slider ~66% + columna lateral ~33%, misma altura total */
-.hero-zone { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: stretch; }
-.side-banners { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.side-banner { flex: 1; position: relative; overflow: hidden; border-radius: 4px; display: flex; min-height: 0; }
+/* S1 · slider ~66% + columna lateral ~33%, misma altura total.
+   Cada bloque = tarjeta separada (radio + sombra + aire entre piezas). */
+.hero-zone { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: stretch; }
+.side-banners { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.side-banner { flex: 1; position: relative; overflow: hidden; border-radius: 12px; display: flex; min-height: 0; }
 
 @media (max-width: 900px) {
   /* Móvil: la columna lateral NO desaparece — baja como 2 tarjetas 50/50 */
-  .hero-zone { grid-template-columns: 1fr !important; gap: 8px; }
-  .side-banners { flex-direction: row !important; gap: 8px; }
+  .hero-zone { grid-template-columns: 1fr !important; gap: 12px; }
+  .side-banners { flex-direction: row !important; gap: 12px; }
   .side-banner { min-height: 132px; flex: 1 1 0; }
+  /* Tarjetas estrechas: fuera miniatura B2B, badge % compacto */
+  .b2b-thumb { display: none !important; }
+  .b2b-body { width: 100% !important; }
+  .pct-badge { width: 54px !important; height: 54px !important; right: 10px !important; }
+  .pct-badge span:first-child { font-size: 15px !important; }
+  .promo-body { padding-right: 72px !important; }
 }
 @media (max-width: 400px) {
   /* Si el texto no cabe, apiladas */

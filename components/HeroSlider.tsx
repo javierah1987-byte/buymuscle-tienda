@@ -46,11 +46,11 @@ export default function HeroSlider({initialBanners=null}){
         // eslint-disable-next-line @next/next/no-img-element
         <img src={s.image_url} alt={s.title||'Banner'} key={s.id||idx}
           fetchPriority={idx===0?'high':'auto'} decoding="async"
-          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.85,transition:'opacity 0.4s'}}/>
+          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:1,transition:'opacity 0.4s'}}/>
       )}
 
-      {/* Overlay */}
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.1) 60%,transparent 100%)'}}/>
+      {/* Overlay — solo lo justo para que el texto lea; la foto va a plena luz */}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.08) 55%,transparent 100%)'}}/>
 
       {/* Texto */}
       {(s.title||s.subtitle)&&(
