@@ -12,7 +12,7 @@ interface Props {
   variantsByType: Record<string, Variant[]>
   sortedTypes: string[]
   hasVariants: boolean
-  formatSlot?: any   // MOCKUP F0 ADR-BM-001: pills de formato renderizadas por el server (entre precio y sabor)
+  formatSlot?: any   // ADR-BM-001: pills de formato renderizadas por el server (entre precio y sabor)
 }
 
 const DIST_ACCENT = '#d9b45a'

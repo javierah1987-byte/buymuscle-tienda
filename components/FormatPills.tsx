@@ -1,9 +1,9 @@
 // @ts-nocheck
-// MOCKUP F0 · ADR-BM-001 (Opción A+ formato×sabor, estilo LifePro).
-// Pills de FORMATO: cada una navega a la ficha del producto HERMANO (cada formato ya es su
-// propio producto → cambian foto+precio+stock+barcode al navegar). Link con prefetch para
-// que el salto se perciba instantáneo. Server component — sin estado, la pill activa es
-// la ficha en la que estás.
+// ADR-BM-001 (Opción A+ formato×sabor, estilo LifePro) · consolidado en F0-T2.
+// Pills de FORMATO: cada una navega a la ficha del producto HERMANO del mismo
+// products.group_code (cada formato ya es su propio producto → cambian foto+precio+
+// stock+barcode al navegar). Link con prefetch para que el salto se perciba
+// instantáneo. Server component — sin estado, la pill activa es la ficha en la que estás.
 import Link from 'next/link'
 
 export default function FormatPills({ items = [], activeId }) {

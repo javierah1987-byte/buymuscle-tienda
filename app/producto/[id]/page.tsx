@@ -30,41 +30,21 @@ const coverFirst = (cover, arr) => {
   return out.length ? out : null
 }
 
-// ── MOCKUP F0 · ADR-BM-001 (A+ formato×sabor) ──────────────────────────────────
-// Pills de FORMATO: hermanos detectados on-the-fly por NOMBRE — los reference son
-// inconsistentes (WIGISO / WIGISO1 / WIGISO500), el token de formato vive al final
-// del nombre ("ISOLATE PROFESSIONAL 2 KG", "Creatine 3000 (150 comprimidos)").
-// TIEMPO 2 tras el OK de Javier al mockup: sustituir esta heurística por columnas
-// aditivas products.group_code + format_label + format_order (ver ADR-BM-001 F0).
-const FMT_RX = /(\d+(?:[.,]\d+)?)\s*(KG|KGS|GRS?|G|LB|LBS|ML|L|CAPS|COMPRIMIDOS?|VIALES|SOBRES|BARRITAS)\b/i
-const parseFormat = (name) => {
-  const up = (name || '').toUpperCase()
-  const m = up.match(FMT_RX)
-  if (!m || m.index < 3) return null            // sin token, o token al inicio del nombre → sin pills
-  const n = parseFloat(m[1].replace(',', '.'))
-  const u = m[2].replace(/^GRS?$/, 'G').replace(/^KGS$/, 'KG').replace(/^COMPRIMIDO$/, 'COMPRIMIDOS')
-  const order = u === 'KG' ? n * 1000 : u === 'LB' ? n * 453.6 : n     // gramos (o nº de unidades)
-  const label = u === 'G' ? n + 'g' : u === 'KG' ? String(n).replace('.', ',') + 'KG'
-    : u === 'CAPS' ? n + ' caps' : u === 'COMPRIMIDOS' ? n + ' comp.' : n + ' ' + u.toLowerCase()
-  const base = up.replace(FMT_RX, '§').replace(/[\s\-_.,()®]+/g, ' ').trim()
-  return { prefix: (name || '').slice(0, m.index).trim(), base, order, label }
-}
+// ── Formato×sabor (ADR-BM-001 A+ · F0 consolidado) ─────────────────────────────
+// Pills de FORMATO desde la agrupación CURADA en datos: products.group_code +
+// format_label + format_order (columnas aditivas pobladas en F0-T2 desde el censo
+// auditado; backup pre-cambio en ops/memory/backups). group_code NULL → producto
+// sin familia → sin pills, ficha idéntica a la de siempre.
 const getFormatSiblings = async (product) => {
-  const f = parseFormat(product.name)
-  if (!f || f.prefix.length < 3) return []
+  if (!product.group_code) return []
   const { data } = await supabase.from('products')
-    .select('id,name,brand,price_incl_tax,sale_price,stock')
-    .eq('active', true).ilike('name', f.prefix + '%').limit(20)
-  const out = []
-  for (const p of (data || [])) {
-    const pf = parseFormat(p.name)
-    if (!pf || pf.base !== f.base || (p.brand || '') !== (product.brand || '')) continue
-    if (out.some(x => x.label === pf.label)) continue   // mismo formato duplicado → familia sucia
-    out.push({ id: p.id, label: pf.label, order: pf.order, price: Number(p.sale_price || p.price_incl_tax), stock: p.stock })
-  }
-  // fail-closed del mockup: si el dedupe echó al propio producto, no pintamos nada
-  if (out.length < 2 || !out.some(x => x.id === product.id)) return []
-  return out.sort((a, b) => a.order - b.order)
+    .select('id,format_label,format_order,price_incl_tax,sale_price,stock')
+    .eq('group_code', product.group_code).eq('active', true)
+    .order('format_order', { ascending: true })
+  const out = (data || []).filter(p => p.format_label)
+    .map(p => ({ id: p.id, label: p.format_label, price: Number(p.sale_price || p.price_incl_tax), stock: p.stock }))
+  // fail-closed: pills solo si la familia tiene ≥2 activos y uno es el producto actual
+  return out.length > 1 && out.some(x => x.id === product.id) ? out : []
 }
 
 const getProduct = cache(async (id) => {
@@ -95,7 +75,7 @@ export default async function ProductoPage({ params }) {
     supabase.from('product_reviews').select('id,name,rating,comment,created_at').eq('product_id', params.id).eq('verified', true).order('created_at', { ascending: false })
   ])
   if (!product) notFound()
-  const siblingsPromise = getFormatSiblings(product)   // MOCKUP F0: en paralelo con el resto
+  const siblingsPromise = getFormatSiblings(product)   // pills de formato: en paralelo con el resto
   const rawVariants = variantsRes.data || []
   const reviews = reviewsRes.data || []
   // "Completa tu pedido con…": productos COMPLEMENTARIOS de OTRAS categorías (no más de lo mismo).
