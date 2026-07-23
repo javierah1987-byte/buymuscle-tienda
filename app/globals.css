@@ -316,6 +316,54 @@ table { width: 100%; overflow-x: auto; display: block; }
   .h2-banner > div:first-child { padding: 20px 16px !important; }
 }
 
+/* ── HOME REDESIGN (hero zone + paneles editoriales + tiles) ── */
+/* S1 · slider ~66% + columna lateral ~33%, misma altura total */
+.hero-zone { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: stretch; }
+.side-banners { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.side-banner { flex: 1; position: relative; overflow: hidden; border-radius: 4px; display: flex; min-height: 0; }
+
+@media (max-width: 900px) {
+  /* Móvil: la columna lateral NO desaparece — baja como 2 tarjetas 50/50 */
+  .hero-zone { grid-template-columns: 1fr !important; gap: 8px; }
+  .side-banners { flex-direction: row !important; gap: 8px; }
+  .side-banner { min-height: 132px; flex: 1 1 0; }
+}
+@media (max-width: 400px) {
+  /* Si el texto no cabe, apiladas */
+  .side-banners { flex-direction: column !important; }
+}
+
+/* S2 · barra de confianza: móvil grid 2×2 compacto */
+.trust-bar-grid { display: flex; align-items: center; justify-content: center; gap: clamp(16px,4vw,56px); flex-wrap: wrap; }
+@media (max-width: 768px) {
+  .trust-bar-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+}
+
+/* S5 · banda de cifras */
+.stats-band { display: flex; align-items: center; justify-content: center; gap: clamp(24px,6vw,72px); flex-wrap: wrap; }
+
+/* S6/S9/S10 · panel de texto + carrusel (alternando lado) */
+.panel-grid { display: grid; grid-template-columns: clamp(220px,26vw,300px) 1fr; align-items: stretch; }
+.panel-grid.panel-right { grid-template-columns: 1fr clamp(220px,26vw,300px); }
+.panel-grid.panel-right .panel-text { order: 2; }
+.panel-grid.panel-right .panel-carousel { order: 1; }
+
+@media (max-width: 768px) {
+  .panel-grid, .panel-grid.panel-right { grid-template-columns: 1fr !important; }
+  /* El texto SIEMPRE antes que el carrusel (si no, el panel no se lee) */
+  .panel-grid .panel-text { order: -1 !important; border-right: none !important; border-left: none !important; padding: 0 0 1.25rem !important; }
+  .panel-grid .panel-text.panel-text-dark { padding: 1.5rem 1.25rem !important; margin-bottom: 1.25rem; }
+  .panel-grid .panel-carousel { order: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+}
+
+/* S11 · tiles de los mundos: móvil 2×2 */
+.world-tiles { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+@media (max-width: 900px) { .world-tiles { grid-template-columns: 1fr 1fr !important; } }
+
+/* S12 · testimonios de cierre */
+.testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+@media (max-width: 768px) { .testi-grid { grid-template-columns: 1fr !important; } }
+
 /* ── PRODUCTOS GRID ───────────────────────────────── */
 .products-grid { grid-template-columns: repeat(4, 1fr); }
 

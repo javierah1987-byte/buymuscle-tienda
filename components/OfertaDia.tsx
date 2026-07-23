@@ -66,7 +66,7 @@ export default function OfertaDia() {
             <span style={{fontSize:24}}>⚡</span>
             <div>
               <div style={{fontWeight:900,fontSize:'clamp(16px,2vw,22px)',color:'white',letterSpacing:'-0.02em'}}>OFERTA DEL DIA</div>
-              <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:1}}>Solo hoy · Precio especial</div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:1}}>Cuando el contador llega a cero, vuela</div>
             </div>
           </div>
           {/* Countdown */}

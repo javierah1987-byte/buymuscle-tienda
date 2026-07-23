@@ -1,201 +1,73 @@
-import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import ProductCard from '@/components/ProductCard'
-import { CARD_COLUMNS } from '@/lib/productCard'
 import ProductCarousel from '@/components/ProductCarousel'
-import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
-import LazyBgVideo from '@/components/LazyBgVideo'
+import { getHomeProducts, getHomeBanners, getWeekOffer } from '@/lib/homeData'
+import HeroZone from '@/components/home/HeroZone'
+import TrustBar from '@/components/home/TrustBar'
+import WeekOffer from '@/components/home/WeekOffer'
+import QuickCats from '@/components/home/QuickCats'
+import StatsBand from '@/components/home/StatsBand'
+import EditorialPanel from '@/components/home/EditorialPanel'
+import WorldTiles from '@/components/home/WorldTiles'
+import Testimonials from '@/components/home/Testimonials'
+import BlogSection from '@/components/home/BlogSection'
+import MockupSwitch from '@/components/home/MockupSwitch'
 
+// HOME — VARIANTE A (recomendada por dirección creativa).
+// Ritmo: PROMO (S1-S3) → NAV (S4-S5) → PRODUCTO (S6) → PROMO (S7) →
+// PRODUCTO (S8-S10) → NAV (S11) → CONFIANZA (S12).
 // ISR: la home se regenera cada 5 min (catálogo, no sensible al stock en tiempo real)
 export const revalidate = 300
 
-const BG_VIDEO_3 = 'https://tienda.buymuscle.es/img/cms/bg-video-BM-3.mp4'
-const BASE_BLOG = 'https://tienda.buymuscle.es'
-
-const BLOG_POSTS = [
-  { titulo:'Proteina sin lactosa: que opciones elegir si la proteina te cae pesada', href:'/blog/news/proteina-sin-lactosa-que-opciones-elegir-si-la-proteina-te-cae-pesada-o-tienes-intolerancia', img:'/modules/ph_simpleblog/covers/115-thumb.jpg', fecha:'Marzo 3, 2026', cat:'Nutricion' },
-  { titulo:'Suplementacion para deportes de resistencia: running, ciclismo o trail en Canarias', href:'/blog/news/suplementacion-para-deportes-de-resistencia-lo-que-necesitas-si-haces-running-ciclismo-o-trail-en-canarias', img:'/modules/ph_simpleblog/covers/114-thumb.jpg', fecha:'Febrero 18, 2026', cat:'Suplementacion' },
-  { titulo:'Que tomar antes de entrenar? Opciones naturales y suplementos para energia', href:'/blog/news/que-tomar-antes-de-entrenar-opciones-naturales-y-suplementos-antes-de-entrenar-para-energia', img:'/modules/ph_simpleblog/covers/113-thumb.jpg', fecha:'Febrero 2, 2026', cat:'Pre-entreno' },
-]
-
-// Columnas que consumen las tarjetas (fuente canónica lib/productCard + categoría).
-// Incluye has_variants para que los productos con variantes enruten a la ficha
-// ("Ver opciones →") en vez de añadirse al carrito sin variante.
-const CARD_COLS = CARD_COLUMNS + ',categories(name)'
-
-async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'id') {
-  let q = supabase.from('products').select(CARD_COLS).eq('active',true).gt('stock',0)
-  if(cat){
-    const {data:cd} = await supabase.from('categories').select('id').eq('name',cat).single()
-    if(cd) q = q.eq('category_id', cd.id)
-  }
-  q = orderBy === 'stock' ? q.order('stock',{ascending:false}) : q.order('id',{ascending:false})
-  const {data} = await q.limit(limit)
-  // Las tarjetas solo usan CARD_COLS; el tipo Product completo no aplica aquí.
-  return (data || []) as any[]
-}
-
-// Banners del hero en servidor (ISR): el primer slide sale en el HTML inicial
-// → mejor LCP y sin doble descarga fallback→real en el cliente.
-async function getBanners() {
-  const { data } = await supabase.from('banners')
-    .select('id,image_url,url,title,subtitle')
-    .eq('active', true).order('order_pos', { ascending: true })
-  return data || []
-}
-
-const QUICK_CATS = [
-  {name:'Proteinas',    icon:'🥛', slug:'Proteinas'},
-  {name:'Creatinas',   icon:'⚡', slug:'Creatinas Monohidratos'},
-  {name:'Pre-entrenos',icon:'🔥', slug:'Pre-entrenos'},
-  {name:'BCAA',        icon:'💪', slug:'BCAA'},
-  {name:'Vitaminas',   icon:'💊', slug:'Vitaminas'},
-  {name:'Quemadores',  icon:'🎯', slug:'Quemadores'},
-  {name:'Sport Wear',  icon:'👕', slug:'Sport Wear'},
-  {name:'Veganos',     icon:'🌱', slug:'Veganos'},
-  {name:'Snacks',      icon:'🍫', slug:'Snacks Proteicos'},
-  {name:'Gainers',     icon:'💥', slug:'Ganadores de Peso'},
-]
+// El banner de distribuidores (id 10) deja de rotar en el slider: pasa a ser
+// el lateral B2B fijo de la hero zone (la puerta visible a /distribuidores).
+const B2B_BANNER_ID = 10
 
 export default async function Home() {
-  const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
-    getProducts(undefined, 8, 'id'),
-    getProducts(undefined, 8, 'stock'),
-    getProducts('Proteinas', 8, 'id'),
-    getProducts('Pre-entrenos', 8, 'id'),
-    getProducts('Veganos', 8, 'id'),
-    getBanners(),
+  const [novedades, masVendidos, iogenix, sportswear, banners, weekOffer] = await Promise.all([
+    getHomeProducts({ limit: 12, orderBy: 'id' }),
+    getHomeProducts({ limit: 8, orderBy: 'stock' }),
+    getHomeProducts({ brand: 'iO.GENIX', limit: 12, orderBy: 'stock' }),
+    getHomeProducts({ cat: 'Camisetas', limit: 12, orderBy: 'id' }),
+    getHomeBanners(),
+    getWeekOffer(),
   ])
 
+  const sliderBanners = banners.filter((b: any) => b.id !== B2B_BANNER_ID)
+  const b2bImage = (banners as any[]).find(b => b.id === B2B_BANNER_ID)?.image_url
+
   return (
-    <main style={{background:'#f5f5f5'}}>
-      <h1 style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
-      <HeroSlider initialBanners={banners as any} />
+    <main style={{ background: '#f5f5f5' }}>
+      <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
 
-      {/* h2 BANNER OFERTA PRINCIPAL */}
-      <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120,flexWrap:'wrap'}} className="h2-banner">
-          <div style={{flex:1,padding:'24px 0'}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>⚡ OFERTA DE LA SEMANA</div>
-            {novedades[0] && <>
-              <div style={{fontSize:'clamp(18px,3vw,26px)',fontWeight:900,color:'white',lineHeight:1.1,marginBottom:8}}>
-                {novedades[0].name.slice(0,40)}{novedades[0].name.length>40?'...':''}
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-                <span style={{fontSize:26,fontWeight:900,color:'white'}}>{novedades[0].sale_price ? Number(novedades[0].sale_price).toFixed(2) : Number(novedades[0].price_incl_tax).toFixed(2)} €</span>
-                {novedades[0].sale_price && <span style={{fontSize:15,color:'rgba(255,255,255,0.4)',textDecoration:'line-through'}}>{Number(novedades[0].price_incl_tax).toFixed(2)} €</span>}
-              </div>
-              <Link href={'/producto/'+novedades[0].id} style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'11px 28px',fontWeight:800,fontSize:13,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.06em'}}>
-                Comprar ahora →
-              </Link>
-            </>}
-          </div>
-          <div style={{width:'clamp(140px,25vw,260px)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 0'}}>
-            {novedades[0]?.image_url && <img src={novedades[0].image_url} alt={novedades[0].name} style={{maxWidth:'100%',maxHeight:200,objectFit:'contain',filter:'drop-shadow(0 8px 24px rgba(255,30,65,0.3))'}} loading="eager"/>}
-          </div>
-        </div>
-      </section>
+      {/* S1 · HERO ZONE compuesta: slider (~66%) + dupla lateral fija (~33%) */}
+      <HeroZone sliderBanners={sliderBanners as any} b2bImage={b2bImage} />
 
-      {/* h1 PROPUESTA DE VALOR */}
-      <section style={{background:'#111',padding:'12px 20px',borderBottom:'1px solid #222'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'clamp(16px,4vw,56px)',flexWrap:'wrap'}} className="propuesta-grid">
-          {[
-            {icon:'🚀',t:'🚀 Envío 24-48h',s:'Canarias y Peninsula'},
-            {icon:'✅',t:'✅ Marca oficial',s:'100% productos originales'},
-            {icon:'💰',t:'💰 Precio mínimo',s:'Si lo encuentras más barato, igualamos el precio'},
-            {icon:'🔄',t:'🔄 Devolución 14 días',s:'Sin preguntas'},
-          ].map(({icon,t,s})=>(
-            <div key={t} style={{display:'flex',alignItems:'center',gap:8,color:'white'}}>
-              <span style={{fontSize:20,lineHeight:1}}>{icon}</span>
-              <div>
-                <div style={{fontWeight:700,fontSize:12,letterSpacing:'0.04em'}}>{t}</div>
-                <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:1}}>{s}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      {/* === h3 SOCIAL PROOF === */}
-      <section style={{background:'#f9f9f9',padding:'1.25rem 20px',borderBottom:'1px solid #ebebeb'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
-          <div style={{display:'flex',gap:'clamp(20px,4vw,56px)',flexWrap:'wrap',alignItems:'center'}} className="social-proof-stats">
-            {([{n:'+500',l:'Clientes en Canarias'},{n:'316',l:'Productos disponibles'},{n:'24h',l:'Envio express'},{n:'4.9★',l:'Valoracion media'}]).map(({n,l})=>(
-              <div key={l} style={{textAlign:'center'}}>
-                <div style={{fontWeight:900,fontSize:'clamp(20px,2.5vw,28px)',color:'#ff1e41',lineHeight:1}}>{n}</div>
-                <div style={{fontSize:11,color:'#888',marginTop:3}}>{l}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{display:'flex',gap:10,flexWrap:'wrap'}} className="social-proof-reviews">
-            {([{t:'La mejor tienda de suplementacion de Canarias. Envio en 24h.',a:'Carlos M.'},{t:'Precios imbatibles y atencion al cliente 10/10.',a:'Laura G.'},{t:'Productos originales y bien embalados. Repito seguro.',a:'Marta R.'}]).map(({t,a})=>(
-              <div key={a} style={{background:'white',border:'1px solid #ebebeb',borderRadius:8,padding:'10px 12px',maxWidth:200,fontSize:12}}>
-                <div style={{color:'#f59e0b',fontSize:12,marginBottom:3}}>★★★★★</div>
-                <div style={{color:'#666',lineHeight:1.4,fontStyle:'italic'}}>"{t}"</div>
-                <div style={{fontWeight:700,color:'#111',marginTop:5,fontSize:10}}>— {a}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* h3: social proof ya está arriba */}
+      {/* S2 · Barra de confianza — pegada al hero */}
+      <TrustBar />
 
-      {/* Categorias rapidas */}
-      <section style={{background:'white',borderBottom:'1px solid #ebebeb',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'flex',overflowX:'auto'}}>
-            {QUICK_CATS.map(cat=>(
-              <Link key={cat.name} href={`/tienda?cat=${encodeURIComponent(cat.slug)}`} className="cat-bar-link">
-                <span style={{fontSize:22}}>{cat.icon}</span>
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* S3 · Oferta de la semana */}
+      <WeekOffer product={weekOffer || novedades[0]} />
 
-      {/* h5 OFERTA DEL DIA */}
+      {/* S4 · Categorías rápidas */}
+      <QuickCats />
+
+      {/* S5 · Stats de social proof (solo cifras; los testimonios cierran en S12) */}
+      <StatsBand />
+
+      {/* S6 · NOVEDADES — panel de texto + carrusel (patrón editorial) */}
+      <EditorialPanel
+        side="left"
+        eyebrow="Recién llegado"
+        title="Novedades"
+        body="Lo último en nutrición deportiva, ya en Canarias. Proteínas, creatina y pre-entrenos de marcas oficiales — recién salidos del horno y en tu casa en 24-48h."
+        cta={{ href: '/tienda', label: 'Ver novedades →' }}
+        products={novedades}
+      />
+
+      {/* S7 · OFERTA DEL DÍA — interrupción de urgencia a mitad del scroll */}
       <OfertaDia />
 
-      {/* NOVEDADES — layout 2 columnas fijo igual que el original */}
-      <section style={{background:'white',padding:'2rem 0 2.5rem',borderBottom:'1px solid #ebebeb'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'clamp(180px,22vw,240px) 1fr',gap:0,alignItems:'start'}} className="novedades-grid">
-            {/* Texto izq */}
-            <div style={{padding:'0 2rem 0 0',borderRight:'1px solid #ebebeb'}}>
-              <div style={{fontSize:11,fontWeight:700,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.12em',marginBottom:'0.4rem'}}>BUYMUSCLE</div>
-              <h2 style={{fontSize:26,fontWeight:900,color:'#111',lineHeight:1.1,marginBottom:'1rem'}}>
-                Nutricion<br/>deportiva
-              </h2>
-              <p style={{fontSize:13,color:'#777',lineHeight:1.8,marginBottom:'1.25rem'}}>
-                Compra suplementos deportivos en Canarias. Proteinas, creatina y pre-entrenos de marcas lideres.
-              </p>
-              <Link href="/tienda" style={{fontSize:13,fontWeight:700,color:'var(--red)',textDecoration:'none',display:'block',marginBottom:'1.5rem'}}>Ver todo el catalogo →</Link>
-              <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                <Link href="/sport-wear" style={{display:'block',background:'#111',color:'white',padding:'8px 12px',textDecoration:'none',fontSize:11,fontWeight:700,textTransform:'uppercase'}}>👕 Sport Wear</Link>
-                <Link href="/veganos" style={{display:'block',background:'#1a3a1a',color:'#7ed957',padding:'8px 12px',textDecoration:'none',fontSize:11,fontWeight:700,textTransform:'uppercase'}}>🌱 Veganos</Link>
-                <Link href="/streetflavour" style={{display:'block',background:'#0a1a2a',color:'#47daff',padding:'8px 12px',textDecoration:'none',fontSize:11,fontWeight:700,textTransform:'uppercase'}}>🎽 StreetFlavour</Link>
-                <Link href="/bm-team" style={{display:'block',background:'#001a0d',color:'#00F399',padding:'8px 12px',textDecoration:'none',fontSize:11,fontWeight:700,textTransform:'uppercase'}}>💪 BM Team</Link>
-              </div>
-            </div>
-            {/* Novedades grid 4 col */}
-            <div style={{paddingLeft:'2rem'}}>
-              <div style={{marginBottom:'1rem'}}>
-                <div style={{fontSize:15,fontWeight:700,textTransform:'uppercase',color:'#222',letterSpacing:'0.04em',marginBottom:'0.5rem'}}>NOVEDADES</div>
-                <div style={{borderBottom:'1px solid #e0e0e0'}}/>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#ebebeb'}}>
-                {novedades.slice(0,4).map((p:any)=><ProductCard key={p.id} product={p}/>)}
-              </div>
-              <div style={{marginTop:'0.75rem',textAlign:'right'}}>
-                <Link href="/tienda" style={{fontSize:12,color:'var(--red)',fontWeight:700,textDecoration:'none',border:'1px solid var(--red)',padding:'5px 14px',display:'inline-block'}}>Ver todo →</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* LOS MAS VENDIDOS — carrusel deslizable */}
+      {/* S8 · Los más vendidos — carrusel simple (no todo lleva panel) */}
       <ProductCarousel
         products={masVendidos}
         title="LOS MAS VENDIDOS"
@@ -204,87 +76,38 @@ export default async function Home() {
         hrefLabel="Ver todos →"
       />
 
-      {/* Distribuidores: sin sección en la home. El acceso está arriba a la derecha ("Distribuidores" → login). */}
-
-      {/* PROTEINAS — carrusel */}
-      <ProductCarousel
-        products={proteinas}
-        title="LAS MEJORES PROTEINAS"
-        titleIcon="🥛"
-        href="/tienda?cat=Proteinas"
-        hrefLabel="Ver todas →"
+      {/* S9 · Panel de MARCA: iO.GENIX — tienda oficial (panel a la derecha) */}
+      <EditorialPanel
+        side="right"
+        eyebrow="Tienda oficial"
+        title={<>iO.GENIX <span style={{ color: 'var(--red)' }}>Nutrition</span></>}
+        body="La marca que más se mueve en nuestra tienda, con distribución oficial en Canarias. Whey, isolate, creatina Creapure® y más — originales, frescos y al mejor precio de las islas."
+        cta={{ href: '/marca/iogenix', label: 'Ver todo iO.GENIX →' }}
+        products={iogenix}
       />
 
-      {/* BM SPORTSWEAR banner */}
-      <section style={{position:'relative',overflow:'hidden',height:260,background:'#111'}}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="BM Sportswear"
-          style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.75}}/>
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'}}/>
-        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 60px'}}>
-          <div style={{fontSize:11,fontWeight:700,color:'#47daff',textTransform:'uppercase',letterSpacing:'0.2em',marginBottom:8}}>BUYMUSCLE</div>
-          <h2 style={{fontSize:'clamp(26px,3.5vw,48px)',fontWeight:900,color:'white',textTransform:'uppercase',lineHeight:1,marginBottom:12}}>
-            BM <span style={{color:'#47daff'}}>SPORTSWEAR</span>
-          </h2>
-          <p style={{color:'rgba(255,255,255,0.65)',fontSize:14,maxWidth:380,marginBottom:18}}>Camisetas, hoodies y accesorios BuyMuscle para entrenar con estilo.</p>
-          <div style={{display:'flex',gap:10}}>
-            <Link href="/sport-wear" style={{background:'white',color:'#111',padding:'10px 22px',fontFamily:'var(--font-body)',fontSize:12,fontWeight:700,textDecoration:'none',textTransform:'uppercase'}}>Ver Sport Wear</Link>
-            <Link href="/streetflavour" style={{background:'#47daff',color:'#111',padding:'10px 22px',fontFamily:'var(--font-body)',fontSize:12,fontWeight:700,textDecoration:'none',textTransform:'uppercase'}}>StreetFlavour</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* PRE-ENTRENOS — carrusel */}
-      <ProductCarousel
-        products={preEntrenos}
-        title="PRE-ENTRENOS"
-        titleIcon="🔥"
-        href="/tienda?cat=Pre-entrenos"
-        hrefLabel="Ver todos →"
+      {/* S10 · BM SPORTSWEAR — panel OSCURO (el gesto PrestaShop) */}
+      <EditorialPanel
+        side="left"
+        dark
+        eyebrow="La ropa de la casa"
+        title={<>BM <span style={{ color: '#47daff' }}>Sportswear</span></>}
+        body="Viste como entrenas. Camisetas y prendas de corte urbano y relajado, para el gym y para la calle. Diseño propio BuyMuscle."
+        cta={{ href: '/sport-wear', label: 'Ver colección →' }}
+        secondary={{ href: '/streetflavour', label: '¿Buscas StreetFlavour? →' }}
+        products={sportswear}
       />
 
-      {/* VEGANOS — carrusel */}
-      {veganos.length > 0 && (
-        <ProductCarousel
-          products={veganos}
-          title="VEGANOS"
-          titleIcon="🌱"
-          href="/veganos"
-          hrefLabel="Ver todos →"
-        />
-      )}
+      {/* S11 · Los mundos BuyMuscle — tiles de navegación permanente */}
+      <WorldTiles />
 
-      {/* BLOG */}
-      <section style={{padding:'2.5rem 0',background:'#f5f5f5',borderTop:'1px solid #ebebeb'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'1.25rem',borderBottom:'2px solid #e0e0e0',paddingBottom:'0.75rem'}}>
-            <div>
-              <h2 style={{fontSize:17,fontWeight:800,textTransform:'uppercase',color:'#111',margin:0}}>NUESTRO BLOG</h2>
-              <div style={{fontSize:12,color:'#999',marginTop:3}}>Nutricion deportiva, entrenamiento y suplementacion</div>
-            </div>
-            <Link href="/blog" style={{fontSize:12,color:'var(--red)',fontWeight:700,textDecoration:'none',border:'1px solid var(--red)',padding:'5px 14px'}}>Ver todos →</Link>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'1px',background:'#e0e0e0'}}>
-            {BLOG_POSTS.map(post=>(
-              <a key={post.href} href={BASE_BLOG+post.href} target="_blank" rel="noopener noreferrer"
-                style={{background:'white',textDecoration:'none',color:'inherit',display:'flex',flexDirection:'column'}}>
-                <div style={{height:180,overflow:'hidden',background:'#f0f0f0',flexShrink:0}}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={BASE_BLOG+post.img} alt={post.titulo} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                </div>
-                <div style={{padding:'1rem',flex:1,display:'flex',flexDirection:'column'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:'0.5rem'}}>
-                    <span style={{fontSize:10,fontWeight:700,background:'#f0f0f0',color:'#666',padding:'2px 8px',textTransform:'uppercase'}}>{post.cat}</span>
-                    <span style={{fontSize:11,color:'#bbb'}}>{post.fecha}</span>
-                  </div>
-                  <h3 style={{fontSize:14,fontWeight:700,color:'#111',lineHeight:1.4,margin:'0 0 0.5rem',flex:1}}>{post.titulo}</h3>
-                  <span style={{fontSize:12,fontWeight:700,color:'var(--red)'}}>Leer mas →</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Blog (SEO/contenido; mantener salvo que Javier diga lo contrario) */}
+      <BlogSection />
+
+      {/* S12 · Cierre de confianza — testimonios + última puerta abierta */}
+      <Testimonials />
+
+      <MockupSwitch variant="A" />
     </main>
   )
 }
