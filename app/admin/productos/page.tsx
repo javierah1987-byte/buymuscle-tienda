@@ -8,7 +8,7 @@ const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const H={apikey:K,'Authorization':'Bearer '+K}
 const PER=50
 const sc=s=>s===0?'#ef4444':s<=10?'#f59e0b':'#22c55e'
-const inp={padding:'7px 10px',border:'1px solid #333',background:'#1a1a1a',color:'white',fontSize:13,borderRadius:4,width:'100%',fontFamily:'inherit',boxSizing:'border-box'}
+const inp={padding:'7px 10px',border:'1px solid #ccc',background:'white',color:'#111',fontSize:13,borderRadius:4,width:'100%',fontFamily:'inherit',boxSizing:'border-box'}
 
 export default function AdminProductos(){
   const[prods,setProds]=useState([])
@@ -21,6 +21,7 @@ export default function AdminProductos(){
   const[total,setTotal]=useState(0)
   const[filter,setFilter]=useState('all')
   const[msg,setMsg]=useState('')
+  const[deleting,setDeleting]=useState({})
 
   const load=useCallback(async()=>{
     let q=''
@@ -96,6 +97,17 @@ export default function AdminProductos(){
     load()
   }
 
+  async function del(p){
+    if(!confirm('¿Eliminar "'+p.name+'"?\n\nSi tiene ventas se DESACTIVARÁ en su lugar (para no perder el historial).')) return
+    setDeleting(d=>({...d,[p.id]:true}))
+    let res; try{ res=await fetch('/api/admin/products?id='+p.id,{method:'DELETE',credentials:'same-origin'}) }catch(e){ setDeleting(d=>({...d,[p.id]:false})); alert('Error de red'); return }
+    setDeleting(d=>({...d,[p.id]:false}))
+    const dd=await res.json().catch(()=>({}))
+    if(!res.ok){ alert('No se pudo eliminar: '+(dd.error||res.status)); return }
+    if(dd.softDeleted){ alert('"'+p.name+'" tenía ventas → se ha DESACTIVADO (no borrado).'); setProds(ps=>(ps||[]).map(x=>x.id===p.id?{...x,active:false}:x)) }
+    else { setProds(ps=>(ps||[]).filter(x=>x.id!==p.id)); setTotal(t=>t-1) }
+  }
+
   async function toggleActive(p){
     await fetch('/api/admin/products',{method:'PATCH',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({id:p.id,fields:{active:!p.active}})})
     setProds(ps=>(ps||[]).map(x=>x.id===p.id?{...x,active:!p.active}:x))
@@ -112,15 +124,15 @@ export default function AdminProductos(){
   const pages=Math.ceil(total/PER)
 
   return(
-    <div style={{background:'#0f0f0f',minHeight:'100vh',color:'white',fontFamily:'Arial,sans-serif'}}>
+    <div style={{background:'#f4f5f7',minHeight:'100vh',color:'#111',fontFamily:'Arial,sans-serif'}}>
 
       {/* MODAL EDICION */}
       {editing&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-          <div style={{background:'#1a1a1a',borderRadius:8,width:'100%',maxWidth:800,maxHeight:'90vh',overflowY:'auto',border:'1px solid #333'}}>
-            <div style={{padding:'16px 20px',borderBottom:'1px solid #333',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:'#1a1a1a',zIndex:1}}>
+          <div style={{background:'white',borderRadius:8,width:'100%',maxWidth:800,maxHeight:'90vh',overflowY:'auto',border:'1px solid #e0e0e0'}}>
+            <div style={{padding:'16px 20px',borderBottom:'1px solid #eee',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:'white',zIndex:1}}>
               <h2 style={{margin:0,fontSize:16,fontWeight:800,color:'#ff1e41'}}>Editar: {editing.name?.slice(0,40)}</h2>
-              <button onClick={()=>{setEditing(null);setVariants([])}} style={{background:'none',border:'none',color:'#888',fontSize:22,cursor:'pointer',lineHeight:1}}>x</button>
+              <button onClick={()=>{setEditing(null);setVariants([])}} style={{background:'none',border:'none',color:'#999',fontSize:22,cursor:'pointer',lineHeight:1}}>x</button>
             </div>
             <div style={{padding:20,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
 
@@ -166,7 +178,7 @@ export default function AdminProductos(){
               {/* Stock general */}
               <div>
                 <label style={{display:'block',fontSize:11,color:'#888',marginBottom:4,fontWeight:700,textTransform:'uppercase'}}>Stock general</label>
-                <input type='number' min='0' value={editing.stock||0} onChange={e=>setEditing(v=>({...v,stock:parseInt(e.target.value)||0}))} style={inp}/>
+                <div style={{...inp,background:'#f0f0f0',color:'#888',cursor:'not-allowed'}}>{editing.stock||0} <span style={{fontSize:10}}>· se cambia en /admin/stock</span></div>
               </div>
 
               {/* Activo */}
@@ -194,7 +206,7 @@ export default function AdminProductos(){
               <div style={{gridColumn:'1/-1'}}>
                 <label style={{display:'block',fontSize:11,color:'#888',marginBottom:4,fontWeight:700,textTransform:'uppercase'}}>URL Imagen</label>
                 <input value={editing.image_url||''} onChange={e=>setEditing(v=>({...v,image_url:e.target.value}))} style={inp} placeholder='https://...'/>
-                {editing.image_url&&<img src={editing.image_url} alt='' style={{marginTop:8,height:80,objectFit:'contain',background:'#111',borderRadius:4,padding:4}}/>}
+                {editing.image_url&&<img src={editing.image_url} alt='' style={{marginTop:8,height:80,objectFit:'contain',background:'#f0f0f0',borderRadius:4,padding:4}}/>}
               </div>
 
               {/* Descripcion */}
@@ -209,8 +221,8 @@ export default function AdminProductos(){
                   <label style={{display:'block',fontSize:11,color:'#888',marginBottom:8,fontWeight:700,textTransform:'uppercase'}}>Variantes ({variants.length})</label>
                   <div style={{display:'flex',flexDirection:'column',gap:6}}>
                     {variants.map((v,i)=>(
-                      <div key={v.id} style={{display:'grid',gridTemplateColumns:'1fr 100px 100px',gap:8,alignItems:'center',padding:'8px 10px',background:'#111',borderRadius:4,border:'1px solid #2a2a2a'}}>
-                        <div style={{fontSize:13,color:'#ddd'}}><span style={{color:'#888',fontSize:11}}>{v.type}: </span>{v.value}</div>
+                      <div key={v.id} style={{display:'grid',gridTemplateColumns:'1fr 100px 100px',gap:8,alignItems:'center',padding:'8px 10px',background:'#f7f7f7',borderRadius:4,border:'1px solid #e8e8e8'}}>
+                        <div style={{fontSize:13,color:'#333'}}><span style={{color:'#888',fontSize:11}}>{v.type}: </span>{v.value}</div>
                         <div>
                           <label style={{display:'block',fontSize:10,color:'#888',marginBottom:2}}>Stock</label>
                           <input type='number' min='0' value={v.stock} onChange={e=>{const nv=[...variants];nv[i]={...nv[i],stock:e.target.value};setVariants(nv)}} style={{...inp,padding:'4px 6px',fontSize:12}}/>
@@ -227,8 +239,8 @@ export default function AdminProductos(){
             </div>
 
             {/* Footer del modal */}
-            <div style={{padding:'12px 20px',borderTop:'1px solid #333',display:'flex',gap:10,justifyContent:'flex-end',position:'sticky',bottom:0,background:'#1a1a1a'}}>
-              <button onClick={()=>{setEditing(null);setVariants([])}} style={{padding:'9px 20px',background:'#333',border:'none',color:'#aaa',borderRadius:4,cursor:'pointer',fontSize:13}}>
+            <div style={{padding:'12px 20px',borderTop:'1px solid #eee',display:'flex',gap:10,justifyContent:'flex-end',position:'sticky',bottom:0,background:'white'}}>
+              <button onClick={()=>{setEditing(null);setVariants([])}} style={{padding:'9px 20px',background:'#eee',border:'none',color:'#555',borderRadius:4,cursor:'pointer',fontSize:13}}>
                 Cancelar
               </button>
               <button onClick={save} disabled={saving}
@@ -241,7 +253,7 @@ export default function AdminProductos(){
       )}
 
       {/* HEADER */}
-      <div style={{background:'#0a0a0a',padding:'16px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #222'}}>
+      <div style={{background:'white',padding:'16px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #e8e8e8'}}>
         <div>
           <h1 style={{margin:0,fontSize:18,fontWeight:900,textTransform:'uppercase',color:'#ff1e41'}}>Gestion de Productos</h1>
           <p style={{margin:'3px 0 0',fontSize:12,color:'#888'}}>{total} productos en total</p>
@@ -254,12 +266,12 @@ export default function AdminProductos(){
       </div>
 
       {/* FILTROS */}
-      <div style={{padding:'14px 24px',display:'flex',gap:10,flexWrap:'wrap',alignItems:'center',borderBottom:'1px solid #222',background:'#111'}}>
+      <div style={{padding:'14px 24px',display:'flex',gap:10,flexWrap:'wrap',alignItems:'center',borderBottom:'1px solid #e8e8e8',background:'#fafafa'}}>
         <input value={search} onChange={e=>{setSearch(e.target.value);setPage(0)}} placeholder='Buscar producto...' style={{...inp,width:280}}/>
         {[['all','Todos'],['active','Activos'],['inactive','Inactivos'],['nostock','Sin stock']].map(([f,l])=>(
           <button key={f} onClick={()=>{setFilter(f);setPage(0)}}
             style={{padding:'7px 14px',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:700,
-              background:filter===f?'#ff1e41':'#222',color:filter===f?'white':'#aaa'}}>
+              background:filter===f?'#ff1e41':'#eee',color:filter===f?'white':'#555'}}>
             {l}
           </button>
         ))}
@@ -269,25 +281,25 @@ export default function AdminProductos(){
       <div style={{overflowX:'auto'}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
-            <tr style={{background:'#0a0a0a',borderBottom:'1px solid #2a2a2a'}}>
+            <tr style={{background:'#fafafa',borderBottom:'1px solid #e8e8e8'}}>
               {['Img','Nombre / ID','Marca','PVP','Oferta','Stock','Estado','Distrib','Acciones'].map(h=>(
-                <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:10,fontWeight:700,color:'#666',textTransform:'uppercase',letterSpacing:'0.06em'}}>{h}</th>
+                <th key={h} style={{padding:'10px 12px',textAlign:'left',fontSize:10,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.06em'}}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {(prods||[]).map(p=>(
-              <tr key={p.id} style={{borderBottom:'1px solid #1a1a1a',transition:'background 0.1s'}}
-                onMouseEnter={e=>e.currentTarget.style.background='#151515'}
+              <tr key={p.id} style={{borderBottom:'1px solid #f0f0f0',transition:'background 0.1s'}}
+                onMouseEnter={e=>e.currentTarget.style.background='#f9f9f9'}
                 onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                <td style={{padding:'8px 12px',width:52}}>
+                <td style={{padding:'8px 12px',width:76}}>
                   {p.image_url
-                    ?<img src={p.image_url} alt='' style={{width:44,height:44,objectFit:'contain',borderRadius:4,background:'#222'}}/>
-                    :<div style={{width:44,height:44,background:'#222',borderRadius:4,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📦</div>}
+                    ?<img src={p.image_url} alt='' style={{width:64,height:64,objectFit:'contain',borderRadius:4,background:'#f0f0f0'}}/>
+                    :<div style={{width:64,height:64,background:'#f0f0f0',borderRadius:4,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26}}>📦</div>}
                 </td>
                 <td style={{padding:'8px 12px',maxWidth:240}}>
-                  <div style={{fontWeight:600,color:'white',fontSize:13,lineHeight:1.3}}>{p.name}</div>
-                  <div style={{fontSize:11,color:'#555',marginTop:2}}>#{p.id}</div>
+                  <div style={{fontWeight:600,color:'#111',fontSize:13,lineHeight:1.3}}>{p.name}</div>
+                  <div style={{fontSize:11,color:'#999',marginTop:2}}>#{p.id}</div>
                 </td>
                 <td style={{padding:'8px 12px',color:'#888',fontSize:12}}>{p.brand||'—'}</td>
                 <td style={{padding:'8px 12px'}}>
@@ -315,10 +327,12 @@ export default function AdminProductos(){
                   </button>
                 </td>
                 <td style={{padding:'8px 12px'}}>
-                  <button onClick={()=>openEdit(p)}
-                    style={{padding:'6px 14px',background:'#1d4ed8',border:'none',color:'white',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:700}}>
-                    Editar
-                  </button>
+                  <div style={{display:'flex',gap:6,whiteSpace:'nowrap'}}>
+                    <button onClick={()=>openEdit(p)} title='Editar ficha'
+                      style={{padding:'6px 14px',background:'#1d4ed8',border:'none',color:'white',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:700}}>Editar</button>
+                    <button onClick={()=>del(p)} disabled={!!deleting[p.id]} title='Eliminar producto'
+                      style={{padding:'6px 10px',background:'white',color:'#dc2626',border:'1px solid #f0c0c0',borderRadius:4,cursor:'pointer',fontSize:13}}>{deleting[p.id]?'⏳':'🗑️'}</button>
+                  </div>
                 </td>
               </tr>
             ))}
