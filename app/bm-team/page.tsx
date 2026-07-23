@@ -1,5 +1,57 @@
 'use client'
 import Link from 'next/link'
+import { useState } from 'react'
+
+// Formulario modal "Unirse al BM Team" → POST /api/bm-team-apply → email a la tienda.
+function BMTeamFormModal({ onClose }: { onClose: () => void }) {
+  const [f, setF] = useState({ nombre:'', email:'', telefono:'', instagram:'', mensaje:'' })
+  const [sending, setSending] = useState(false)
+  const [done, setDone] = useState(false)
+  const set = (k:string,v:string) => setF(s=>({ ...s, [k]:v }))
+  const inp = { width:'100%', padding:'11px 13px', border:'1px solid #333', background:'#0f0f0f', color:'white', fontSize:14, borderRadius:6, fontFamily:'inherit', boxSizing:'border-box' as const, marginTop:5 }
+  const lbl = { display:'block', fontSize:12, fontWeight:700, color:'#00F399', textTransform:'uppercase' as const, letterSpacing:'0.05em' }
+  async function submit() {
+    if (!f.nombre.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) { alert('Pon tu nombre y un email válido.'); return }
+    setSending(true)
+    let res
+    try { res = await fetch('/api/bm-team-apply', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(f) }) }
+    catch { setSending(false); alert('Error de red, inténtalo de nuevo.'); return }
+    setSending(false)
+    if (!res.ok) { const d = await res.json().catch(()=>({})); alert('No se pudo enviar: ' + (d.error || res.status)); return }
+    setDone(true)
+  }
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:2000, display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'4vh 16px', overflowY:'auto' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:'#161616', border:'1px solid #00F39940', borderRadius:12, width:'100%', maxWidth:480, boxShadow:'0 20px 60px rgba(0,0,0,0.6)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'18px 22px', borderBottom:'1px solid #262626' }}>
+          <h3 style={{ margin:0, color:'white', fontSize:18, fontWeight:900, textTransform:'uppercase' }}>Unirse al <span style={{color:'#00F399'}}>BM Team</span></h3>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:'#888', fontSize:24, cursor:'pointer', lineHeight:1 }}>×</button>
+        </div>
+        {done ? (
+          <div style={{ padding:'40px 22px', textAlign:'center' }}>
+            <div style={{ fontSize:52 }}>✅</div>
+            <h4 style={{ color:'white', fontSize:18, margin:'12px 0 6px' }}>¡Solicitud enviada!</h4>
+            <p style={{ color:'#aaa', fontSize:14, lineHeight:1.6 }}>Gracias por tu interés. El equipo de BuyMuscle revisará tu solicitud y te contactará pronto.</p>
+            <button onClick={onClose} style={{ marginTop:20, background:'#00F399', color:'#111', border:'none', padding:'12px 28px', fontSize:14, fontWeight:700, borderRadius:6, cursor:'pointer' }}>Cerrar</button>
+          </div>
+        ) : (
+          <div style={{ padding:'20px 22px', display:'flex', flexDirection:'column', gap:14 }}>
+            <div><label style={lbl}>Nombre *</label><input value={f.nombre} onChange={e=>set('nombre',e.target.value)} style={inp} placeholder="Tu nombre y apellidos"/></div>
+            <div><label style={lbl}>Email *</label><input value={f.email} onChange={e=>set('email',e.target.value)} style={inp} type="email" placeholder="tu@email.com"/></div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div><label style={lbl}>Teléfono</label><input value={f.telefono} onChange={e=>set('telefono',e.target.value)} style={inp} placeholder="600..."/></div>
+              <div><label style={lbl}>Instagram</label><input value={f.instagram} onChange={e=>set('instagram',e.target.value)} style={inp} placeholder="@usuario"/></div>
+            </div>
+            <div><label style={lbl}>Cuéntanos sobre ti</label><textarea value={f.mensaje} onChange={e=>set('mensaje',e.target.value)} style={{ ...inp, minHeight:80, resize:'vertical' }} placeholder="Tu deporte, tu experiencia, por qué quieres unirte…"/></div>
+            <button onClick={submit} disabled={sending} style={{ background:'#00F399', color:'#111', border:'none', padding:'14px', fontSize:15, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.04em', borderRadius:6, cursor:'pointer', opacity:sending?0.6:1 }}>
+              {sending ? 'Enviando…' : 'Enviar solicitud'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const BASE = 'https://tienda.buymuscle.es/img/cms/'
 const LOGO_TEAM = BASE + 'Logo-BM-Team.png'
@@ -23,8 +75,10 @@ const ATLETAS = [
 ]
 
 export default function BMTeamPage() {
+  const [showForm, setShowForm] = useState(false)
   return (
     <div style={{ background:'#111', minHeight:'100vh', color:'white' }}>
+      {showForm && <BMTeamFormModal onClose={()=>setShowForm(false)} />}
 
       {/* Hero */}
       <section style={{ background:'linear-gradient(135deg,#0a0a0a 0%,#1a0a0a 50%,#0a0a0a 100%)', borderBottom:'3px solid #00F399', padding:'3rem 20px' }}>
@@ -58,9 +112,9 @@ export default function BMTeamPage() {
             <p style={{ fontSize:13, color:'rgba(255,255,255,0.5)', marginBottom:'1.5rem' }}>
               Forma parte de la familia BuyMuscle.<br/>Comparte tu pasion por el fitness.
             </p>
-            <a href="mailto:tienda@buymuscle.es" style={{ display:'inline-block', background:'#00F399', color:'#111', padding:'12px 28px', fontSize:13, fontWeight:700, textDecoration:'none', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+            <button onClick={()=>setShowForm(true)} style={{ display:'inline-block', background:'#00F399', color:'#111', padding:'12px 28px', fontSize:13, fontWeight:700, border:'none', cursor:'pointer', fontFamily:'inherit', textTransform:'uppercase', letterSpacing:'0.05em' }}>
               Unirse al equipo
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -98,10 +152,10 @@ export default function BMTeamPage() {
           <p style={{ color:'rgba(255,255,255,0.6)', fontSize:14, lineHeight:1.8, maxWidth:500, margin:'0 auto 2rem' }}>
             Si eres atleta, influencer o apasionado del fitness y quieres representar a BuyMuscle, contacta con nosotros.
           </p>
-          <a href="mailto:tienda@buymuscle.es?subject=Solicitud BM Team"
-            style={{ display:'inline-block', background:'#00F399', color:'#111', padding:'14px 36px', fontSize:14, fontWeight:700, textDecoration:'none', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+          <button onClick={()=>setShowForm(true)}
+            style={{ display:'inline-block', background:'#00F399', color:'#111', padding:'14px 36px', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', fontFamily:'inherit', textTransform:'uppercase', letterSpacing:'0.05em' }}>
             Enviar solicitud
-          </a>
+          </button>
         </div>
       </div>
     </div>
