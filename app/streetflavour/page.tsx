@@ -5,7 +5,10 @@ import Link from 'next/link'
 export const revalidate = 60
 
 async function getProducts() {
-  const { data: catData } = await supabase.from('categories').select('id').ilike('name','%street%')
+  // StreetFlavour = ropa/streetwear. Las camisetas y demás prendas viven en categorías
+  // como "Camisetas", "Ropa Deportiva", "Sport Wear"… así que incluimos todas esas.
+  const { data: catData } = await supabase.from('categories').select('id')
+    .or('name.ilike.%street%,name.ilike.%flavour%,name.ilike.%camis%,name.ilike.%ropa%,name.ilike.%wear%,name.ilike.%sudader%,name.ilike.%chand%,name.ilike.%camisill%')
   const ids = catData?.map((c:any)=>c.id) || []
   const q = supabase.from('products').select(CARD_COLUMNS + ', categories(name)').eq('active',true).gt('stock',0).order('id',{ascending:false})
   const { data } = ids.length ? await q.in('category_id',ids).limit(48) : await q.ilike('name','%street%').limit(24)
