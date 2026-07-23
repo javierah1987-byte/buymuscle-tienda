@@ -13,27 +13,29 @@ async function resolveDistributor(db, req){
   try{
     const authz = req.headers.get('authorization') || ''
     const token = authz.startsWith('Bearer ') ? authz.slice(7).trim() : ''
-    if(!token || token === process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return { pct: 0, channel: 'web' }
+    if(!token || token === process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return { pct: 0, channel: 'online_retail' }
     const anon = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       { auth: { persistSession: false, autoRefreshToken: false } }
     )
     const { data: { user } } = await anon.auth.getUser(token)
-    if(!user) return { pct: 0, channel: 'web' }
+    if(!user) return { pct: 0, channel: 'online_retail' }
     const { data } = await db.from('distributors')
       .select('level_id,active,distributor_levels(discount_pct)').eq('user_id', user.id).maybeSingle()
-    if(!data || data.active === false) return { pct: 0, levelId: null, channel: 'web' }
+    if(!data || data.active === false) return { pct: 0, levelId: null, channel: 'online_retail' }
     const pct = Number(data.distributor_levels?.discount_pct) || 0
-    return { pct, levelId: data.level_id ?? null, channel: 'distributor' }
-  }catch{ return { pct: 0, levelId: null, channel: 'web' } }
+    return { pct, levelId: data.level_id ?? null, channel: 'online_distributor' }
+  }catch{ return { pct: 0, levelId: null, channel: 'online_retail' } }
 }
 
 // POST /api/create-order — checkout web. Crea el pedido como 'pending'
 // (pago no verificado: transferencia). Si el que compra es un distribuidor
 // autenticado, aplica su descuento de grupo en SERVIDOR y marca el canal
-// 'distributor' (→ serie B2B en Holded). El pago verificado por PayPal va por
-// /api/paypal/capture.
+// 'online_distributor' (→ serie B2B en Holded; el `.includes('distributor')` de
+// orderCore lo detecta igual). Los canales válidos están en CANALES (lib/orderCore):
+// son los de la restricción orders_channel_check, y usar otro tumbaba el INSERT.
+// El pago verificado por PayPal va por /api/paypal/capture.
 export async function POST(req){
   try{
     if(!process.env.SUPABASE_SERVICE_ROLE_KEY)

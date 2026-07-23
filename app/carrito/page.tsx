@@ -160,7 +160,6 @@ export default function CarritoPage() {
           payment_method: method || 'transfer',
           discount_code: discountInfo ? coupon.trim() : '',
           idempotency_key: idemKey,
-          channel: 'web',
         })
       })
       const data = await r.json()
@@ -192,7 +191,6 @@ export default function CarritoPage() {
         name: i.name, qty: i.qty, variant: i.variant || '',
       })),
       discount_code: discountInfo ? coupon.trim() : '',
-      channel: 'web',
     }
   }
   function paypalValidate(){
