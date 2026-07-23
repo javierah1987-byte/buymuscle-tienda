@@ -45,7 +45,17 @@ async function createHoldedCreditNote(order, itemsDev){
 }
 
 // POST /api/tpv-return → procesa una devolución (registra + repone stock)
-// body: { order_number, items:[{line_id,product_id,product_name,qty_dev,unit_price}], method, motivo }
+// body: { order_number, items:[{line_id,qty_dev}], method, motivo }
+//
+// TODO el trabajo con integridad (tope de lo ya devuelto, importes autoritativos,
+// registro y reposición de stock) ocurre dentro de la función process_return, en UNA
+// transacción y con la fila del pedido bloqueada. Antes se hacía en 4 pasos sueltos
+// desde aquí: el stock se reponía leyendo-y-escribiendo (dos devoluciones a la vez
+// perdían una reposición) y el tope se comprobaba fuera de transacción (dos a la vez
+// devolvían dos veces lo mismo = doble reembolso). Ver la migración
+// supabase/migrations/20260724_process_return_atomic.sql.
+// Lo que el cliente manda de `items` solo se usa como SELECCIÓN (qué línea, cuánto);
+// el precio y el máximo devolvible los pone la BD desde order_lines.
 export async function POST(req){
   try{
     if(!(await authorized())) return NextResponse.json({ ok:false, error:'no_autorizado' }, { status:401 })
@@ -57,81 +67,36 @@ export async function POST(req){
     if(!order_number || !Array.isArray(items) || items.length === 0)
       return NextResponse.json({ ok:false, error:'invalid_request' }, { status:400 })
 
-    // Verificar que el pedido existe
+    // Solo para localizar el pedido y tener los datos de contacto de la rectificativa.
+    // Las reglas de negocio (estado reembolsable, tope por línea) las decide la función.
     const { data: order } = await db.from('orders')
       .select('id,order_number,status,customer_email,customer_name').eq('order_number', String(order_number).toUpperCase()).maybeSingle()
     if(!order) return NextResponse.json({ ok:false, error:'order_not_found' }, { status:404 })
 
-    // Solo se permiten devoluciones sobre pedidos pagados/cumplidos
-    if(order.status === 'pending' || order.status === 'cancelled')
-      return NextResponse.json({ ok:false, error:'pedido_no_reembolsable' }, { status:400 })
-
-    // Cargar devoluciones previas para no exceder lo ya devuelto por línea
-    const { data: prevDevs } = await db.from('devoluciones').select('items').eq('order_id', order.id)
-    const alreadyReturned = {}
-    for(const dev of (prevDevs||[])){
-      for(const di of (Array.isArray(dev?.items) ? dev.items : [])){
-        const lid = di?.line_id
-        if(lid == null) continue
-        alreadyReturned[lid] = (alreadyReturned[lid] || 0) + (parseInt(di?.qty_dev) || 0)
-      }
+    const { data: dev, error: devErr } = await db.rpc('process_return', {
+      p_order_id: order.id,
+      p_items: items.map(i => ({ line_id: i.line_id, qty_dev: parseInt(i.qty_dev) || 0 })),
+      p_method: method,
+      p_motivo: motivo,
+      p_operator: 'TPV',
+    })
+    if(devErr){
+      const msg = String(devErr.message || devErr)
+      if(msg.includes('ORDER_NOT_FOUND'))      return NextResponse.json({ ok:false, error:'order_not_found' }, { status:404 })
+      if(msg.includes('ORDER_NOT_REFUNDABLE')) return NextResponse.json({ ok:false, error:'pedido_no_reembolsable' }, { status:400 })
+      // NO_ITEMS: nada devolvible (ya se devolvió todo, cantidades a 0 o líneas de otro pedido).
+      if(msg.includes('NO_ITEMS'))             return NextResponse.json({ ok:false, error:'no_items' }, { status:400 })
+      throw devErr
     }
 
-    // Recalcular importes a partir de precios reales de las líneas (anti-manipulación)
-    const { data: dbLines } = await db.from('order_lines').select('id,product_id,variant_id,product_name,unit_price,quantity').eq('order_id', order.id)
-    const lineMap = new Map((dbLines||[]).map(l => [l.id, l]))
+    const itemsDev = dev?.items || []
+    const totalDev = Number(dev?.total || 0)
 
-    const itemsDev = []
-    for(const it of items){
-      const dbl = lineMap.get(it.line_id)
-      if(!dbl) continue
-      const remaining = Number(dbl.quantity) - (alreadyReturned[dbl.id] || 0)
-      const qty = Math.max(0, Math.min(parseInt(it.qty_dev || 0), remaining))
-      if(qty <= 0) continue
-      itemsDev.push({
-        line_id: dbl.id,
-        product_id: dbl.product_id,
-        variant_id: dbl.variant_id || null,
-        product_name: dbl.product_name,
-        qty_dev: qty,
-        unit_price: Number(dbl.unit_price),
-        importe: round2(Number(dbl.unit_price) * qty),
-      })
-    }
-    if(!itemsDev.length) return NextResponse.json({ ok:false, error:'no_items' }, { status:400 })
-
-    const totalDev = round2(itemsDev.reduce((s, i) => s + i.importe, 0))
-
-    // Registrar devolución
-    const { data: devRow, error: devErr } = await db.from('devoluciones').insert({
-      order_number: order.order_number,
-      order_id: order.id,
-      items: itemsDev,
-      total_devuelto: totalDev,
-      method,
-      motivo,
-      operator: 'TPV',
-      created_at: new Date().toISOString(),
-    }).select('id').single()
-    if(devErr) throw devErr
-
-    // Reponer stock EN LA MISMA GRANULARIDAD que lo descontó la venta (process_order_stock):
-    // línea con variante → product_variants.stock; sin variante → products.stock. Reponer en
-    // products.stock una línea de variante desviaba el stock (variante en negativo, padre inflado).
-    for(const item of itemsDev){
-      if(item.variant_id){
-        const { data: v } = await db.from('product_variants').select('stock').eq('id', item.variant_id).maybeSingle()
-        if(v) await db.from('product_variants').update({ stock: Number(v.stock) + item.qty_dev }).eq('id', item.variant_id)
-      } else {
-        const { data: p } = await db.from('products').select('stock').eq('id', item.product_id).maybeSingle()
-        if(p) await db.from('products').update({ stock: Number(p.stock) + item.qty_dev }).eq('id', item.product_id)
-      }
-    }
-
-    // Rectificativa en Holded (best-effort, no bloquea la devolución)
+    // Rectificativa en Holded (best-effort, no bloquea la devolución: ya está registrada
+    // y el stock repuesto de forma atómica; si Holded falla, se emite a mano).
     const creditNoteId = await createHoldedCreditNote(order, itemsDev)
-    if(creditNoteId && devRow?.id)
-      await db.from('devoluciones').update({ holded_creditnote_id: creditNoteId }).eq('id', devRow.id).catch(()=>{})
+    if(creditNoteId && dev?.dev_id)
+      await db.from('devoluciones').update({ holded_creditnote_id: creditNoteId }).eq('id', dev.dev_id).catch(()=>{})
 
     return NextResponse.json({ ok:true, total: totalDev, method, items: itemsDev, creditNoteId })
   }catch(e){
