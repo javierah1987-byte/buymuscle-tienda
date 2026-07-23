@@ -49,7 +49,7 @@ export default function CarouselTrack({ products, autoplayMs = 4000 }: { product
 
   const arrowStyle = (side: 'left' | 'right', disabled: boolean): React.CSSProperties => ({
     position: 'absolute', [side]: 6, top: '50%', transform: 'translateY(-50%)',
-    width: 34, height: 34, borderRadius: '50%', zIndex: 2,
+    width: 40, height: 40, borderRadius: '50%', zIndex: 2,
     border: '1px solid ' + (disabled ? '#eee' : '#ccc'),
     background: disabled ? 'rgba(250,250,250,0.9)' : 'rgba(255,255,255,0.95)',
     color: disabled ? '#ccc' : '#333',

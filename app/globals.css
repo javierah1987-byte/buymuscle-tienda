@@ -316,6 +316,28 @@ table { width: 100%; overflow-x: auto; display: block; }
   .h2-banner > div:first-child { padding: 20px 16px !important; }
 }
 
+/* ── CATEGORÍAS BARRA (restaurada: se perdió en el refactor 2fc5001 y la
+      clase quedó huérfana — sin ella los enlaces no tienen tap target) ── */
+.cat-bar-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  border-right: 1px solid #f0f0f0;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color var(--transition), background var(--transition);
+}
+.cat-bar-link:hover { color: var(--red); background: #fafafa; }
+.cat-bar-link:last-child { border-right: none; }
+
 /* ── HOME REDESIGN (hero zone + paneles editoriales + tiles) ── */
 /* S1 · slider ~66% + columna lateral ~33%, misma altura total.
    Cada bloque = tarjeta separada (radio + sombra + aire entre piezas). */

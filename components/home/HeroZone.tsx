@@ -16,11 +16,13 @@ const CARD_SHADOW = '0 2px 12px rgba(0,0,0,0.10)'
 
 export default function HeroZone({ sliderBanners, b2bImage }: { sliderBanners: Banner[]; b2bImage?: string }) {
   return (
-    <section style={{ background: '#f5f5f5', padding: '16px 20px 6px' }}>
+    // Fondo BLANCO continuo con el header (sin franja gris a los lados) y
+    // aire vertical abajo: el hero no se pega a lo que viene después.
+    <section style={{ background: 'white', padding: '16px 20px 26px' }}>
       <div className="hero-zone" style={{ maxWidth: 1280, margin: '0 auto' }}>
         {/* Slider actual, tal cual (banners rotativos editoriales) — envuelto
             en marco de tarjeta para que se lea como pieza propia */}
-        <div style={{ minWidth: 0, borderRadius: 12, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
+        <div style={{ minWidth: 0, borderRadius: 12, overflow: 'hidden', boxShadow: CARD_SHADOW, border: '1px solid #ececec' }}>
           <HeroSlider initialBanners={sliderBanners as any} />
         </div>
 
@@ -42,7 +44,7 @@ export default function HeroZone({ sliderBanners, b2bImage }: { sliderBanners: B
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', lineHeight: 1.4 }}>Proteína, creatina y más, a precio mínimo</div>
               <div style={{ marginTop: 8 }}>
-                <span style={{ display: 'inline-block', background: 'white', color: '#d90429', padding: '6px 14px', borderRadius: 4, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ir a ofertas →</span>
+                <span style={{ display: 'inline-block', background: 'white', color: '#d90429', padding: '9px 16px', borderRadius: 4, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ir a ofertas →</span>
               </div>
             </div>
           </Link>
@@ -62,7 +64,7 @@ export default function HeroZone({ sliderBanners, b2bImage }: { sliderBanners: B
               <div style={{ fontSize: 'clamp(16px,1.5vw,21px)', fontWeight: 900, color: '#111', lineHeight: 1.1 }}>Hazte distribuidor BuyMuscle</div>
               <div style={{ fontSize: 11, color: '#777', lineHeight: 1.4 }}>Precios B2B y reparto en toda Canarias</div>
               <div style={{ marginTop: 8 }}>
-                <span style={{ display: 'inline-block', border: '1.5px solid #111', color: '#111', padding: '5px 13px', borderRadius: 4, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quiero ser distribuidor →</span>
+                <span style={{ display: 'inline-block', border: '1.5px solid #111', color: '#111', padding: '8px 14px', borderRadius: 4, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quiero ser distribuidor →</span>
               </div>
             </div>
           </Link>

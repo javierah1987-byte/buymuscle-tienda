@@ -101,11 +101,11 @@ export default async function Home() {
       {/* S11 · Los mundos BuyMuscle — tiles de navegación permanente */}
       <WorldTiles />
 
+      {/* S12 · Reseñas protagonistas — antes del blog para ganar visibilidad */}
+      <Testimonials />
+
       {/* Blog (SEO/contenido; mantener salvo que Javier diga lo contrario) */}
       <BlogSection />
-
-      {/* S12 · Cierre de confianza — testimonios + última puerta abierta */}
-      <Testimonials />
 
       <MockupSwitch variant="A" />
     </main>

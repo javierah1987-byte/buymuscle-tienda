@@ -38,7 +38,7 @@ export default function EditorialPanel({ side, dark = false, eyebrow, title, bod
             <h2 style={{ fontSize: 'clamp(22px,2.2vw,28px)', fontWeight: 900, color: dark ? 'white' : '#111', lineHeight: 1.1, margin: '0 0 0.9rem', textTransform: 'uppercase' }}>{title}</h2>
             <p style={{ fontSize: 13, color: dark ? 'rgba(255,255,255,0.6)' : '#777', lineHeight: 1.8, margin: '0 0 1.25rem' }}>{body}</p>
             <div>
-              <Link href={cta.href} style={{ display: 'inline-block', background: 'var(--red)', color: 'white', padding: '10px 22px', fontWeight: 800, fontSize: 12, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <Link href={cta.href} style={{ display: 'inline-block', background: 'var(--red)', color: 'white', padding: '12px 22px', fontWeight: 800, fontSize: 12, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {cta.label}
               </Link>
             </div>
