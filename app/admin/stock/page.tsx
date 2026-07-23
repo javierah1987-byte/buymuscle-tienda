@@ -325,6 +325,7 @@ export default function AdminStock() {
   const [catFilter, setCatFilter] = useState('Todos')
   const [categories, setCategories] = useState([])
   const [showLow, setShowLow] = useState(false)
+  const [showInactive, setShowInactive] = useState(false)
   const [saved, setSaved] = useState(null)
   const [showFactura, setShowFactura] = useState(false)
   const [variantsByProduct, setVariantsByProduct] = useState({})
@@ -383,7 +384,8 @@ export default function AdminStock() {
     const matchCat = catFilter === 'Todos' || p.categories?.name === catFilter
     const matchSearch = !search.trim() || p.name.toLowerCase().includes(search.toLowerCase())
     const matchLow = !showLow || p.stock <= 5
-    return matchCat && matchSearch && matchLow
+    const matchActive = showInactive || p.active
+    return matchCat && matchSearch && matchLow && matchActive
   })
 
   function edit(id, field, val) { setEdits(e => ({ ...e, [id]: { ...(e[id]||{}), [field]: val } })) }
@@ -543,6 +545,10 @@ export default function AdminStock() {
           <button onClick={()=>setShowLow(!showLow)}
             style={{ padding:'6px 14px', border:'1px solid '+(showLow?'#ef4444':'#ddd'), background:showLow?'#ef4444':'white', color:showLow?'white':'#666', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
             ⚠ Stock bajo ({lowStock})
+          </button>
+          <button onClick={()=>setShowInactive(!showInactive)} title="Por defecto solo se ven los productos activos"
+            style={{ padding:'6px 14px', border:'1px solid '+(showInactive?'#6b7280':'#ddd'), background:showInactive?'#6b7280':'white', color:showInactive?'white':'#666', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+            {showInactive?'👁 Viendo inactivos':'🚫 Ocultar inactivos'}
           </button>
           <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
             {categories.slice(0,10).map(c=>(
