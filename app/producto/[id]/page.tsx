@@ -10,6 +10,7 @@ import AddToCartSection from '@/components/AddToCartSection'
 import ProductCard from '@/components/ProductCard'
 import ImageGallery from '@/components/ImageGallery'
 import ProductoGrid from '@/components/ProductoGrid'
+import FormatPills from '@/components/FormatPills'
 import Script from 'next/script'
 import { SITE_URL } from '@/lib/site'
 
@@ -18,6 +19,33 @@ const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process
 // de antigüedad, pero el checkout valida stock de forma autoritativa (sin_stock 409),
 // así que una insignia "disponible" ligeramente obsoleta no causa sobreventa.
 export const revalidate = 60
+
+// Bote SIEMPRE primero: la portada curada (image_url, la que sube el admin) va delante del
+// array del import (que mezcla botes y tablas nutricionales SIN orden garantizado), sin
+// duplicarla. normImg ignora el ?v= de cache-bust al comparar. Devuelve null si no hay nada
+// (mismo shape que el dato ausente de hoy).
+const normImg = u => (u||'').split('?')[0]
+const coverFirst = (cover, arr) => {
+  const out = [cover, ...(arr||[]).filter(Boolean).filter(u => normImg(u) !== normImg(cover))].filter(Boolean)
+  return out.length ? out : null
+}
+
+// ── Formato×sabor (ADR-BM-001 A+ · F0 consolidado) ─────────────────────────────
+// Pills de FORMATO desde la agrupación CURADA en datos: products.group_code +
+// format_label + format_order (columnas aditivas pobladas en F0-T2 desde el censo
+// auditado; backup pre-cambio en ops/memory/backups). group_code NULL → producto
+// sin familia → sin pills, ficha idéntica a la de siempre.
+const getFormatSiblings = async (product) => {
+  if (!product.group_code) return []
+  const { data } = await supabase.from('products')
+    .select('id,format_label,format_order,price_incl_tax,sale_price,stock')
+    .eq('group_code', product.group_code).eq('active', true)
+    .order('format_order', { ascending: true })
+  const out = (data || []).filter(p => p.format_label)
+    .map(p => ({ id: p.id, label: p.format_label, price: Number(p.sale_price || p.price_incl_tax), stock: p.stock }))
+  // fail-closed: pills solo si la familia tiene ≥2 activos y uno es el producto actual
+  return out.length > 1 && out.some(x => x.id === product.id) ? out : []
+}
 
 const getProduct = cache(async (id) => {
   const { data } = await supabase.from('products').select('*, categories(name)').eq('id', id).single()
@@ -47,6 +75,7 @@ export default async function ProductoPage({ params }) {
     supabase.from('product_reviews').select('id,name,rating,comment,created_at').eq('product_id', params.id).eq('verified', true).order('created_at', { ascending: false })
   ])
   if (!product) notFound()
+  const siblingsPromise = getFormatSiblings(product)   // pills de formato: en paralelo con el resto
   const rawVariants = variantsRes.data || []
   const reviews = reviewsRes.data || []
   // "Completa tu pedido con…": productos COMPLEMENTARIOS de OTRAS categorías (no más de lo mismo).
@@ -56,7 +85,7 @@ export default async function ProductoPage({ params }) {
   for (const v of rawVariants) {
     const typeName = v.attribute_values?.attribute_types?.name || 'Variante'
     if (!variantsByType[typeName]) { variantsByType[typeName] = []; typeOrder.push(typeName) }
-    variantsByType[typeName].push({ id: v.attribute_values?.id, value: v.attribute_values?.value||'', hex: v.attribute_values?.hex_color, variantId: v.id, stock: v.stock, priceModifier: v.price_modifier||0, image: v.image_url||null, images: v.images||null })
+    variantsByType[typeName].push({ id: v.attribute_values?.id, value: v.attribute_values?.value||'', hex: v.attribute_values?.hex_color, variantId: v.id, stock: v.stock, priceModifier: v.price_modifier||0, image: v.image_url||null, images: coverFirst(v.image_url, v.images) })
   }
   const hasVariants = Object.keys(variantsByType).length > 0
   const catName = product.categories?.name || ''
@@ -65,9 +94,10 @@ export default async function ProductoPage({ params }) {
   const displayPrice = salePrice || price
   const discount = salePrice ? Math.round((1 - salePrice/price)*100) : null
   const desc = product.description || ''
-  const images = (product.images && product.images.length > 0 ? product.images : [product.image_url]).filter(Boolean)
+  const images = coverFirst(product.image_url, product.images) || []
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
   const { data: relatedRaw } = await relatedPromise
+  const formatSiblings = await siblingsPromise
   // Variedad: máximo 4, cada uno de una categoría distinta (creatina, snacks, vitaminas…), no todo proteína.
   const related = []
   const seenCat = new Set()
@@ -114,7 +144,8 @@ export default async function ProductoPage({ params }) {
             {product.stock>0&&product.stock<=10&&<div style={{background:'#fff3cd',border:'1px solid #ffc107',padding:'8px 14px',marginBottom:12,fontSize:13,fontWeight:700,color:'#856404'}}>
               Solo quedan {product.stock} unidades!
             </div>}
-            <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}/>
+            <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}
+              formatSlot={<FormatPills items={formatSiblings} activeId={product.id}/>}/>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:10,marginTop:18}}>
               {[['🚚','Envío 24-48h','Península y Canarias','#fff0f2'],['✅','100% Original','Marca oficial','#eefaf0'],['🔒','Pago seguro','Compra protegida','#eef3fb']].map(([ic,t,s,bg])=>(
