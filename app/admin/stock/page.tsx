@@ -610,10 +610,6 @@ export default function AdminStock() {
                         <td style={{ padding:'6px 12px', whiteSpace:'nowrap', textAlign:'right' }}>
                           <button onClick={e=>{e.stopPropagation();setEditModal(p)}} title="Editar ficha completa"
                             style={{ padding:'5px 9px', background:'white', color:'#2563eb', border:'1px solid #c7d7f0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3, marginRight:6 }}>✏️</button>
-                          <button onClick={e=>{e.stopPropagation();del(p)}} disabled={deleting[p.id]} title="Eliminar producto"
-                            style={{ padding:'5px 9px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
-                            {deleting[p.id]?'⏳':'🗑️'}
-                          </button>
                         </td>
                       </tr>
                     ]
@@ -678,8 +674,7 @@ export default function AdminStock() {
                           : <div style={{ width:64, height:64, background:'#f0f0f0', borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontSize:28 }}>📦</div>}
                       </td>
                       <td style={{ padding:'6px 12px', maxWidth:240 }}>
-                        <input value={getVal(p,'name')||''} onChange={e=>edit(p.id,'name',e.target.value)} title="Nombre del producto"
-                          style={{ width:'100%', minWidth:160, padding:'4px 6px', border:'1px solid '+(edits[p.id]?.name!==undefined?'#3b82f6':'#eee'), fontSize:12, fontWeight:600, color:'#111', fontFamily:'inherit', borderRadius:3 }}/>
+                        <div style={{ fontSize:12, fontWeight:600, color:'#111', lineHeight:1.3 }}>{p.name}</div>
                       </td>
                       <td style={{ padding:'6px 12px' }}>
                         <select value={getVal(p,'category_id')??''} onChange={e=>edit(p.id,'category_id',e.target.value)} title="Categoría"
@@ -730,10 +725,6 @@ export default function AdminStock() {
                             style={{ padding:'5px 12px', background:'#ff1e41', color:'white', border:'none', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit', borderRadius:3, marginRight:6 }}>
                             {saving[p.id]?'⏳':'💾'}
                           </button>}
-                        <button onClick={()=>del(p)} disabled={deleting[p.id]} title="Eliminar producto"
-                          style={{ padding:'5px 9px', background:'white', color:'#dc2626', border:'1px solid #f0c0c0', fontSize:13, cursor:'pointer', fontFamily:'inherit', borderRadius:3 }}>
-                          {deleting[p.id]?'⏳':'🗑️'}
-                        </button>
                       </td>
                     </tr>
                   )
