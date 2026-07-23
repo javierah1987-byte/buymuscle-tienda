@@ -44,17 +44,19 @@ const PROTEIN_CAT_IDS = [8, 16, 17, 43, 44, 39]
 
 // Productos de proteína con foto (feedback Javier): image_url NOT NULL para que
 // un producto sin foto no pueda colarse en un carrusel visual, por construcción.
-// orderBy 'id' = lo último en llegar (novedades) · 'stock' = las mejores
-// disponibles (sección proteínas; id desc de desempate para orden estable).
+// id desc = lo último en llegar. `offset` reparte VENTANAS DISJUNTAS de la misma
+// lista entre secciones (novedades = 1-8, carrusel proteínas = 9-16): cero
+// producto repetido entre ambas por construcción. (Ordenar por "ventas" no es
+// posible — no hay columna de ventas — y por stock tampoco: 28/29 empatados.)
 // La categoría suelta 'Proteinas' NO existe en la tabla — por eso esta lista de
 // familias y no getProducts('Proteinas') (que devolvía todo el catálogo).
-async function getProteinProducts(limit = 8, orderBy: 'id' | 'stock' = 'id') {
-  let q = supabase.from('products').select(CARD_COLS)
+async function getProteinProducts(limit = 8, offset = 0) {
+  const { data } = await supabase.from('products').select(CARD_COLS)
     .eq('active', true).gt('stock', 0)
     .in('category_id', PROTEIN_CAT_IDS)
     .not('image_url', 'is', null)
-  q = orderBy === 'stock' ? q.order('stock',{ascending:false}).order('id',{ascending:false}) : q.order('id',{ascending:false})
-  const { data } = await q.limit(limit)
+    .order('id', { ascending: false })
+    .range(offset, offset + limit - 1)
   return (data || []) as any[]
 }
 
@@ -102,9 +104,9 @@ const QUICK_CATS = [
 
 export default async function Home() {
   const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
-    getProteinProducts(8, 'id'),
+    getProteinProducts(8),
     getProducts(undefined, 8, 'stock'),
-    getProteinProducts(8, 'stock'),
+    getProteinProducts(8, 8),
     getProducts('Pre-entrenos', 8, 'id'),
     getProducts('Veganos', 8, 'id'),
     getBanners(),
