@@ -56,7 +56,7 @@ export default async function ProductoPage({ params }) {
   for (const v of rawVariants) {
     const typeName = v.attribute_values?.attribute_types?.name || 'Variante'
     if (!variantsByType[typeName]) { variantsByType[typeName] = []; typeOrder.push(typeName) }
-    variantsByType[typeName].push({ id: v.attribute_values?.id, value: v.attribute_values?.value||'', hex: v.attribute_values?.hex_color, variantId: v.id, stock: v.stock, priceModifier: v.price_modifier||0 })
+    variantsByType[typeName].push({ id: v.attribute_values?.id, value: v.attribute_values?.value||'', hex: v.attribute_values?.hex_color, variantId: v.id, stock: v.stock, priceModifier: v.price_modifier||0, image: v.image_url||null })
   }
   const hasVariants = Object.keys(variantsByType).length > 0
   const catName = product.categories?.name || ''
