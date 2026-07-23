@@ -1,5 +1,10 @@
-// BuyMuscle Service Worker v3 - PWA
-const CACHE_VERSION = 'bm-v3'
+// BuyMuscle Service Worker v4 - PWA
+// v4: el SW YA NO intercepta imágenes (ver el bloque `destination === 'image'` abajo).
+// Subir la versión es parte del arreglo: `activate` borra todos los caches que no sean
+// los de esta versión, así que al actualizar se PURGAN las entradas de imagen envenenadas
+// que la v3 dejó en los navegadores (era lo que hacía ver fotos rotas aunque el
+// servidor las sirviera con 200).
+const CACHE_VERSION = 'bm-v4'
 const STATIC_CACHE = CACHE_VERSION + '-static'
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic'
 
@@ -50,21 +55,28 @@ self.addEventListener('fetch', function(e) {
   if (url.pathname.startsWith('/api/')) return
   if (url.pathname.startsWith('/_next/webpack-hmr')) return
 
-  // Imágenes: cache first (hasta 30 días)
-  if (e.request.destination === 'image') {
-    e.respondWith(
-      caches.open(DYNAMIC_CACHE).then(function(cache) {
-        return cache.match(e.request).then(function(cached) {
-          if (cached) return cached
-          return fetch(e.request).then(function(res) {
-            if (res && res.status === 200) cache.put(e.request, res.clone())
-            return res
-          }).catch(function() { return cached || new Response('', { status: 404 }) })
-        })
-      })
-    )
-    return
-  }
+  // ── IMÁGENES: el SW NO las toca. Las gestiona el caché HTTP del navegador. ──
+  //
+  // La v3 hacía cache-first sobre ellas y tenía dos fallos que se veían como FOTOS ROTAS
+  // en el navegador aunque el servidor las sirviera con 200:
+  //   1) Cache-first SIN caducidad ni revalidación (el comentario "hasta 30 días" no lo
+  //      implementaba nadie): la primera respuesta que entrara al caché se servía PARA
+  //      SIEMPRE. Una imagen que cambió de URL/host —p. ej. las que se rehospedaron al
+  //      dejar de hotlinkear el PrestaShop viejo— se quedaba clavada en la versión mala,
+  //      y el único modo de purgarla era cambiar CACHE_VERSION (por eso esto es v4).
+  //   2) Ante CUALQUIER fallo de red fabricaba `new Response('', {status:404})`: una
+  //      respuesta vacía que el navegador pinta como imagen rota, en vez de dejar que
+  //      falle de verdad (que es lo que activa el reintento del navegador y el
+  //      `onError` de los componentes, que sí tienen su propio placeholder).
+  //
+  // No se sustituye por stale-while-revalidate: para una tienda, una foto de producto
+  // equivocada es peor que una petición de red, y el caché HTTP ya hace bien este trabajo
+  // (valida con ETag/Last-Modified y respeta Cache-Control; el optimizador de Next sirve
+  // /_next/image con max-age de 30 días). El SW no aportaba nada aquí salvo el bug.
+  // Si algún día se quiere caché de imágenes offline, hay que hacerlo con TTL, sin
+  // guardar respuestas opacas (status 0 = no sabemos si el otro dominio devolvió 404)
+  // y sin inventar respuestas de error.
+  if (e.request.destination === 'image') return
 
   // Next.js static assets (_next/static): cache first
   if (url.pathname.startsWith('/_next/static/')) {
