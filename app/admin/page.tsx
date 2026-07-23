@@ -132,31 +132,31 @@ export default function AdminDashboard(){
         {msg&&<div style={{background:'#166534',padding:'8px 16px',marginBottom:12,fontSize:13,borderRadius:4}}>{msg}</div>}
 
         {/* ACCIONES RAPIDAS */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:18}}>
-          <a href="/admin/nuevo-producto" style={{display:'block',background:'rgba(255,107,53,0.1)',border:'1px solid rgba(255,107,53,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
-            <div style={{fontSize:22,marginBottom:6}}>➕</div>
-            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Nuevo producto</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:11}}>
+          <a href="/admin/nuevo-producto" style={{display:'block',background:'rgba(255,107,53,0.1)',border:'1px solid rgba(255,107,53,0.4)',padding:'9px 12px',textDecoration:'none',borderRadius:6}}>
+            <div style={{fontSize:17,marginBottom:2}}>➕</div>
+            <div style={{fontSize:12,fontWeight:800,color:'#111',marginBottom:1}}>Nuevo producto</div>
             <div style={{fontSize:11,color:'#888888'}}>Añadir al catalogo</div>
           </a>
-          <a href="/admin/pedidos?status=pending" style={{display:'block',background:stats.pendientes>0?'rgba(245,158,11,0.15)':'#ffffff',border:'1px solid rgba(245,158,11,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
-            <div style={{fontSize:22,marginBottom:6}}>📦</div>
-            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Pedidos pendientes</div>
+          <a href="/admin/pedidos?status=pending" style={{display:'block',background:stats.pendientes>0?'rgba(245,158,11,0.15)':'#ffffff',border:'1px solid rgba(245,158,11,0.4)',padding:'9px 12px',textDecoration:'none',borderRadius:6}}>
+            <div style={{fontSize:17,marginBottom:2}}>📦</div>
+            <div style={{fontSize:12,fontWeight:800,color:'#111',marginBottom:1}}>Pedidos pendientes</div>
             <div style={{fontSize:11,color:'#888888'}}>{stats.pendientes} sin gestionar</div>
           </a>
-          <a href="/admin/stock" style={{display:'block',background:stats.stockBajo>50?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.08)',border:'1px solid rgba(34,197,94,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
-            <div style={{fontSize:22,marginBottom:6}}>📊</div>
-            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Gestion de stock</div>
+          <a href="/admin/stock" style={{display:'block',background:stats.stockBajo>50?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.08)',border:'1px solid rgba(34,197,94,0.4)',padding:'9px 12px',textDecoration:'none',borderRadius:6}}>
+            <div style={{fontSize:17,marginBottom:2}}>📊</div>
+            <div style={{fontSize:12,fontWeight:800,color:'#111',marginBottom:1}}>Gestion de stock</div>
             <div style={{fontSize:11,color:'#888888'}}>{stats.stockBajo} referencias bajas</div>
           </a>
-          <a href="/tpv" style={{display:'block',background:'rgba(59,130,246,0.1)',border:'1px solid rgba(59,130,246,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
-            <div style={{fontSize:22,marginBottom:6}}>🖥️</div>
-            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Ir al TPV</div>
+          <a href="/tpv" style={{display:'block',background:'rgba(59,130,246,0.1)',border:'1px solid rgba(59,130,246,0.4)',padding:'9px 12px',textDecoration:'none',borderRadius:6}}>
+            <div style={{fontSize:17,marginBottom:2}}>🖥️</div>
+            <div style={{fontSize:12,fontWeight:800,color:'#111',marginBottom:1}}>Ir al TPV</div>
             <div style={{fontSize:11,color:'#888888'}}>Punto de venta</div>
           </a>
         </div>
 
         {/* KPIs */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:18}} className="admin-kpis">
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:8,marginBottom:11}} className="admin-kpis">
           {[
             {label:'FACTURACION',val:stats.facturacion.toFixed(0)+' €',icon:'💰',c:'#22c55e'},
             {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'#111',href:'/admin/pedidos'},
@@ -166,16 +166,16 @@ export default function AdminDashboard(){
             {label:'STOCK BAJO',val:stats.stockBajo,icon:'⚠️',c:stats.stockBajo>50?'#ef4444':'#f59e0b',href:'/admin/stock'},
             {label:'TICKET MEDIO',val:stats.ticketMedio.toFixed(0)+' €',icon:'📈',c:'#8b5cf6'},
           ].map(k=>(
-            <div key={k.label} onClick={function(){if(k.href)window.location.href=k.href}} style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:'14px 12px',textAlign:'center',cursor:k.href?'pointer':'default'}}>
-              <div style={{fontSize:18,marginBottom:4}}>{k.icon}</div>
-              <div style={{fontSize:20,fontWeight:900,color:k.c}}>{k.val}</div>
+            <div key={k.label} onClick={function(){if(k.href)window.location.href=k.href}} style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:'8px 8px',textAlign:'center',cursor:k.href?'pointer':'default'}}>
+              <div style={{fontSize:15,marginBottom:2}}>{k.icon}</div>
+              <div style={{fontSize:17,fontWeight:900,color:k.c}}>{k.val}</div>
               <div style={{fontSize:9,color:'#888888',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{k.label}</div>
             </div>
           ))}
         </div>
 
         {/* Grafico 7 dias */}
-        {ventas7.length>0&&<div style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:18,marginBottom:18}}>
+        {ventas7.length>0&&<div style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:12,marginBottom:11}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
             <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'#888888'}}>📈 Ventas ultimos 7 dias</div>
             <div style={{fontSize:12,color:'#666666'}}>
@@ -183,9 +183,9 @@ export default function AdminDashboard(){
               {' · '}Media: <strong style={{color:'#111'}}>{(ventas7.reduce((s,v)=>s+v.total,0)/7).toFixed(0)} €/dia</strong>
             </div>
           </div>
-          <div style={{display:'flex',alignItems:'flex-end',gap:6,height:80}}>
+          <div style={{display:'flex',alignItems:'flex-end',gap:6,height:44}}>
             {ventas7.map((v,i)=>{
-              const mx=ventas7.length>0?ventas7.reduce(function(a,x){return x.total>a?x.total:a},1):1; const hh=Math.max(4,Math.round((v.total/mx)*72))
+              const mx=ventas7.length>0?ventas7.reduce(function(a,x){return x.total>a?x.total:a},1):1; const hh=Math.max(4,Math.round((v.total/mx)*38))
               return(
                 <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
                   {v.total>0&&<div style={{fontSize:9,color:'#666666'}}>{v.total.toFixed(0)}</div>}
