@@ -109,13 +109,18 @@ export default async function ProductoPage({ params }) {
             <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}/>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:10,marginTop:18}}>
-              {[['🚚','Envío 24-48h','Península y Canarias','#fff0f2'],['✅','100% Original','Marca oficial','#eefaf0'],['🔒','Pago seguro','Compra protegida','#eef3fb'],['📞','¿Dudas?','828 048 310','#fff7ea']].map(([ic,t,s,bg])=>(
+              {[['🚚','Envío 24-48h','Península y Canarias','#fff0f2'],['✅','100% Original','Marca oficial','#eefaf0'],['🔒','Pago seguro','Compra protegida','#eef3fb']].map(([ic,t,s,bg])=>(
                 <div key={t} style={{display:'flex',gap:11,alignItems:'center',padding:'12px 13px',background:'#fff',border:'1px solid #ececec',borderRadius:11,boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
                   <div style={{width:40,height:40,borderRadius:10,background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{ic}</div>
                   <div style={{minWidth:0}}><div style={{fontSize:12.5,fontWeight:800,color:'#1a1a1a',lineHeight:1.2}}>{t}</div><div style={{fontSize:11,color:'#999',marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{s}</div></div>
                 </div>
               ))}
             </div>
+            <a href="https://wa.me/34828048310" target="_blank" rel="noopener noreferrer" style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',gap:2,marginTop:10,padding:'14px',background:'linear-gradient(135deg,#ff1e41,#d4132f)',borderRadius:12,boxShadow:'0 3px 12px rgba(255,30,65,0.28)',textDecoration:'none'}}>
+              <div style={{fontSize:22}}>💬</div>
+              <div style={{fontSize:14,fontWeight:800,color:'#fff'}}>¿Dudas? Escríbenos</div>
+              <div style={{fontSize:12.5,color:'rgba(255,255,255,0.92)',fontWeight:600}}>WhatsApp · 828 048 310</div>
+            </a>
           </div>
         </ProductoGrid>
         <ProductTabs description={desc} reviews={reviews} productId={product.id}/>

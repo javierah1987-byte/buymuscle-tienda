@@ -688,14 +688,7 @@ export default function AdminStock() {
                           style={{ width:70, padding:'4px 6px', border:'1px solid '+(Number(stock)<=5?'#ef4444':'#ddd'), fontSize:13, fontWeight:700, textAlign:'center', color:Number(stock)===0?'#ef4444':Number(stock)<=5?'#f59e0b':'#111', fontFamily:'inherit' }}/>
                         {Number(stock)<=5 && <div style={{ fontSize:9, color:'#ef4444', marginTop:2 }}>⚠ BAJO</div>}
                       </td>
-                      <td style={{ padding:'6px 12px' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                          <input type="number" min="0" step="0.01" value={getVal(p,'cost_price')||''} onChange={e=>edit(p.id,'cost_price',e.target.value)}
-                            placeholder="—" title="Precio de coste (lo que te cuesta a ti)"
-                            style={{ width:80, padding:'4px 6px', border:'1px solid '+(getVal(p,'cost_price')?'#3b82f6':'#ddd'), fontSize:12, fontFamily:'inherit' }}/>
-                          <span style={{ fontSize:11, color:'#aaa' }}>€</span>
-                        </div>
-                      </td>
+                      <td style={{ padding:'6px 12px', fontSize:12, color:'#888' }} title="Coste (se edita en /admin/productos)">{p.cost_price?Number(p.cost_price).toFixed(2)+' €':'—'}</td>
                       <td style={{ padding:'6px 12px' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                           <input type="number" min="0" step="0.01" value={getVal(p,'price')||getVal(p,'price_incl_tax')||''} onChange={e=>edit(p.id,'price',e.target.value)}
@@ -703,18 +696,11 @@ export default function AdminStock() {
                           <span style={{ fontSize:11, color:'#aaa' }}>€</span>
                         </div>
                       </td>
+                      <td style={{ padding:'6px 12px', fontSize:12, color:'#888' }} title="Oferta (se edita en /admin/productos)">{p.sale_price?Number(p.sale_price).toFixed(2)+' €':'—'}</td>
                       <td style={{ padding:'6px 12px' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                          <input type="number" min="0" step="0.01" value={getVal(p,'sale_price')||''} onChange={e=>edit(p.id,'sale_price',e.target.value)}
-                            placeholder="—" style={{ width:80, padding:'4px 6px', border:'1px solid '+(getVal(p,'sale_price')?'#22c55e':'#ddd'), fontSize:12, fontFamily:'inherit' }}/>
-                          <span style={{ fontSize:11, color:'#aaa' }}>€</span>
-                        </div>
-                      </td>
-                      <td style={{ padding:'6px 12px' }}>
-                        <button onClick={()=>edit(p.id,'active',!isActive)}
-                          style={{ padding:'4px 10px', border:'none', background:isActive?'#22c55e':'#ddd', color:isActive?'white':'#888', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit', borderRadius:20 }}>
-                          {isActive?'✓ ACTIVO':'✗ INACT.'}
-                        </button>
+                        <span style={{ display:'inline-block', padding:'4px 10px', background:p.active?'#eafaf0':'#f0f0f0', color:p.active?'#16a34a':'#999', fontSize:11, fontWeight:700, borderRadius:20 }}>
+                          {p.active?'✓ ACTIVO':'✗ INACT.'}
+                        </span>
                       </td>
                       <td style={{ padding:'6px 12px', whiteSpace:'nowrap', textAlign:'right' }}>
                         <button onClick={()=>setEditModal(p)} title="Editar ficha completa"
