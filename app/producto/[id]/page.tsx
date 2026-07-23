@@ -49,8 +49,8 @@ export default async function ProductoPage({ params }) {
   if (!product) notFound()
   const rawVariants = variantsRes.data || []
   const reviews = reviewsRes.data || []
-  // p6: Relacionados por categoría + brand como fallback
-  const relatedPromise = supabase.from('products').select('id,name,price_incl_tax,sale_price,image_url,stock,active,brand').eq('category_id', product.category_id).eq('active', true).gt('stock', 0).neq('id', params.id).order('id', {ascending: false}).limit(8)
+  // "Completa tu pedido con…": productos COMPLEMENTARIOS de OTRAS categorías (no más de lo mismo).
+  const relatedPromise = supabase.from('products').select('id,name,price_incl_tax,sale_price,image_url,stock,active,brand,category_id').eq('active', true).gt('stock', 0).neq('id', params.id).neq('category_id', product.category_id).order('id', {ascending: false}).limit(40)
   const variantsByType = {}
   const typeOrder = []
   for (const v of rawVariants) {
@@ -67,7 +67,15 @@ export default async function ProductoPage({ params }) {
   const desc = product.description || ''
   const images = (product.images && product.images.length > 0 ? product.images : [product.image_url]).filter(Boolean)
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
-  const { data: related } = await relatedPromise
+  const { data: relatedRaw } = await relatedPromise
+  // Variedad: máximo 4, cada uno de una categoría distinta (creatina, snacks, vitaminas…), no todo proteína.
+  const related = []
+  const seenCat = new Set()
+  for (const r of (relatedRaw || [])) {
+    if (seenCat.has(r.category_id)) continue
+    seenCat.add(r.category_id); related.push(r)
+    if (related.length >= 4) break
+  }
   const jsonLd = {
     '@context':'https://schema.org','@type':'Product',
     name:product.name, description:desc.slice(0,300)||product.name, image:images[0]||'',
@@ -130,7 +138,7 @@ export default async function ProductoPage({ params }) {
             <h3 style={{margin:0,fontSize:15,fontWeight:800,textTransform:'uppercase',color:'#111'}}>Complementa tu compra</h3>
             <span style={{fontSize:12,color:'#888',fontWeight:400,marginLeft:'auto'}}>También se lleva con {product.name.split(' ')[0]}</span>
           </div>
-          <h2 style={{fontSize:16,fontWeight:900,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:16,color:'#111'}}>Productos relacionados</h2>
+          <h2 style={{fontSize:16,fontWeight:900,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:16,color:'#111'}}>🛒 Completa tu pedido con</h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
             {related.map(r=><ProductCard key={r.id} product={r}/>)}
           </div>
