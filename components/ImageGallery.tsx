@@ -50,7 +50,7 @@ export default function ImageGallery({images=[],name=''}){
       {/* Miniaturas (64px reales en vez del original completo) */}
       {imgs.length>1&&<div style={{display:'flex',gap:8,marginTop:10,flexWrap:'wrap'}}>
         {imgs.map((img,i)=>(
-          <button key={i} onClick={()=>{setMain(i);setFlavorImg(null)}} aria-label={'Ver imagen '+(i+1)+' de '+name}
+          <button key={i} onClick={()=>setMain(i)} aria-label={'Ver imagen '+(i+1)+' de '+name}
             style={{border:main===i?'2px solid #ff1e41':'2px solid #f0f0f0',padding:0,background:'none',cursor:'pointer',width:64,height:64,flexShrink:0,overflow:'hidden',position:'relative'}}>
             <Image src={proxyImg(img)} alt={name+' miniatura '+(i+1)} width={64} height={64} loading="lazy"
               style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>

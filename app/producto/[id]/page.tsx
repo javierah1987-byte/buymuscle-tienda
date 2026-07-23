@@ -19,6 +19,16 @@ const supabase = createClient('https://awwlbepjxuoxaigztugh.supabase.co',process
 // así que una insignia "disponible" ligeramente obsoleta no causa sobreventa.
 export const revalidate = 60
 
+// Bote SIEMPRE primero: la portada curada (image_url, la que sube el admin) va delante del
+// array del import (que mezcla botes y tablas nutricionales SIN orden garantizado), sin
+// duplicarla. normImg ignora el ?v= de cache-bust al comparar. Devuelve null si no hay nada
+// (mismo shape que el dato ausente de hoy).
+const normImg = u => (u||'').split('?')[0]
+const coverFirst = (cover, arr) => {
+  const out = [cover, ...(arr||[]).filter(Boolean).filter(u => normImg(u) !== normImg(cover))].filter(Boolean)
+  return out.length ? out : null
+}
+
 const getProduct = cache(async (id) => {
   const { data } = await supabase.from('products').select('*, categories(name)').eq('id', id).single()
   return data
@@ -56,7 +66,7 @@ export default async function ProductoPage({ params }) {
   for (const v of rawVariants) {
     const typeName = v.attribute_values?.attribute_types?.name || 'Variante'
     if (!variantsByType[typeName]) { variantsByType[typeName] = []; typeOrder.push(typeName) }
-    variantsByType[typeName].push({ id: v.attribute_values?.id, value: v.attribute_values?.value||'', hex: v.attribute_values?.hex_color, variantId: v.id, stock: v.stock, priceModifier: v.price_modifier||0, image: v.image_url||null, images: v.images||null })
+    variantsByType[typeName].push({ id: v.attribute_values?.id, value: v.attribute_values?.value||'', hex: v.attribute_values?.hex_color, variantId: v.id, stock: v.stock, priceModifier: v.price_modifier||0, image: v.image_url||null, images: coverFirst(v.image_url, v.images) })
   }
   const hasVariants = Object.keys(variantsByType).length > 0
   const catName = product.categories?.name || ''
@@ -65,7 +75,7 @@ export default async function ProductoPage({ params }) {
   const displayPrice = salePrice || price
   const discount = salePrice ? Math.round((1 - salePrice/price)*100) : null
   const desc = product.description || ''
-  const images = (product.images && product.images.length > 0 ? product.images : [product.image_url]).filter(Boolean)
+  const images = coverFirst(product.image_url, product.images) || []
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
   const { data: relatedRaw } = await relatedPromise
   // Variedad: máximo 4, cada uno de una categoría distinta (creatina, snacks, vitaminas…), no todo proteína.
