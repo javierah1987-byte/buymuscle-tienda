@@ -12,11 +12,12 @@ interface Props {
   variantsByType: Record<string, Variant[]>
   sortedTypes: string[]
   hasVariants: boolean
+  formatSlot?: any   // MOCKUP F0 ADR-BM-001: pills de formato renderizadas por el server (entre precio y sabor)
 }
 
 const DIST_ACCENT = '#d9b45a'
 
-export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants }: Props) {
+export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants, formatSlot = null }: Props) {
   const { add } = useCart()
   const { isDistributor, levelName, discountPct, overrides } = useAuth()
   const [selected, setSelected] = useState<Record<string,Variant>>({})
@@ -70,6 +71,8 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         </div>
         <div style={{ fontSize:11, color:'#aaa', marginTop:2 }}>IVA incluido · Compralo ahora y te lo entregamos en 24-48 horas.</div>
       </div>
+
+      {formatSlot}
 
       {sortedTypes.map(typeName => (
         <div key={typeName} style={{ marginBottom:'1rem' }}>

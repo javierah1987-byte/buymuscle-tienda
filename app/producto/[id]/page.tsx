@@ -10,6 +10,7 @@ import AddToCartSection from '@/components/AddToCartSection'
 import ProductCard from '@/components/ProductCard'
 import ImageGallery from '@/components/ImageGallery'
 import ProductoGrid from '@/components/ProductoGrid'
+import FormatPills from '@/components/FormatPills'
 import Script from 'next/script'
 import { SITE_URL } from '@/lib/site'
 
@@ -27,6 +28,43 @@ const normImg = u => (u||'').split('?')[0]
 const coverFirst = (cover, arr) => {
   const out = [cover, ...(arr||[]).filter(Boolean).filter(u => normImg(u) !== normImg(cover))].filter(Boolean)
   return out.length ? out : null
+}
+
+// ── MOCKUP F0 · ADR-BM-001 (A+ formato×sabor) ──────────────────────────────────
+// Pills de FORMATO: hermanos detectados on-the-fly por NOMBRE — los reference son
+// inconsistentes (WIGISO / WIGISO1 / WIGISO500), el token de formato vive al final
+// del nombre ("ISOLATE PROFESSIONAL 2 KG", "Creatine 3000 (150 comprimidos)").
+// TIEMPO 2 tras el OK de Javier al mockup: sustituir esta heurística por columnas
+// aditivas products.group_code + format_label + format_order (ver ADR-BM-001 F0).
+const FMT_RX = /(\d+(?:[.,]\d+)?)\s*(KG|KGS|GRS?|G|LB|LBS|ML|L|CAPS|COMPRIMIDOS?|VIALES|SOBRES|BARRITAS)\b/i
+const parseFormat = (name) => {
+  const up = (name || '').toUpperCase()
+  const m = up.match(FMT_RX)
+  if (!m || m.index < 3) return null            // sin token, o token al inicio del nombre → sin pills
+  const n = parseFloat(m[1].replace(',', '.'))
+  const u = m[2].replace(/^GRS?$/, 'G').replace(/^KGS$/, 'KG').replace(/^COMPRIMIDO$/, 'COMPRIMIDOS')
+  const order = u === 'KG' ? n * 1000 : u === 'LB' ? n * 453.6 : n     // gramos (o nº de unidades)
+  const label = u === 'G' ? n + 'g' : u === 'KG' ? String(n).replace('.', ',') + 'KG'
+    : u === 'CAPS' ? n + ' caps' : u === 'COMPRIMIDOS' ? n + ' comp.' : n + ' ' + u.toLowerCase()
+  const base = up.replace(FMT_RX, '§').replace(/[\s\-_.,()®]+/g, ' ').trim()
+  return { prefix: (name || '').slice(0, m.index).trim(), base, order, label }
+}
+const getFormatSiblings = async (product) => {
+  const f = parseFormat(product.name)
+  if (!f || f.prefix.length < 3) return []
+  const { data } = await supabase.from('products')
+    .select('id,name,brand,price_incl_tax,sale_price,stock')
+    .eq('active', true).ilike('name', f.prefix + '%').limit(20)
+  const out = []
+  for (const p of (data || [])) {
+    const pf = parseFormat(p.name)
+    if (!pf || pf.base !== f.base || (p.brand || '') !== (product.brand || '')) continue
+    if (out.some(x => x.label === pf.label)) continue   // mismo formato duplicado → familia sucia
+    out.push({ id: p.id, label: pf.label, order: pf.order, price: Number(p.sale_price || p.price_incl_tax), stock: p.stock })
+  }
+  // fail-closed del mockup: si el dedupe echó al propio producto, no pintamos nada
+  if (out.length < 2 || !out.some(x => x.id === product.id)) return []
+  return out.sort((a, b) => a.order - b.order)
 }
 
 const getProduct = cache(async (id) => {
@@ -57,6 +95,7 @@ export default async function ProductoPage({ params }) {
     supabase.from('product_reviews').select('id,name,rating,comment,created_at').eq('product_id', params.id).eq('verified', true).order('created_at', { ascending: false })
   ])
   if (!product) notFound()
+  const siblingsPromise = getFormatSiblings(product)   // MOCKUP F0: en paralelo con el resto
   const rawVariants = variantsRes.data || []
   const reviews = reviewsRes.data || []
   // "Completa tu pedido con…": productos COMPLEMENTARIOS de OTRAS categorías (no más de lo mismo).
@@ -78,6 +117,7 @@ export default async function ProductoPage({ params }) {
   const images = coverFirst(product.image_url, product.images) || []
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
   const { data: relatedRaw } = await relatedPromise
+  const formatSiblings = await siblingsPromise
   // Variedad: máximo 4, cada uno de una categoría distinta (creatina, snacks, vitaminas…), no todo proteína.
   const related = []
   const seenCat = new Set()
@@ -124,7 +164,8 @@ export default async function ProductoPage({ params }) {
             {product.stock>0&&product.stock<=10&&<div style={{background:'#fff3cd',border:'1px solid #ffc107',padding:'8px 14px',marginBottom:12,fontSize:13,fontWeight:700,color:'#856404'}}>
               Solo quedan {product.stock} unidades!
             </div>}
-            <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}/>
+            <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}
+              formatSlot={<FormatPills items={formatSiblings} activeId={product.id}/>}/>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:10,marginTop:18}}>
               {[['🚚','Envío 24-48h','Península y Canarias','#fff0f2'],['✅','100% Original','Marca oficial','#eefaf0'],['🔒','Pago seguro','Compra protegida','#eef3fb']].map(([ic,t,s,bg])=>(
