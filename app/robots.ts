@@ -7,7 +7,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/tpv', '/api', '/pedido-confirmado', '/mis-pedidos', '/mi-cuenta'],
+        // /distribuidores es portal privado (login + facturas): fuera del índice.
+        // El middleware además manda X-Robots-Tag noindex en estas zonas.
+        disallow: ['/admin', '/tpv', '/distribuidores', '/api', '/pedido-confirmado', '/mis-pedidos', '/mi-cuenta'],
       },
     ],
     sitemap: SITE_URL + '/sitemap.xml',
