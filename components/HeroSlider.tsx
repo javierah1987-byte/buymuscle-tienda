@@ -40,7 +40,7 @@ export default function HeroSlider({initialBanners=null}){
   const s=slides[idx]||{}
 
   return(
-    <div style={{position:'relative',width:'100%',aspectRatio:'1600 / 630',maxHeight:560,background:'#111',overflow:'hidden',userSelect:'none'}}>
+    <div style={{position:'relative',width:'100%',aspectRatio:'1600 / 630',maxHeight:720,background:'#111',overflow:'hidden',userSelect:'none'}}>
       {/* Imagen */}
       {s.image_url&&(
         // eslint-disable-next-line @next/next/no-img-element
