@@ -60,6 +60,26 @@ async function getBanners() {
   return data || []
 }
 
+// Campañas del slider (artes finales 1600×630 con el texto ya incorporado — se
+// pintan limpias, sin overlay ni título encima). Rehospedadas en nuestro
+// storage: cero hotlink al PrestaShop (destinado a apagarse).
+const SLIDES_CDN = 'https://awwlbepjxuoxaigztugh.supabase.co/storage/v1/object/public/product-images/clon-home/'
+const CAMPAIGN_SLIDES = [
+  {id:'camp-proteinas-matrix', image_url:SLIDES_CDN+'slide-1-proteinas-matrix.jpg', url:'/tienda?cat=Proteinas', alt:'Nuevas proteínas iO.GENIX: Whey Nova Matrix y Milk Protein Isolate'},
+  {id:'camp-salsas',           image_url:SLIDES_CDN+'slide-2-salsas-siropes.jpg',   url:'/tienda?cat='+encodeURIComponent('Salsas y Siropes'), alt:'Salsas y siropes Gourmet Selection iO.GENIX'},
+  {id:'camp-isolate',          image_url:SLIDES_CDN+'slide-3-isolate-sabores.jpg',  url:'/tienda?cat='+encodeURIComponent('Proteína Isolatada'), alt:'Isolate iO.GENIX: nuevos sabores'},
+  {id:'camp-protein-rings',    image_url:SLIDES_CDN+'slide-4-protein-rings.jpg',    url:'/producto/1697', alt:'Protein Rings iO.GENIX'},
+  {id:'camp-whatsapp',         image_url:SLIDES_CDN+'slide-5-canal-whatsapp.jpg',   url:'https://www.whatsapp.com/channel/0029VbAZetpF6smwmI1pv20X', external:true, alt:'Canal de WhatsApp de BuyMuscle'},
+  {id:'camp-streetflavour',    image_url:SLIDES_CDN+'slide-6-streetflavour.jpg',    url:'/streetflavour', alt:'StreetFlavour: moda callejera'},
+  {id:'camp-bm-vip',           image_url:SLIDES_CDN+'slide-7-bm-vip.jpg',           url:'/login', alt:'BM VIP: club de ventajas BuyMuscle'},
+]
+// Banners de la tabla ya CUBIERTOS por su campaña planchada de arriba (mismos
+// artes, pero hotlinkeados al PrestaShop y con un título desalineado pintado
+// encima). Verificados 23-jul contra la BD: 6 isolate · 7 streetflavour ·
+// 8 whatsapp · 9 protein-rings. Se omiten del slider; cualquier banner nuevo
+// creado en el admin sigue saliendo detrás de las campañas. BD intacta.
+const LEGACY_COVERED_BANNER_IDS = [6, 7, 8, 9]
+
 const QUICK_CATS = [
   {name:'Proteinas',    icon:'🥛', slug:'Proteinas'},
   {name:'Creatinas',   icon:'⚡', slug:'Creatinas Monohidratos'},
@@ -86,7 +106,7 @@ export default async function Home() {
   return (
     <main style={{background:'#f5f5f5'}}>
       <h1 style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
-      <HeroSlider initialBanners={banners as any} />
+      <HeroSlider initialBanners={[...CAMPAIGN_SLIDES, ...banners.filter((b:any)=>!LEGACY_COVERED_BANNER_IDS.includes(b.id))] as any} />
 
       {/* h2 BANNER OFERTA PRINCIPAL */}
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
