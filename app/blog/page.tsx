@@ -1,6 +1,7 @@
 // @ts-nocheck
 import Link from 'next/link'
 import{createClient}from'@supabase/supabase-js'
+import{rehost}from'@/lib/rehostedImages'
 export const revalidate=3600
 const sb=createClient('https://awwlbepjxuoxaigztugh.supabase.co',process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 export const metadata={title:'Blog | BUYMUSCLE',description:'Articulos sobre nutricion deportiva, suplementacion y entrenamiento.'}
@@ -22,7 +23,7 @@ export default async function BlogPage(){
               <article key={a.id} style={{background:'white',borderRadius:4,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>
                 <Link href={'/blog/'+(a.slug||a.id)} style={{textDecoration:'none',color:'inherit',display:'block'}}>
                   <div style={{position:'relative',paddingTop:'56.25%',background:'#f0f0f0',overflow:'hidden'}}>
-                    {a.cover_image&&<img src={a.cover_image} alt={a.title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} loading="lazy"/>}
+                    {a.cover_image&&<img src={rehost(a.cover_image)} alt={a.title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}} loading="lazy"/>}
                     {a.category&&<div style={{position:'absolute',top:10,left:10,background:'#ff1e41',color:'white',fontSize:10,fontWeight:700,padding:'3px 8px',textTransform:'uppercase'}}>{a.category}</div>}
                   </div>
                   <div style={{padding:16}}>

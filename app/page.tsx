@@ -6,6 +6,7 @@ import ProductCarousel from '@/components/ProductCarousel'
 import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
 import LazyBgVideo from '@/components/LazyBgVideo'
+import { rehost } from '@/lib/rehostedImages'
 
 // ISR: la home se regenera cada 5 min (catálogo, no sensible al stock en tiempo real)
 export const revalidate = 300
@@ -262,7 +263,7 @@ export default async function Home() {
       {/* BM SPORTSWEAR banner */}
       <section style={{position:'relative',overflow:'hidden',height:260,background:'#111'}}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="BM Sportswear"
+        <img src={rehost('https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg')} alt="BM Sportswear"
           style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.75}}/>
         <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'}}/>
         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 60px'}}>
@@ -314,7 +315,7 @@ export default async function Home() {
                 style={{background:'white',textDecoration:'none',color:'inherit',display:'flex',flexDirection:'column'}}>
                 <div style={{height:180,overflow:'hidden',background:'#f0f0f0',flexShrink:0}}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={BASE_BLOG+post.img} alt={post.titulo} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  <img src={rehost(BASE_BLOG+post.img)} alt={post.titulo} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                 </div>
                 <div style={{padding:'1rem',flex:1,display:'flex',flexDirection:'column'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:'0.5rem'}}>

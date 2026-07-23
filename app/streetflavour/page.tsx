@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import { CARD_COLUMNS } from '@/lib/productCard'
 import Link from 'next/link'
+import { rehost } from '@/lib/rehostedImages'
 export const revalidate = 60
 
 async function getProducts() {
@@ -20,7 +21,7 @@ export default async function StreetFlavourPage() {
     <div style={{background:'#f5f5f5',minHeight:'80vh'}}>
       <section style={{position:'relative',height:300,overflow:'hidden',background:'#0a0a0a'}}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="StreetFlavour"
+        <img src={rehost("https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg")} alt="StreetFlavour"
           style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.7}}/>
         <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 60%)'}}/>
         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 60px'}}>
