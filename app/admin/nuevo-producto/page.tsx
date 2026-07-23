@@ -8,7 +8,7 @@ const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const H={apikey:K,'Authorization':'Bearer '+K}
 const MARCAS = ['BuyMuscle','MVP','IO.Genix','Applied Nutrition','GN Nutrition','BioTechUSA','Scitec','HSN','Quamtrax']
-const INP = {width:'100%',padding:'9px 11px',border:'1px solid #333',borderRadius:4,background:'#1a1a1a',color:'white',fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}
+const INP = {width:'100%',padding:'9px 11px',border:'1px solid #333',borderRadius:4,background:'#ffffff',color:'#111',fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}
 const LBL = {display:'block',fontSize:11,fontWeight:700,color:'#aaa',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:5}
 
 export default function NuevoProducto() {
@@ -67,8 +67,8 @@ export default function NuevoProducto() {
   }
 
   return(
-    <div style={{minHeight:'100vh',background:'#111',color:'white',paddingBottom:60}}>
-      <div style={{background:'#1a1a1a',borderBottom:'1px solid #333',padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+    <div style={{minHeight:'100vh',background:'#f5f5f6',color:'#111',paddingBottom:60}}>
+      <div style={{background:'#ffffff',borderBottom:'1px solid #333',padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <div>
           <h1 style={{fontSize:20,fontWeight:900,color:'#ff1e41',margin:0}}>NUEVO PRODUCTO</h1>
           <p style={{fontSize:12,color:'#888',margin:'2px 0 0'}}>Añadir producto al catalogo</p>
@@ -77,7 +77,7 @@ export default function NuevoProducto() {
       </div>
       <div style={{maxWidth:900,margin:'0 auto',padding:'24px 20px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
-          <div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:8,padding:20}}>
+          <div style={{background:'#ffffff',border:'1px solid #333',borderRadius:8,padding:20}}>
             <h2 style={{fontSize:13,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',marginBottom:16}}>Informacion basica</h2>
             <div style={{marginBottom:14}}><label style={LBL}>Nombre *</label><input style={INP} value={form.name} onChange={e=>set('name',e.target.value)} placeholder="WHEY 80 PROFESSIONAL 2KG MVP"/></div>
             <div style={{marginBottom:14}}><label style={LBL}>Marca</label><select style={INP} value={form.brand} onChange={e=>set('brand',e.target.value)}>{MARCAS.map(m=><option key={m}>{m}</option>)}</select></div>
@@ -94,10 +94,10 @@ export default function NuevoProducto() {
             <div style={{marginBottom:14}}><label style={LBL}>Descripcion</label><textarea style={{...INP,height:80,resize:'vertical'}} value={form.description} onChange={e=>set('description',e.target.value)}/></div>
             <div style={{display:'flex',alignItems:'center',gap:10}}><label style={{...LBL,margin:0}}>Activo</label><input type="checkbox" checked={form.active} onChange={e=>set('active',e.target.checked)} style={{width:18,height:18}}/></div>
           </div>
-          {form.image_url&&<div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:8,padding:16,textAlign:'center'}}><img src={form.image_url} alt="" style={{maxHeight:140,maxWidth:'100%',objectFit:'contain'}} onError={e=>{e.target.style.display='none'}}/></div>}
+          {form.image_url&&<div style={{background:'#ffffff',border:'1px solid #333',borderRadius:8,padding:16,textAlign:'center'}}><img src={form.image_url} alt="" style={{maxHeight:140,maxWidth:'100%',objectFit:'contain'}} onError={e=>{e.target.style.display='none'}}/></div>}
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:16}}>
-          <div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:8,padding:20}}>
+          <div style={{background:'#ffffff',border:'1px solid #333',borderRadius:8,padding:20}}>
             <h2 style={{fontSize:13,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',marginBottom:4}}>Variantes (sabores / tallas)</h2>
             <p style={{fontSize:11,color:'#888',marginBottom:14}}>Opcional</p>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
@@ -106,25 +106,25 @@ export default function NuevoProducto() {
               <div><label style={LBL}>Stock</label><input style={INP} type="number" min="0" value={nv.stock} onChange={e=>setNv(v=>({...v,stock:e.target.value}))}/></div>
               <div><label style={LBL}>Mod. precio EUR</label><input style={INP} type="number" step="0.01" value={nv.mod} onChange={e=>setNv(v=>({...v,mod:e.target.value}))}/></div>
             </div>
-            <button onClick={addVar} style={{width:'100%',padding:9,background:'#333',border:'1px solid #555',color:'white',borderRadius:4,cursor:'pointer',fontSize:13,fontWeight:700,marginBottom:16}}>+ Añadir variante</button>
+            <button onClick={addVar} style={{width:'100%',padding:9,background:'#d5d5d5',border:'1px solid #555',color:'#111',borderRadius:4,cursor:'pointer',fontSize:13,fontWeight:700,marginBottom:16}}>+ Añadir variante</button>
             {variantes.length>0&&<div style={{display:'flex',flexDirection:'column',gap:6}}>{variantes.map(v=>(
-              <div key={v.uid} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#222',border:'1px solid #444',borderRadius:4,padding:'8px 12px'}}>
-                <span style={{fontSize:12}}><span style={{color:'#ff1e41',fontWeight:700}}>{v.tipo}</span> <span style={{color:'white'}}>{v.valor}</span> <span style={{color:'#888'}}>· {v.stock} uds</span></span>
+              <div key={v.uid} style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#e8e8e8',border:'1px solid #444',borderRadius:4,padding:'8px 12px'}}>
+                <span style={{fontSize:12}}><span style={{color:'#ff1e41',fontWeight:700}}>{v.tipo}</span> <span style={{color:'#111'}}>{v.valor}</span> <span style={{color:'#888'}}>· {v.stock} uds</span></span>
                 <button onClick={()=>setVariantes(vs=>vs.filter(x=>x.uid!==v.uid))} style={{background:'none',border:'none',color:'#ef4444',cursor:'pointer',fontSize:16}}>x</button>
               </div>
             ))}</div>}
           </div>
-          <div style={{background:'#1a1a1a',border:'1px solid #333',borderRadius:8,padding:20}}>
+          <div style={{background:'#ffffff',border:'1px solid #333',borderRadius:8,padding:20}}>
             <h2 style={{fontSize:13,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',marginBottom:12}}>Guardar</h2>
-            <div style={{background:'#222',borderRadius:6,padding:12,marginBottom:14,fontSize:12,color:'#ccc',lineHeight:1.8}}>
-              <div><b style={{color:'white'}}>Nombre:</b> {form.name||'—'}</div>
-              <div><b style={{color:'white'}}>Precio:</b> {form.price_incl_tax||'—'} EUR</div>
-              <div><b style={{color:'white'}}>Stock:</b> {form.stock}</div>
-              <div><b style={{color:'white'}}>Variantes:</b> {variantes.length}</div>
-              <div><b style={{color:'white'}}>Activo:</b> {form.active?'Si':'No'}</div>
+            <div style={{background:'#e8e8e8',borderRadius:6,padding:12,marginBottom:14,fontSize:12,color:'#ccc',lineHeight:1.8}}>
+              <div><b style={{color:'#111'}}>Nombre:</b> {form.name||'—'}</div>
+              <div><b style={{color:'#111'}}>Precio:</b> {form.price_incl_tax||'—'} EUR</div>
+              <div><b style={{color:'#111'}}>Stock:</b> {form.stock}</div>
+              <div><b style={{color:'#111'}}>Variantes:</b> {variantes.length}</div>
+              <div><b style={{color:'#111'}}>Activo:</b> {form.active?'Si':'No'}</div>
             </div>
             {msg&&<div style={{padding:'10px 14px',borderRadius:6,marginBottom:14,fontSize:13,background:msg.err?'#7f1d1d':'#14532d',border:msg.err?'1px solid #ef4444':'1px solid #22c55e',color:msg.err?'#fca5a5':'#86efac'}}>{msg.text}</div>}
-            <button onClick={handleSave} disabled={saving} style={{width:'100%',padding:14,background:saving?'#555':'#ff1e41',border:'none',color:'white',borderRadius:4,cursor:saving?'not-allowed':'pointer',fontSize:14,fontWeight:900,textTransform:'uppercase',letterSpacing:'0.05em'}}>
+            <button onClick={handleSave} disabled={saving} style={{width:'100%',padding:14,background:saving?'#555':'#ff1e41',border:'none',color:'#111',borderRadius:4,cursor:saving?'not-allowed':'pointer',fontSize:14,fontWeight:900,textTransform:'uppercase',letterSpacing:'0.05em'}}>
               {saving?'Guardando...':'CREAR PRODUCTO'}
             </button>
           </div>

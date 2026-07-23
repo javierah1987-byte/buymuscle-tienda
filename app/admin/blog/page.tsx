@@ -103,12 +103,12 @@ export default function BlogAdmin(){
 
   return(
     <div style={{background:'#f5f5f5',minHeight:'100vh',fontFamily:'Arial,sans-serif'}}>
-      <div style={{background:'#111',color:'white',padding:'24px 32px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <div style={{background:'#f5f5f6',color:'#111',padding:'24px 32px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <span style={{fontSize:24}}>✍️</span>
           <div>
             <h1 style={{margin:0,fontSize:20,fontWeight:900,textTransform:'uppercase'}}>Blog Admin</h1>
-            <p style={{margin:0,fontSize:12,color:'rgba(255,255,255,0.6)'}}>Gestiona artículos del blog</p>
+            <p style={{margin:0,fontSize:12,color:'#5a5a5a'}}>Gestiona artículos del blog</p>
           </div>
         </div>
         <Link href="/blog" target="_blank" style={{color:'#ff1e41',textDecoration:'none',fontSize:13,fontWeight:700}}>Ver blog →</Link>
@@ -161,7 +161,7 @@ export default function BlogAdmin(){
             {editing&&<button onClick={()=>{setEditing(null);setForm({...EMPTY})}}
               style={{flex:1,padding:10,border:'1px solid #ddd',background:'white',cursor:'pointer',fontSize:13,fontFamily:'inherit'}}>Cancelar</button>}
             <button onClick={save} disabled={saving||!form.title}
-              style={{flex:2,padding:10,border:'none',background:'#ff1e41',color:'white',cursor:'pointer',fontSize:13,fontWeight:700,fontFamily:'inherit'}}>
+              style={{flex:2,padding:10,border:'none',background:'#ff1e41',color:'#111',cursor:'pointer',fontSize:13,fontWeight:700,fontFamily:'inherit'}}>
               {saving?'Guardando...':(editing?'Actualizar':'Publicar artículo')}
             </button>
           </div>

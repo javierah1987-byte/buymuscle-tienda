@@ -108,7 +108,7 @@ export default function AdminDescuentos() {
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',gap:'0.75rem',marginBottom:'1.25rem',flexWrap:'wrap'}}>
           <h1 style={{fontSize:20,fontWeight:900,textTransform:'uppercase',margin:0}}>🏷️ Códigos de Descuento</h1>
-          <a href="/admin" style={{background:'#111',color:'white',padding:'6px 14px',fontSize:12,fontWeight:700,textDecoration:'none',textTransform:'uppercase'}}>← Admin</a>
+          <a href="/admin" style={{background:'#f5f5f6',color:'#111',padding:'6px 14px',fontSize:12,fontWeight:700,textDecoration:'none',textTransform:'uppercase'}}>← Admin</a>
           <a href="/" style={{marginLeft:'auto',fontSize:12,color:'#888',textDecoration:'none'}}>← Tienda</a>
         </div>
 
@@ -207,7 +207,7 @@ export default function AdminDescuentos() {
 
               <div style={{display:'flex',gap:8,paddingTop:4}}>
                 <button type="submit" disabled={saving}
-                  style={{flex:1,background:'#ff1e41',color:'white',border:'none',padding:'10px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+                  style={{flex:1,background:'#ff1e41',color:'#111',border:'none',padding:'10px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
                   {saving?'Guardando...':(editId?'💾 Actualizar':'✓ Crear código')}
                 </button>
                 {editId && (
@@ -273,7 +273,7 @@ export default function AdminDescuentos() {
                         </td>
                         {/* Usos */}
                         <td style={{padding:'10px 12px'}}>
-                          <div style={{fontSize:13,fontWeight:600,color:exhausted?'#ef4444':'#333'}}>
+                          <div style={{fontSize:13,fontWeight:600,color:exhausted?'#ef4444':'#d5d5d5'}}>
                             {c.uses}{c.max_uses ? ' / '+c.max_uses : ''}
                           </div>
                           {c.max_uses && (
