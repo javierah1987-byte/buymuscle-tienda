@@ -108,10 +108,11 @@ export default async function ProductoPage({ params }) {
             </div>}
             <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}/>
 
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:8,marginTop:16}}>
-              {[['Envio 24-48h','Peninsular y Canarias'],['Original','Marca oficial'],['Seguro','100% protegido'],['Dudas?','828 048 310']].map(([t,s])=>(
-                <div key={t} style={{display:'flex',gap:8,alignItems:'center',padding:'8px 10px',background:'#f9f9f9',border:'1px solid #f0f0f0'}}>
-                  <div><div style={{fontSize:11,fontWeight:700,color:'#444'}}>{t}</div><div style={{fontSize:10,color:'#aaa'}}>{s}</div></div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:10,marginTop:18}}>
+              {[['🚚','Envío 24-48h','Península y Canarias','#fff0f2'],['✅','100% Original','Marca oficial','#eefaf0'],['🔒','Pago seguro','Compra protegida','#eef3fb'],['📞','¿Dudas?','828 048 310','#fff7ea']].map(([ic,t,s,bg])=>(
+                <div key={t} style={{display:'flex',gap:11,alignItems:'center',padding:'12px 13px',background:'#fff',border:'1px solid #ececec',borderRadius:11,boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
+                  <div style={{width:40,height:40,borderRadius:10,background:bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{ic}</div>
+                  <div style={{minWidth:0}}><div style={{fontSize:12.5,fontWeight:800,color:'#1a1a1a',lineHeight:1.2}}>{t}</div><div style={{fontSize:11,color:'#999',marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{s}</div></div>
                 </div>
               ))}
             </div>
