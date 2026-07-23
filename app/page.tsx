@@ -10,7 +10,7 @@ import CarouselTrack from '@/components/home/CarouselTrack'
 import TrustBar from '@/components/home/TrustBar'
 import WeekOffer from '@/components/home/WeekOffer'
 import Testimonials from '@/components/home/Testimonials'
-import { getHomeProducts, getWeekOffer, getNovedadesClon, getByCategoryIds } from '@/lib/homeData'
+import { getHomeProducts, getWeekOffer, getNovedadesProteinas, getByCategoryIds, PROTEIN_CAT_IDS } from '@/lib/homeData'
 
 // HOME CLON — réplica fiel de la home del PrestaShop (tienda.buymuscle.es),
 // sección a sección y en su orden, con el catálogo servido desde nuestra BD.
@@ -18,17 +18,17 @@ import { getHomeProducts, getWeekOffer, getNovedadesClon, getByCategoryIds } fro
 // TrustBar · Oferta de la semana · Oferta del día (countdown) · Reseñas.
 export const revalidate = 300
 
-// Categorías de ropa/complementos BM (sportswear) y familias de proteína.
-// IDs verificados contra la tabla categories de la BD.
+// Categorías de ropa/complementos BM (sportswear); las familias de proteína
+// viven en lib/homeData (PROTEIN_CAT_IDS, compartidas con novedades).
 const SPORTSWEAR_CATS = [33, 34, 53, 69, 153, 164, 165, 190, 191, 192, 193, 67, 68]
-const PROTEIN_CATS = [8, 16, 17, 43, 44, 39]
 
 export default async function Home() {
+  // Novedades (feedback Javier): solo proteínas nuevas — botes iO.GENIX, fila homogénea.
   const [novedades, masVendidos, sportswear, proteinas, weekOffer] = await Promise.all([
-    getNovedadesClon(10),
+    getNovedadesProteinas(10),
     getHomeProducts({ limit: 12, orderBy: 'stock' }),
     getByCategoryIds(SPORTSWEAR_CATS, 12),
-    getByCategoryIds(PROTEIN_CATS, 12),
+    getByCategoryIds(PROTEIN_CAT_IDS, 12),
     getWeekOffer(),
   ])
 

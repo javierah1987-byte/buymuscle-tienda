@@ -44,23 +44,20 @@ export async function getWeekOffer() {
 
 // ── Queries del clon fiel de la home PrestaShop ──
 
-// Novedades: primero los marcados is_new, completando con los últimos altas
-// hasta el límite (el carrusel del PrestaShop muestra ~10 novedades).
-export async function getNovedadesClon(limit = 10) {
-  const { data: nuevos } = await supabase.from('products').select(CARD_COLS)
-    .eq('active', true).gt('stock', 0).eq('is_new', true)
+// Familias de proteína (fuente única — carrusel de novedades + grid "Las
+// mejores proteínas"). IDs verificados contra la tabla categories.
+export const PROTEIN_CAT_IDS = [8, 16, 17, 43, 44, 39]
+
+// Novedades (feedback Javier): SOLO las proteínas más nuevas — botes iO.GENIX,
+// fila homogénea. id desc = lo último en llegar; image_url NOT NULL para que
+// un producto sin foto no pueda colarse en un carrusel visual, por construcción.
+export async function getNovedadesProteinas(limit = 10) {
+  const { data } = await supabase.from('products').select(CARD_COLS)
+    .eq('active', true).gt('stock', 0)
+    .in('category_id', PROTEIN_CAT_IDS)
+    .not('image_url', 'is', null)
     .order('id', { ascending: false }).limit(limit)
-  let out = (nuevos || []) as any[]
-  if (out.length < limit) {
-    let q = supabase.from('products').select(CARD_COLS)
-      .eq('active', true).gt('stock', 0)
-      .order('id', { ascending: false }).limit(limit - out.length)
-    const ids = out.map(p => p.id)
-    if (ids.length) q = q.not('id', 'in', '(' + ids.join(',') + ')')
-    const { data: extra } = await q
-    out = out.concat((extra || []) as any[])
-  }
-  return out
+  return (data || []) as any[]
 }
 
 // Productos por lista de categorías (sportswear = varias categorías de ropa;
