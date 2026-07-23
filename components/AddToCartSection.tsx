@@ -5,7 +5,7 @@ import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import { SITE_URL } from '@/lib/site'
 
-type Variant = { id:number; value:string; hex?:string; variantId:number; stock:number; priceModifier:number }
+type Variant = { id:number; value:string; hex?:string; variantId:number; stock:number; priceModifier:number; image?:string|null }
 
 interface Props {
   product: { id:number; name:string; price_incl_tax:number; sale_price?:number; on_sale?:boolean; stock:number; image_url:string|null }
@@ -82,6 +82,8 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
               const val = e.target.value
               const v = variantsByType[typeName].find(v => String(v.variantId) === val)
               setSelected(prev => v ? { ...prev, [typeName]: v } : (({ [typeName]:_, ...rest }) => rest)(prev))
+              // Foto por sabor: si la variante elegida tiene foto propia, avisamos a la galería.
+              if (typeof window !== 'undefined' && v?.image) window.dispatchEvent(new CustomEvent('bm-variant-image', { detail: v.image }))
             }}
             aria-label={typeName}
             style={{ width:'100%', padding:'10px 12px', border:'1px solid #ddd', fontSize:13, background:'white', cursor:'pointer', fontFamily:'var(--font-body)' }}>
