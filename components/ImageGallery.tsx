@@ -12,23 +12,24 @@ function proxyImg(url){
 export default function ImageGallery({images=[],name=''}){
   const[main,setMain]=useState(0)
   const[zoom,setZoom]=useState(false)
-  const[flavorImg,setFlavorImg]=useState(null)
-  const imgs=images.filter(Boolean)
+  const[flavorImgs,setFlavorImgs]=useState(null)
+  const baseImgs=images.filter(Boolean)
+  const imgs=(flavorImgs&&flavorImgs.length)?flavorImgs:baseImgs
   useEffect(()=>{
     if(!zoom)return
     const h=e=>{if(e.key==='Escape')setZoom(false)}
     window.addEventListener('keydown',h)
     return()=>window.removeEventListener('keydown',h)
   },[zoom])
-  // Foto por SABOR: AddToCartSection dispara 'bm-variant-image' con la URL de la foto del sabor
-  // elegido → aquí la mostramos como imagen principal. Al pulsar una miniatura se vuelve a la galería.
+  // Galería por SABOR: AddToCartSection dispara 'bm-variant-image' con la(s) foto(s) del sabor
+  // elegido → cambiamos TODA la galería (principal + miniaturas) a las de ese sabor.
   useEffect(()=>{
-    const h=e=>setFlavorImg(e.detail||null)
+    const h=e=>{ const d=e.detail; setFlavorImgs(Array.isArray(d)?d.filter(Boolean):(d?[d]:null)); setMain(0) }
     window.addEventListener('bm-variant-image',h)
     return()=>window.removeEventListener('bm-variant-image',h)
   },[])
-  const shown = flavorImg || imgs[main]
-  if(!imgs.length && !flavorImg) return(
+  const shown = imgs[main]||imgs[0]
+  if(!imgs.length) return(
     <div style={{aspectRatio:'1',background:'#f5f5f5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:60}}>📦</div>
   )
   return(
