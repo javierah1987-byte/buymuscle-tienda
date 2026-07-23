@@ -13,17 +13,18 @@ interface Props {
   autoplayMs?: number
 }
 
+// Sistema PrestaShop "arrows-middle" con colores de marca: flechas circulares
+// rojas a los LADOS del track (centradas en vertical) y desplazamiento SUAVE
+// por página (scroll smooth + snap), en vez de saltos instant por tarjeta.
 export default function ProductCarousel({
   products, title, titleIcon,
   href = '/tienda', hrefLabel = 'Ver todos →',
-  autoplayMs = 3500
+  autoplayMs = 5000
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
   const pausedRef = useRef(false)
-
-  const STEP = 310 // ancho de una tarjeta aprox
 
   // Actualizar estado flechas
   const onScroll = useCallback(() => {
@@ -33,23 +34,17 @@ export default function ProductCarousel({
     setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 5)
   }, [])
 
-  const goLeft = () => {
+  // Avance por PÁGINA (ancho visible ≈ 4 tarjetas desktop), como el
+  // slidesToScroll del slick original, con el easing suave del navegador.
+  const go = (dir: 1 | -1) => {
     const el = trackRef.current
     if (!el) return
     pausedRef.current = true
     setTimeout(() => { pausedRef.current = false }, 5000) // pausa 5s al clicar
-    el.scrollTo({ left: Math.max(0, el.scrollLeft - STEP), behavior: 'instant' })
+    el.scrollBy({ left: dir * el.clientWidth, behavior: 'smooth' })
   }
 
-  const goRight = () => {
-    const el = trackRef.current
-    if (!el) return
-    pausedRef.current = true
-    setTimeout(() => { pausedRef.current = false }, 5000)
-    el.scrollTo({ left: el.scrollLeft + STEP, behavior: 'instant' })
-  }
-
-  // Autoplay — avanza de uno en uno, vuelve al inicio al llegar al final
+  // Autoplay — avanza una página suave; al llegar al final vuelve al inicio
   useEffect(() => {
     const el = trackRef.current
     if (!el || products.length <= 4) return
@@ -58,36 +53,16 @@ export default function ProductCarousel({
       if (pausedRef.current) return
       const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 5
       if (isAtEnd) {
-        // Volver al inicio suavemente
-        el.scrollTo({ left: 0, behavior: 'instant' })
+        el.scrollTo({ left: 0, behavior: 'smooth' })
       } else {
-        el.scrollTo({ left: el.scrollLeft + STEP, behavior: 'instant' })
+        el.scrollBy({ left: el.clientWidth, behavior: 'smooth' })
       }
-      // Actualizar estado flechas
-      setTimeout(() => {
-        setAtStart(el.scrollLeft <= 5)
-        setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 5)
-      }, 50)
     }, autoplayMs)
 
     return () => clearInterval(interval)
   }, [products.length, autoplayMs])
 
   if (!products.length) return null
-
-  const btnStyle = (disabled: boolean): React.CSSProperties => ({
-    width: 34, height: 34,
-    border: '1px solid ' + (disabled ? '#eee' : '#bbb'),
-    background: disabled ? '#fafafa' : 'white',
-    cursor: disabled ? 'default' : 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 20, lineHeight: '1',
-    color: disabled ? '#ccc' : '#444',
-    fontFamily: 'var(--font-body)',
-    flexShrink: 0,
-    userSelect: 'none' as const,
-    transition: 'all 0.15s',
-  })
 
   return (
     <section
@@ -102,40 +77,33 @@ export default function ProductCarousel({
             {titleIcon && <span style={{ fontSize:18 }}>{titleIcon}</span>}
             <h2 style={{ fontSize:16, fontWeight:800, textTransform:'uppercase', color:'#111', margin:0 }}>{title}</h2>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <button onClick={goLeft} aria-label="Productos anteriores" style={btnStyle(atStart)}
-              onMouseEnter={e=>{ if(!atStart){ e.currentTarget.style.background='var(--red)'; e.currentTarget.style.color='white'; e.currentTarget.style.borderColor='var(--red)'; }}}
-              onMouseLeave={e=>{ e.currentTarget.style.background='white'; e.currentTarget.style.color=atStart?'#ccc':'#444'; e.currentTarget.style.borderColor=atStart?'#eee':'#bbb'; }}>
-              ‹
-            </button>
-            <button onClick={goRight} aria-label="Productos siguientes" style={btnStyle(atEnd)}
-              onMouseEnter={e=>{ if(!atEnd){ e.currentTarget.style.background='var(--red)'; e.currentTarget.style.color='white'; e.currentTarget.style.borderColor='var(--red)'; }}}
-              onMouseLeave={e=>{ e.currentTarget.style.background='white'; e.currentTarget.style.color=atEnd?'#ccc':'#444'; e.currentTarget.style.borderColor=atEnd?'#eee':'#bbb'; }}>
-              ›
-            </button>
-            <Link href={href} style={{ fontSize:12, color:'var(--red)', fontWeight:700, textDecoration:'none', border:'1px solid var(--red)', padding:'5px 14px' }}>
-              {hrefLabel}
-            </Link>
-          </div>
+          <Link href={href} style={{ fontSize:12, color:'var(--red)', fontWeight:700, textDecoration:'none', border:'1px solid var(--red)', padding:'5px 14px' }}>
+            {hrefLabel}
+          </Link>
         </div>
 
-        {/* Track scrollable */}
-        <div
-          ref={trackRef}
-          onScroll={onScroll}
-          style={{
-            display: 'flex',
-            gap: '1px',
-            overflowX: 'scroll',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            background: '#e0e0e0',
-          } as React.CSSProperties}>
-          {products.map(p => (
-            <div key={p.id} style={{ flexShrink:0, width:'24%', minWidth:210, maxWidth:310 }}>
-              <ProductCard product={p} />
-            </div>
-          ))}
+        {/* Track con flechas laterales */}
+        <div className="pc-wrap">
+          <button className="pc-arrow pc-arrow-left" onClick={() => go(-1)} disabled={atStart} aria-label="Productos anteriores">‹</button>
+          <button className="pc-arrow pc-arrow-right" onClick={() => go(1)} disabled={atEnd} aria-label="Productos siguientes">›</button>
+          <div
+            ref={trackRef}
+            onScroll={onScroll}
+            style={{
+              display: 'flex',
+              gap: '1px',
+              overflowX: 'scroll',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              scrollSnapType: 'x proximity',
+              background: '#e0e0e0',
+            } as React.CSSProperties}>
+            {products.map(p => (
+              <div key={p.id} style={{ flexShrink:0, width:'24%', minWidth:210, maxWidth:310, scrollSnapAlign:'start' }}>
+                <ProductCard product={p} />
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
