@@ -6,29 +6,39 @@ import { authHeaders } from '@/lib/supabaseBrowser'
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const h={apikey:K,'Authorization':'Bearer '+K}
-const MODULOS=[
-  {icon:'➕',t:'Nuevo Producto',d:'Añadir producto al catalogo',href:'/admin/nuevo-producto',c:'#ff6b35'},
-  {icon:'📦',t:'Pedidos Online',d:'Ver y gestionar pedidos',href:'/admin/pedidos',c:'#ff1e41'},
-  {icon:'🖥️',t:'TPV Tienda fisica',d:'Punto de venta presencial',href:'/tpv',c:'#f59e0b'},
-  {icon:'📊',t:'Gestion de Stock',d:'Actualizar precios y stock',href:'/admin/stock',c:'#22c55e'},
-  {icon:'👥',t:'Distribuidores',d:'Panel de distribuidores',href:'/distribuidores',c:'#3b82f6'},
-  {icon:'✍️',t:'Blog',d:'Gestionar articulos',href:'/admin/blog',c:'#8b5cf6'},
-  {icon:'📱',t:'RRSS',d:'Publicaciones sociales',href:'/admin/rrss',c:'#E1306C'},
-  {icon:'🏷️',t:'Descuentos',d:'Codigos y cupones',href:'/admin/descuentos',c:'#f59e0b'},
-  {icon:'📦',t:'Productos',d:'Editar precio y stock inline',href:'/admin/productos',c:'#22c55e'},
-  {icon:'🖼️',t:'Imágenes pendientes',d:'Subir imágenes que faltan',href:'/admin/imagenes',c:'#8b5cf6'},
-  {icon:'📊',t:'Suscriptores',d:'Emails captados',href:'/admin/suscriptores',c:'#3b82f6'},
-  {icon:'🛒',t:'Carritos Abandonados',d:'Recuperar ventas perdidas',href:'/admin/abandoned',c:'#ff1e41'},
-  {icon:'📧',t:'Newsletter',d:'Enviar emails a suscriptores',href:'/admin/newsletter',c:'#3b82f6'},
-  {icon:'📧',t:'Email (Resend)',d:'Plantillas de email',href:'https://resend.com',c:'#555',ext:true},
-  {icon:'👥',t:'Clientes',d:'Historial y CRM',href:'/admin/clientes',c:'#8b5cf6'},
-  {icon:'⭐',t:'Reseñas',d:'Aprobar / rechazar',href:'/admin/resenas',c:'#f59e0b'},
-  {icon:'📊',t:'Métricas',d:'KPIs avanzados',href:'/admin/metricas',c:'#22c55e'},
-  {icon:'🎯',t:'Precios masivos',d:'Subir/bajar por marca',href:'/admin/precios',c:'#ef4444'},
-  {icon:'💰',t:'Caja',d:'Apertura y cierre Z',href:'/admin/caja',c:'#059669'},
-  {icon:'📈',t:'Estimador de pedidos',d:'Qué reponer cada viernes',href:'/admin/estimador',c:'#0ea5e9'},
-  {icon:'🔄',t:'Devoluciones',d:'Gestionar devoluciones',href:'/admin/devoluciones',c:'#dc2626'},
-  {icon:'🏷️',t:'Holded Facturas',d:'Ver facturas en Holded',href:'https://app.holded.com',c:'#555',ext:true},
+const GRUPOS=[
+  {g:'🛒 Ventas y pedidos', items:[
+    {icon:'📦',t:'Pedidos Online',href:'/admin/pedidos',c:'#ff1e41'},
+    {icon:'🖥️',t:'TPV Tienda física',href:'/tpv',c:'#f59e0b'},
+    {icon:'💰',t:'Caja',href:'/admin/caja',c:'#059669'},
+    {icon:'🔄',t:'Devoluciones',href:'/admin/devoluciones',c:'#dc2626'},
+    {icon:'🛒',t:'Carritos abandonados',href:'/admin/abandoned',c:'#ff1e41'},
+    {icon:'📈',t:'Estimador de pedidos',href:'/admin/estimador',c:'#0ea5e9'},
+  ]},
+  {g:'📦 Catálogo y stock', items:[
+    {icon:'📦',t:'Productos',href:'/admin/productos',c:'#22c55e'},
+    {icon:'➕',t:'Nuevo producto',href:'/admin/nuevo-producto',c:'#ff6b35'},
+    {icon:'📊',t:'Gestión de stock',href:'/admin/stock',c:'#22c55e'},
+    {icon:'🎯',t:'Precios masivos',href:'/admin/precios',c:'#ef4444'},
+    {icon:'🖼️',t:'Imágenes pendientes',href:'/admin/imagenes',c:'#8b5cf6'},
+    {icon:'🏷️',t:'Descuentos',href:'/admin/descuentos',c:'#f59e0b'},
+    {icon:'⭐',t:'Reseñas',href:'/admin/resenas',c:'#f59e0b'},
+  ]},
+  {g:'📣 Marketing', items:[
+    {icon:'✍️',t:'Blog',href:'/admin/blog',c:'#8b5cf6'},
+    {icon:'📱',t:'RRSS',href:'/admin/rrss',c:'#E1306C'},
+    {icon:'📧',t:'Newsletter',href:'/admin/newsletter',c:'#3b82f6'},
+    {icon:'📊',t:'Suscriptores',href:'/admin/suscriptores',c:'#3b82f6'},
+    {icon:'📧',t:'Email (Resend)',href:'https://resend.com',c:'#6b7280',ext:true},
+  ]},
+  {g:'👥 Clientes y distribución', items:[
+    {icon:'👥',t:'Clientes',href:'/admin/clientes',c:'#8b5cf6'},
+    {icon:'🤝',t:'Distribuidores',href:'/distribuidores',c:'#3b82f6'},
+  ]},
+  {g:'📊 Análisis y finanzas', items:[
+    {icon:'📊',t:'Métricas',href:'/admin/metricas',c:'#22c55e'},
+    {icon:'🧾',t:'Holded Facturas',href:'https://app.holded.com',c:'#6b7280',ext:true},
+  ]},
 ]
 export default function AdminDashboard(){
   const[stats,setStats]=useState({facturacion:0,pedidos:0,pendientes:0,tpv:0,productos:0,stockBajo:0,ticketMedio:0})
@@ -109,13 +119,13 @@ export default function AdminDashboard(){
 
 
   return(
-    <div style={{background:'#0d0d0d',minHeight:'100vh',fontFamily:'Arial,sans-serif',color:'white'}}>
-      <div style={{background:'#080808',padding:'16px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+    <div style={{background:'#f4f5f7',minHeight:'100vh',fontFamily:'Arial,sans-serif',color:'#111'}}>
+      <div style={{background:'#ffffff',padding:'16px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #e8e8e8'}}>
         <div style={{display:'flex',alignItems:'center',gap:14}}>
           <span style={{fontSize:20,fontWeight:900,color:'#ff1e41',letterSpacing:'-1px'}}>BUYMUSCLE</span>
-          <span style={{fontSize:12,color:'rgba(255,255,255,0.35)'}}>{stats.pendientes>0?'Panel de Administracion ('+stats.pendientes+' pendientes)':'Panel de Administracion'}</span>
+          <span style={{fontSize:12,color:'#888888'}}>{stats.pendientes>0?'Panel de Administracion ('+stats.pendientes+' pendientes)':'Panel de Administracion'}</span>
         </div>
-        <a href="/tienda" style={{fontSize:12,color:'rgba(255,255,255,0.4)',textDecoration:'none'}}>Ir a la tienda →</a>
+        <a href="/tienda" style={{fontSize:12,color:'#888888',textDecoration:'none'}}>Ir a la tienda →</a>
       </div>
 
       <div style={{maxWidth:1400,margin:'0 auto',padding:'20px 20px'}}>
@@ -125,23 +135,23 @@ export default function AdminDashboard(){
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:18}}>
           <a href="/admin/nuevo-producto" style={{display:'block',background:'rgba(255,107,53,0.1)',border:'1px solid rgba(255,107,53,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
             <div style={{fontSize:22,marginBottom:6}}>➕</div>
-            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Nuevo producto</div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Añadir al catalogo</div>
+            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Nuevo producto</div>
+            <div style={{fontSize:11,color:'#888888'}}>Añadir al catalogo</div>
           </a>
-          <a href="/admin/pedidos?status=pending" style={{display:'block',background:stats.pendientes>0?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.03)',border:'1px solid rgba(245,158,11,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
+          <a href="/admin/pedidos?status=pending" style={{display:'block',background:stats.pendientes>0?'rgba(245,158,11,0.15)':'#ffffff',border:'1px solid rgba(245,158,11,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
             <div style={{fontSize:22,marginBottom:6}}>📦</div>
-            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Pedidos pendientes</div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{stats.pendientes} sin gestionar</div>
+            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Pedidos pendientes</div>
+            <div style={{fontSize:11,color:'#888888'}}>{stats.pendientes} sin gestionar</div>
           </a>
           <a href="/admin/stock" style={{display:'block',background:stats.stockBajo>50?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.08)',border:'1px solid rgba(34,197,94,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
             <div style={{fontSize:22,marginBottom:6}}>📊</div>
-            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Gestion de stock</div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>{stats.stockBajo} referencias bajas</div>
+            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Gestion de stock</div>
+            <div style={{fontSize:11,color:'#888888'}}>{stats.stockBajo} referencias bajas</div>
           </a>
           <a href="/tpv" style={{display:'block',background:'rgba(59,130,246,0.1)',border:'1px solid rgba(59,130,246,0.4)',padding:'14px 16px',textDecoration:'none',borderRadius:4}}>
             <div style={{fontSize:22,marginBottom:6}}>🖥️</div>
-            <div style={{fontSize:13,fontWeight:800,color:'white',marginBottom:2}}>Ir al TPV</div>
-            <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Punto de venta</div>
+            <div style={{fontSize:13,fontWeight:800,color:'#111',marginBottom:2}}>Ir al TPV</div>
+            <div style={{fontSize:11,color:'#888888'}}>Punto de venta</div>
           </a>
         </div>
 
@@ -149,28 +159,28 @@ export default function AdminDashboard(){
         <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10,marginBottom:18}} className="admin-kpis">
           {[
             {label:'FACTURACION',val:stats.facturacion.toFixed(0)+' €',icon:'💰',c:'#22c55e'},
-            {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'white',href:'/admin/pedidos'},
+            {label:'PEDIDOS',val:stats.pedidos,icon:'📦',c:'#111',href:'/admin/pedidos'},
             {label:'PENDIENTES',val:stats.pendientes,icon:'⏳',c:stats.pendientes>0?'#f59e0b':'white',href:'/admin/pedidos?status=pending'},
-            {label:'VENTAS TPV',val:stats.tpv,icon:'🛒',c:'white',href:'/tpv'},
+            {label:'VENTAS TPV',val:stats.tpv,icon:'🛒',c:'#111',href:'/tpv'},
             {label:'PRODUCTOS',val:stats.productos,icon:'📋',c:'#3b82f6',href:'/admin/productos'},
             {label:'STOCK BAJO',val:stats.stockBajo,icon:'⚠️',c:stats.stockBajo>50?'#ef4444':'#f59e0b',href:'/admin/stock'},
             {label:'TICKET MEDIO',val:stats.ticketMedio.toFixed(0)+' €',icon:'📈',c:'#8b5cf6'},
           ].map(k=>(
-            <div key={k.label} onClick={function(){if(k.href)window.location.href=k.href}} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 12px',textAlign:'center',cursor:k.href?'pointer':'default'}}>
+            <div key={k.label} onClick={function(){if(k.href)window.location.href=k.href}} style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:'14px 12px',textAlign:'center',cursor:k.href?'pointer':'default'}}>
               <div style={{fontSize:18,marginBottom:4}}>{k.icon}</div>
               <div style={{fontSize:20,fontWeight:900,color:k.c}}>{k.val}</div>
-              <div style={{fontSize:9,color:'rgba(255,255,255,0.35)',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{k.label}</div>
+              <div style={{fontSize:9,color:'#888888',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{k.label}</div>
             </div>
           ))}
         </div>
 
         {/* Grafico 7 dias */}
-        {ventas7.length>0&&<div style={{background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',padding:18,marginBottom:18}}>
+        {ventas7.length>0&&<div style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:18,marginBottom:18}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)'}}>📈 Ventas ultimos 7 dias</div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>
-              Total: <strong style={{color:'white'}}>{ventas7.reduce((s,v)=>s+v.total,0).toFixed(0)} €</strong>
-              {' · '}Media: <strong style={{color:'white'}}>{(ventas7.reduce((s,v)=>s+v.total,0)/7).toFixed(0)} €/dia</strong>
+            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'#888888'}}>📈 Ventas ultimos 7 dias</div>
+            <div style={{fontSize:12,color:'#666666'}}>
+              Total: <strong style={{color:'#111'}}>{ventas7.reduce((s,v)=>s+v.total,0).toFixed(0)} €</strong>
+              {' · '}Media: <strong style={{color:'#111'}}>{(ventas7.reduce((s,v)=>s+v.total,0)/7).toFixed(0)} €/dia</strong>
             </div>
           </div>
           <div style={{display:'flex',alignItems:'flex-end',gap:6,height:80}}>
@@ -178,9 +188,9 @@ export default function AdminDashboard(){
               const mx=ventas7.length>0?ventas7.reduce(function(a,x){return x.total>a?x.total:a},1):1; const hh=Math.max(4,Math.round((v.total/mx)*72))
               return(
                 <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                  {v.total>0&&<div style={{fontSize:9,color:'rgba(255,255,255,0.5)'}}>{v.total.toFixed(0)}</div>}
+                  {v.total>0&&<div style={{fontSize:9,color:'#666666'}}>{v.total.toFixed(0)}</div>}
                   <div style={{width:'100%',height:hh,background:i===6?'#ff1e41':'rgba(255,30,65,0.3)',borderRadius:'2px 2px 0 0'}}/>
-                  <div style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>{v.dia}</div>
+                  <div style={{fontSize:9,color:'#999999'}}>{v.dia}</div>
                 </div>
               )
             })}
@@ -199,19 +209,19 @@ export default function AdminDashboard(){
             {label:'Pendientes',val:String(stats.pendientes),c:stats.pendientes>0?'#f59e0b':'#555'},
             {label:'Stock bajo',val:stats.stockBajo+' refs',c:stats.stockBajo>50?'#ef4444':'#f59e0b'},
           ].map(function(m){return(
-            <div key={m.label} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',padding:'10px 16px',borderRadius:4,flex:1,minWidth:120}}>
+            <div key={m.label} style={{background:'#ffffff',border:'1px solid #e4e4e4',padding:'10px 16px',borderRadius:4,flex:1,minWidth:120}}>
               <div style={{fontSize:9,color:'#666',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>{m.label}</div>
               <div style={{fontSize:18,fontWeight:800,color:m.c}}>{m.val}</div>
             </div>
           )})}
         </div>
-        <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)'}}>📋 Ultimos pedidos</div>
+        <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'#888888'}}>📋 Ultimos pedidos</div>
               <Link href="/admin/pedidos" style={{fontSize:12,color:'#ff1e41',textDecoration:'none'}}>Ver todos →</Link>
             </div>
             {selected.length>0&&<div style={{background:'rgba(255,30,65,0.1)',border:'1px solid rgba(255,30,65,0.3)',padding:'8px 12px',marginBottom:8,display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
-              <span style={{fontSize:12,color:'rgba(255,255,255,0.7)'}}>{selected.length} seleccionado{selected.length!==1?'s':''}</span>
+              <span style={{fontSize:12,color:'#333333'}}>{selected.length} seleccionado{selected.length!==1?'s':''}</span>
               <select value={bulkStatus} onChange={e=>setBulkStatus(e.target.value)}
-                style={{background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.2)',color:'white',padding:'3px 8px',fontSize:12,fontFamily:'inherit',flex:1}}>
+                style={{background:'#fff',border:'1px solid #ccc',color:'#111',padding:'3px 8px',fontSize:12,fontFamily:'inherit',flex:1}}>
                 <option value="processing">📦 Preparando</option>
                 <option value="shipped">🚚 Enviado</option>
                 <option value="delivered">✅ Entregado</option>
@@ -221,22 +231,22 @@ export default function AdminDashboard(){
                 style={{background:'#ff1e41',color:'white',border:'none',padding:'4px 12px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
                 {saving?'...':'Aplicar'}
               </button>
-              <button onClick={()=>setSelected([])} style={{background:'transparent',border:'1px solid rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.5)',padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>✕</button>
+              <button onClick={()=>setSelected([])} style={{background:'transparent',border:'1px solid #cccccc',color:'#666666',padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>✕</button>
             </div>}
-            <div style={{background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)'}}>
+            <div style={{background:'#ffffff',border:'1px solid #e8e8e8'}}>
               {orders.map(o=>{
                 const isSel=selected.includes(o.id)
                 return(
                   <div key={o.id} onClick={()=>setSelected(s=>isSel?s.filter(x=>x!==o.id):[...s,o.id])}
-                    style={{display:'flex',alignItems:'center',gap:8,padding:'9px 12px',borderBottom:'1px solid rgba(255,255,255,0.04)',cursor:'pointer',background:isSel?'rgba(255,30,65,0.08)':'transparent'}}>
-                    <div style={{width:14,height:14,border:'1px solid',borderColor:isSel?'#ff1e41':'rgba(255,255,255,0.2)',background:isSel?'#ff1e41':'transparent',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9}}>
+                    style={{display:'flex',alignItems:'center',gap:8,padding:'9px 12px',borderBottom:'1px solid #f2f2f2',cursor:'pointer',background:isSel?'rgba(255,30,65,0.08)':'transparent'}}>
+                    <div style={{width:14,height:14,border:'1px solid',borderColor:isSel?'#ff1e41':'#cccccc',background:isSel?'#ff1e41':'transparent',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9}}>
                       {isSel?'✓':''}
                     </div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.85)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      <div style={{fontSize:12,fontWeight:700,color:'#222222',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                         {o.customer_name||o.customer_email||'BM-'+String(o.id || '').slice(0,6).toUpperCase()}
                       </div>
-                      <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>{fmt(o.created_at)}</div>
+                      <div style={{fontSize:10,color:'#888888'}}>{fmt(o.created_at)}</div>
                     </div>
                     <div style={{fontSize:13,fontWeight:700,color:'#ff1e41',flexShrink:0}}>{Number(o.total||0).toFixed(0)} €</div>
                     <span style={{fontSize:10,padding:'2px 7px',background:(SC[o.status]||'#555')+'20',color:SC[o.status]||'#555',border:'1px solid '+(SC[o.status]||'#555')+'40',flexShrink:0,fontWeight:600}}>
@@ -250,36 +260,41 @@ export default function AdminDashboard(){
 
           {/* Modulos */}
           {/* a5: Comparativa métricas */}
-          <div style={{background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',padding:'16px',marginBottom:16}}>
-            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)',marginBottom:12}}>📊 RESUMEN PERIODO</div>
+          <div style={{background:'#ffffff',border:'1px solid #e8e8e8',padding:'16px',marginBottom:16}}>
+            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'#888888',marginBottom:12}}>📊 RESUMEN PERIODO</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
               {[
                 {label:'Facturacion total',val:stats.facturacion.toFixed(0)+' €',color:'#ff1e41',icon:'💰'},
                 {label:'Ticket medio',val:stats.ticketMedio.toFixed(0)+' €',color:'#8b5cf6',icon:'🎫'},
                 {label:'Productos activos',val:stats.productos,color:'#22c55e',icon:'📦'},
               ].map(function(m){return(
-                <div key={m.label} style={{textAlign:'center',padding:'10px 6px',background:'rgba(255,255,255,0.02)',borderRadius:4}}>
+                <div key={m.label} style={{textAlign:'center',padding:'10px 6px',background:'#ffffff',borderRadius:4}}>
                   <div style={{fontSize:20,marginBottom:4}}>{m.icon}</div>
                   <div style={{fontSize:20,fontWeight:900,color:m.color,lineHeight:1}}>{m.val}</div>
-                  <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:4,textTransform:'uppercase'}}>{m.label}</div>
+                  <div style={{fontSize:10,color:'#999999',marginTop:4,textTransform:'uppercase'}}>{m.label}</div>
                 </div>
               )})}
             </div>
           </div>
 
           <div>
-            <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em',color:'rgba(255,255,255,0.4)',marginBottom:10}}>⚡ TODAS LAS SECCIONES</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
-              {MODULOS.map(m=>(
-                <a key={m.href} href={m.href} target={m.ext?'_blank':undefined}
-                  style={{display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',padding:'14px 8px',textDecoration:'none',borderRadius:4,transition:'all 0.15s',gap:4}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=m.c;e.currentTarget.style.background='rgba(255,255,255,0.05)'}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.06)';e.currentTarget.style.background='rgba(255,255,255,0.02)'}}>
-                  <div style={{fontSize:24}}>{m.icon}</div>
-                  <div style={{fontSize:11,fontWeight:700,color:'white',lineHeight:1.2}}>{m.t}</div>
-                </a>
-              ))}
-            </div>
+            <div style={{fontSize:11,fontWeight:800,textTransform:'uppercase',letterSpacing:'0.1em',color:'#888',marginBottom:12}}>⚡ Todas las secciones</div>
+            {GRUPOS.map(gr=>(
+              <div key={gr.g} style={{marginBottom:16}}>
+                <div style={{fontSize:12.5,fontWeight:800,color:'#444',marginBottom:8}}>{gr.g}</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:8}}>
+                  {gr.items.map(m=>(
+                    <a key={m.href} href={m.href} target={m.ext?'_blank':undefined}
+                      style={{display:'flex',alignItems:'center',gap:10,background:'#fff',border:'1px solid #ececec',padding:'11px 12px',textDecoration:'none',borderRadius:10,boxShadow:'0 1px 2px rgba(0,0,0,0.04)',transition:'all 0.15s'}}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor=m.c;e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.09)'}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor='#ececec';e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.04)'}}>
+                      <div style={{width:38,height:38,borderRadius:9,background:m.c+'18',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{m.icon}</div>
+                      <div style={{fontSize:12.5,fontWeight:700,color:'#222',lineHeight:1.2}}>{m.t}</div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
