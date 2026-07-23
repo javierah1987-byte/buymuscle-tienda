@@ -44,7 +44,10 @@ export default async function HomeB() {
       {/* S1 · HERO ZONE compuesta (único cambio de la parte alta) */}
       <HeroZone sliderBanners={sliderBanners as any} b2bImage={b2bImage} />
 
-      {/* Oferta de la semana — posición actual */}
+      {/* Categorías rápidas — justo encima de la oferta de la semana (petición Javier) */}
+      <QuickCats />
+
+      {/* Oferta de la semana */}
       <WeekOffer product={weekOffer || novedades[0]} />
 
       {/* Propuesta de valor — posición actual */}
@@ -72,9 +75,6 @@ export default async function HomeB() {
           </div>
         </div>
       </section>
-
-      {/* Categorías rápidas — posición actual */}
-      <QuickCats />
 
       {/* Oferta del día — posición actual */}
       <OfertaDia />

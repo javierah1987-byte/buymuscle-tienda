@@ -45,11 +45,11 @@ export default async function Home() {
       {/* S2 · Barra de confianza — pegada al hero */}
       <TrustBar />
 
+      {/* Categorías rápidas — justo encima de la oferta de la semana (petición Javier) */}
+      <QuickCats />
+
       {/* S3 · Oferta de la semana */}
       <WeekOffer product={weekOffer || novedades[0]} />
-
-      {/* S4 · Categorías rápidas */}
-      <QuickCats />
 
       {/* S5 · Stats de social proof (solo cifras; los testimonios cierran en S12) */}
       <StatsBand />
