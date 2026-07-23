@@ -232,7 +232,6 @@ export default function Navbar(){
               {/* Botones de colores.
                   En la ZONA DISTRIBUIDORES el socio quiere SOLO "Ofertas" (en azul):
                   se ocultan BM VIP, BM TEAM, StreetFlavour, Objetivos y Comparar. */}
-              {!isDistributor&&<Link href="/distribuidores" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#FBEC96',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM VIP</Link>}
               {!isDistributor&&<Link href="/bm-team" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#00F399',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>BM TEAM</Link>}
               <Link href="/tienda?ofertas=1" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:isDistributor?DIST_BLUE:'#FF2958',color:'white',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>OFERTAS</Link>
               {!isDistributor&&<Link href="/streetflavour" style={{height:42,padding:'0 14px',display:'flex',alignItems:'center',fontFamily:'var(--font-body)',fontSize:11,fontWeight:700,background:'#47DAFF',color:'#111',textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.04em',whiteSpace:'nowrap'}}>STREETFLAVOUR</Link>}

@@ -120,7 +120,7 @@ function AtletaCard({ atleta }: { atleta: typeof ATLETAS[0] }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imgSrc} alt={atleta.nombre}
         style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 0.4s' }}
-        onError={e=>{ (e.target as HTMLImageElement).src='https://placehold.co/400x600/1a1a1a/00F399?text=BM+Team'; }}/>
+        onError={e=>{ const t=e.target as HTMLImageElement; if(!t.dataset.fb){ t.dataset.fb='1'; t.src='https://placehold.co/400x600/111111/ff1e41?text=BUYMUSCLE'; t.style.objectFit='contain'; t.style.padding='30px'; } }}/>
       {/* Overlay hover */}
       <div className="overlay" style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.3) 60%,transparent 100%)', opacity:0, transition:'opacity 0.3s', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'1.5rem' }}>
         <div style={{ fontSize:11, fontWeight:700, color:'#00F399', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>BM TEAM</div>
