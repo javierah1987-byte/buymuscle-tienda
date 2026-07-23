@@ -36,6 +36,21 @@ async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'i
   return (data || []) as any[]
 }
 
+// Familias de proteína (IDs verificados contra la tabla categories).
+const PROTEIN_CAT_IDS = [8, 16, 17, 43, 44, 39]
+
+// Novedades (feedback Javier): SOLO las proteínas más nuevas — fila homogénea de
+// botes. id desc = lo último en llegar; image_url NOT NULL para que un producto
+// sin foto no pueda colarse en un carrusel visual, por construcción.
+async function getNovedades(limit = 8) {
+  const { data } = await supabase.from('products').select(CARD_COLS)
+    .eq('active', true).gt('stock', 0)
+    .in('category_id', PROTEIN_CAT_IDS)
+    .not('image_url', 'is', null)
+    .order('id', { ascending: false }).limit(limit)
+  return (data || []) as any[]
+}
+
 // Banners del hero en servidor (ISR): el primer slide sale en el HTML inicial
 // → mejor LCP y sin doble descarga fallback→real en el cliente.
 async function getBanners() {
@@ -60,7 +75,7 @@ const QUICK_CATS = [
 
 export default async function Home() {
   const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
-    getProducts(undefined, 8, 'id'),
+    getNovedades(8),
     getProducts(undefined, 8, 'stock'),
     getProducts('Proteinas', 8, 'id'),
     getProducts('Pre-entrenos', 8, 'id'),
@@ -143,7 +158,7 @@ export default async function Home() {
       {/* Categorias rapidas */}
       <section style={{background:'white',borderBottom:'1px solid #ebebeb',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'flex',overflowX:'auto'}}>
+          <div className="cat-bar">
             {QUICK_CATS.map(cat=>(
               <Link key={cat.name} href={`/tienda?cat=${encodeURIComponent(cat.slug)}`} className="cat-bar-link">
                 <span style={{fontSize:22}}>{cat.icon}</span>

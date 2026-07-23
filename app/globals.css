@@ -309,11 +309,24 @@ table { width: 100%; overflow-x: auto; display: block; }
 .novedades-grid { grid-template-columns: clamp(180px,22vw,240px) 1fr; }
 .h2-banner > div:last-child { display: flex; }
 
+/* Barra de categorías: chips con aire (.cat-bar-link no tenía CSS → links pegados) */
+.cat-bar { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 12px 0; scrollbar-width: none; }
+.cat-bar::-webkit-scrollbar { display: none; }
+.cat-bar-link {
+  display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
+  padding: 10px 16px; font-size: 13px; font-weight: 600; color: #222; white-space: nowrap;
+  background: #fafafa; border: 1px solid #ebebeb; border-radius: 999px;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+.cat-bar-link:hover { color: var(--red); border-color: var(--red); background: white; }
+
 @media (max-width: 768px) {
   .novedades-grid { grid-template-columns: 1fr !important; }
   .novedades-grid > div:first-child { display: none !important; }
   .h2-banner > div:last-child { display: none !important; }
   .h2-banner > div:first-child { padding: 20px 16px !important; }
+  .cat-bar { gap: 6px; padding: 10px 0; }
+  .cat-bar-link { padding: 8px 13px; font-size: 12px; }
 }
 
 /* ── PRODUCTOS GRID ───────────────────────────────── */
