@@ -248,16 +248,16 @@ export default function AdminDistribuidoresPage() {
   }
 
   const fmt = d => d ? new Date(d).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '-'
-  const inp = { background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', color:'white', padding:'8px 12px', fontSize:13, fontFamily:'Arial', outline:'none', width:'100%', boxSizing:'border-box' }
+  const inp = { background:'#eaeaea', border:'1px solid #dcdcdc', color:'#111', padding:'8px 12px', fontSize:13, fontFamily:'Arial', outline:'none', width:'100%', boxSizing:'border-box' }
 
   return (
-    <div style={{ background:'#0d0d0d', minHeight:'100vh', fontFamily:'Arial,sans-serif', color:'white' }}>
-      <div style={{ background:'#080808', padding:'18px 28px', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ background:'#f4f5f7', minHeight:'100vh', fontFamily:'Arial,sans-serif', color:'#111' }}>
+      <div style={{ background:'#ffffff', padding:'18px 28px', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid #eaeaea' }}>
         <div>
           <h1 style={{ margin:0, fontSize:18, fontWeight:900, textTransform:'uppercase' }}>Distribuidores</h1>
-          <p style={{ margin:'3px 0 0', fontSize:12, color:'rgba(255,255,255,0.4)' }}>{distributors.length} distribuidores registrados</p>
+          <p style={{ margin:'3px 0 0', fontSize:12, color:'#888888' }}>{distributors.length} distribuidores registrados</p>
         </div>
-        <Link href="/admin" style={{ color:'rgba(255,255,255,0.4)', textDecoration:'none', fontSize:13 }}>← Admin</Link>
+        <Link href="/admin" style={{ color:'#888888', textDecoration:'none', fontSize:13 }}>← Admin</Link>
       </div>
 
       {msg && <div style={{ background:msg.indexOf('Error')===0?'rgba(239,68,68,0.1)':'rgba(34,197,94,0.1)', borderBottom:'1px solid '+(msg.indexOf('Error')===0?'rgba(239,68,68,0.2)':'rgba(34,197,94,0.2)'), padding:'12px 28px', fontSize:13, color:msg.indexOf('Error')===0?'#ef4444':'#22c55e' }}>{msg}</div>}
@@ -265,26 +265,26 @@ export default function AdminDistribuidoresPage() {
       <div style={{ padding:'24px 28px', display:'grid', gridTemplateColumns:'300px 1fr', gap:24 }}>
 
         <div>
-          <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>Grupos de descuento</div>
+          <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'#888888', marginBottom:12 }}>Grupos de descuento</div>
           {levels.map(function(level) { return (
-            <div key={level.id} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', padding:'14px 16px', marginBottom:8, borderRadius:4 }}>
+            <div key={level.id} style={{ background:'#ffffff', border:'1px solid #e8e8e8', padding:'14px 16px', marginBottom:8, borderRadius:4 }}>
               {editLevel && editLevel.id === level.id ? (
                 <div>
-                  <label style={{ fontSize:10, color:'rgba(255,255,255,0.4)', display:'block', marginBottom:4 }}>NOMBRE DEL GRUPO</label>
+                  <label style={{ fontSize:10, color:'#888888', display:'block', marginBottom:4 }}>NOMBRE DEL GRUPO</label>
                   <input value={editLevel.name||''} onChange={function(e){ setEditLevel(function(p){ return {...p, name: e.target.value} }) }} style={{ ...inp, marginBottom:8 }}/>
-                  <label style={{ fontSize:10, color:'rgba(255,255,255,0.4)', display:'block', marginBottom:4 }}>DESCUENTO %</label>
+                  <label style={{ fontSize:10, color:'#888888', display:'block', marginBottom:4 }}>DESCUENTO %</label>
                   <input type="number" value={editLevel.discount_pct}
                     onChange={function(e){ setEditLevel(function(p){ return {...p, discount_pct: e.target.value} }) }}
                     style={{ ...inp, marginBottom:8 }}/>
-                  <label style={{ fontSize:10, color:'rgba(255,255,255,0.4)', display:'block', marginBottom:4 }}>PEDIDO MÍNIMO €</label>
+                  <label style={{ fontSize:10, color:'#888888', display:'block', marginBottom:4 }}>PEDIDO MÍNIMO €</label>
                   <input type="number" value={editLevel.min_order_amount}
                     onChange={function(e){ setEditLevel(function(p){ return {...p, min_order_amount: e.target.value} }) }}
                     style={{ ...inp, marginBottom:10 }}/>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={saveLevel} disabled={saving} style={{ flex:1, padding:'8px', background:'#ff1e41', border:'none', color:'white', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'Arial' }}>
+                    <button onClick={saveLevel} disabled={saving} style={{ flex:1, padding:'8px', background:'#ff1e41', border:'none', color:'#111', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'Arial' }}>
                       {saving ? '...' : 'Guardar'}
                     </button>
-                    <button onClick={function(){ setEditLevel(null) }} style={{ padding:'8px 12px', background:'transparent', border:'1px solid rgba(255,255,255,0.2)', color:'white', fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>
+                    <button onClick={function(){ setEditLevel(null) }} style={{ padding:'8px 12px', background:'transparent', border:'1px solid #cccccc', color:'#111', fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>
                       Cancelar
                     </button>
                   </div>
@@ -296,10 +296,10 @@ export default function AdminDistribuidoresPage() {
                       <span style={{ fontSize:20 }}>{LEVEL_ICON[level.name]||''}</span>
                       <span style={{ fontWeight:700, color:LEVEL_COLORS[level.name]||'white' }}>{level.name}</span>
                     </div>
-                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.5)' }}>-{level.discount_pct}% · Min {level.min_order_amount}€</div>
+                    <div style={{ fontSize:12, color:'#6a6a6a' }}>-{level.discount_pct}% · Min {level.min_order_amount}€</div>
                   </div>
                   <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={function(){ setEditLevel({...level}) }} style={{ padding:'5px 12px', background:'transparent', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.6)', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
+                    <button onClick={function(){ setEditLevel({...level}) }} style={{ padding:'5px 12px', background:'transparent', border:'1px solid #d5d5d5', color:'#5a5a5a', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
                       Editar
                     </button>
                     <button onClick={function(){ deleteGroup(level.id) }} title="Borrar grupo" style={{ padding:'5px 9px', background:'transparent', border:'1px solid rgba(239,68,68,0.3)', color:'#ef4444', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
@@ -323,8 +323,8 @@ export default function AdminDistribuidoresPage() {
             </div>
           </div>
 
-          <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.08)', padding:16, borderRadius:4, marginTop:20 }}>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.4)', marginBottom:12 }}>Nuevo distribuidor</div>
+          <div style={{ background:'#ffffff', border:'1px solid #e6e6e6', padding:16, borderRadius:4, marginTop:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#888888', marginBottom:12 }}>Nuevo distribuidor</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               <input value={newDist.email} onChange={function(e){ setNewDist(function(p){ return {...p, email:e.target.value} }) }} placeholder="Email *" style={inp}/>
               <input type="password" value={newDist.password} onChange={function(e){ setNewDist(function(p){ return {...p, password:e.target.value} }) }} placeholder="Contraseña *" style={inp}/>
@@ -335,24 +335,24 @@ export default function AdminDistribuidoresPage() {
                 <option value="">Grupo *</option>
                 {levels.map(function(l){ return <option key={l.id} value={l.id}>{LEVEL_ICON[l.name]||''} {l.name} (-{l.discount_pct}%)</option> })}
               </select>
-              <button onClick={createDistributor} disabled={saving} style={{ padding:'10px', background:'#ff1e41', border:'none', color:'white', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>
+              <button onClick={createDistributor} disabled={saving} style={{ padding:'10px', background:'#ff1e41', border:'none', color:'#111', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'Arial' }}>
                 {saving ? 'Creando...' : 'Crear distribuidor'}
               </button>
             </div>
           </div>
         </div>
 
-        <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ padding:'14px 20px', borderBottom:'1px solid rgba(255,255,255,0.06)', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.4)' }}>Lista de distribuidores</div>
+        <div style={{ background:'#ffffff', border:'1px solid #e6e6e6' }}>
+          <div style={{ padding:'14px 20px', borderBottom:'1px solid #eaeaea', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#888888' }}>Lista de distribuidores</div>
           {loading ? (
-            <div style={{ padding:40, textAlign:'center', color:'rgba(255,255,255,0.4)' }}>Cargando...</div>
+            <div style={{ padding:40, textAlign:'center', color:'#888888' }}>Cargando...</div>
           ) : distributors.length === 0 ? (
-            <div style={{ padding:40, textAlign:'center', color:'rgba(255,255,255,0.3)', fontSize:14 }}>No hay distribuidores aun</div>
+            <div style={{ padding:40, textAlign:'center', color:'#9a9a9a', fontSize:14 }}>No hay distribuidores aun</div>
           ) : (
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead><tr>
                 {['Empresa','Email','Grupo','Telefono','Alta','Estado',''].map(function(col){ return (
-                  <th key={col} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'rgba(255,255,255,0.4)', borderBottom:'1px solid rgba(255,255,255,0.08)' }}>{col}</th>
+                  <th key={col} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'#888888', borderBottom:'1px solid #e6e6e6' }}>{col}</th>
                 )})}
               </tr></thead>
               <tbody>
@@ -360,23 +360,23 @@ export default function AdminDistribuidoresPage() {
                   const levelName = d.distributor_levels ? d.distributor_levels.name : ''
                   const levelDisc = d.distributor_levels ? d.distributor_levels.discount_pct : 0
                   return (
-                    <tr key={d.id} onClick={function(){ openDetalle(d) }} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', cursor:'pointer', transition:'background 0.15s' }} onMouseEnter={function(e){e.currentTarget.style.background='rgba(255,255,255,0.04)'}} onMouseLeave={function(e){e.currentTarget.style.background=''}}>
-                      <td style={{ padding:'12px 14px', fontSize:13, fontWeight:700, color:'white' }}>{d.company_name}</td>
-                      <td style={{ padding:'12px 14px', fontSize:12, color:'rgba(255,255,255,0.6)', fontFamily:'monospace' }}>{d.email}</td>
+                    <tr key={d.id} onClick={function(){ openDetalle(d) }} style={{ borderBottom:'1px solid #f3f3f3', cursor:'pointer', transition:'background 0.15s' }} onMouseEnter={function(e){e.currentTarget.style.background='#f3f3f3'}} onMouseLeave={function(e){e.currentTarget.style.background=''}}>
+                      <td style={{ padding:'12px 14px', fontSize:13, fontWeight:700, color:'#111' }}>{d.company_name}</td>
+                      <td style={{ padding:'12px 14px', fontSize:12, color:'#5a5a5a', fontFamily:'monospace' }}>{d.email}</td>
                       <td style={{ padding:'12px 14px' }}>
                         <span style={{ fontSize:11, padding:'2px 8px', background:(LEVEL_COLORS[levelName]||'#555')+'20', color:LEVEL_COLORS[levelName]||'#888', borderRadius:12, fontWeight:700 }}>
                           {LEVEL_ICON[levelName]||''} {levelName} {levelDisc>0?'-'+levelDisc+'%':''}
                         </span>
                       </td>
-                      <td style={{ padding:'12px 14px', fontSize:12, color:'rgba(255,255,255,0.5)' }}>{d.phone||'-'}</td>
-                      <td style={{ padding:'12px 14px', fontSize:11, color:'rgba(255,255,255,0.4)' }}>{fmt(d.created_at)}</td>
+                      <td style={{ padding:'12px 14px', fontSize:12, color:'#6a6a6a' }}>{d.phone||'-'}</td>
+                      <td style={{ padding:'12px 14px', fontSize:11, color:'#888888' }}>{fmt(d.created_at)}</td>
                       <td style={{ padding:'12px 14px' }}>
                         <span style={{ fontSize:11, padding:'2px 8px', borderRadius:12, background:d.active?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)', color:d.active?'#22c55e':'#ef4444' }}>
                           {d.active?'Activo':'Inactivo'}
                         </span>
                       </td>
                       <td style={{ padding:'12px 14px' }}>
-                        <button onClick={function(e){ e.stopPropagation(); toggleActive(d.id, d.active) }} style={{ padding:'4px 10px', background:'transparent', border:'1px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.6)', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
+                        <button onClick={function(e){ e.stopPropagation(); toggleActive(d.id, d.active) }} style={{ padding:'4px 10px', background:'transparent', border:'1px solid #d5d5d5', color:'#5a5a5a', fontSize:11, cursor:'pointer', fontFamily:'Arial' }}>
                           {d.active?'Desactivar':'Activar'}
                         </button>
                       </td>
@@ -391,9 +391,9 @@ export default function AdminDistribuidoresPage() {
 
       {/* PRECIOS ESPECIALES POR PRODUCTO */}
       <div style={{ padding:'0 28px 28px' }}>
-        <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid rgba(217,180,90,0.2)', borderRadius:4, padding:'18px 20px' }}>
+        <div style={{ background:'#ffffff', border:'1px solid rgba(217,180,90,0.2)', borderRadius:4, padding:'18px 20px' }}>
           <div style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#d9b45a', marginBottom:4 }}>Precios especiales por producto</div>
-          <p style={{ fontSize:12, color:'rgba(255,255,255,0.4)', margin:'0 0 14px' }}>Ponle a un producto un % distinto al general del grupo (manda sobre el % del grupo).</p>
+          <p style={{ fontSize:12, color:'#888888', margin:'0 0 14px' }}>Ponle a un producto un % distinto al general del grupo (manda sobre el % del grupo).</p>
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'flex-start' }}>
             <select value={ppGroup} onChange={function(e){ setPpGroup(e.target.value); ppLoad(e.target.value); setPpSel(null); setPpSearch(''); setPpResults([]) }} style={{ ...inp, width:200, cursor:'pointer' }}>
               <option value="">Elige grupo…</option>
@@ -405,7 +405,7 @@ export default function AdminDistribuidoresPage() {
                 {!ppSel && ppResults.length>0 && (
                   <div style={{ position:'absolute', top:'100%', left:0, right:0, background:'#161616', border:'1px solid #333', zIndex:5, maxHeight:220, overflow:'auto' }}>
                     {ppResults.map(function(p){ return (
-                      <div key={p.id} onClick={function(){ setPpSel(p); setPpResults([]) }} style={{ padding:'8px 10px', fontSize:12, color:'white', cursor:'pointer', borderBottom:'1px solid #222' }}>{p.name}</div>
+                      <div key={p.id} onClick={function(){ setPpSel(p); setPpResults([]) }} style={{ padding:'8px 10px', fontSize:12, color:'#111', cursor:'pointer', borderBottom:'1px solid #222' }}>{p.name}</div>
                     )})}
                   </div>
                 )}
@@ -417,8 +417,8 @@ export default function AdminDistribuidoresPage() {
           {ppGroup && ppList.length>0 && (
             <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:6, maxWidth:560 }}>
               {ppList.map(function(it){ return (
-                <div key={it.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', padding:'8px 12px', fontSize:13 }}>
-                  <span style={{ color:'white' }}>{it.products ? it.products.name : ('#'+it.product_id)}</span>
+                <div key={it.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', background:'#ffffff', border:'1px solid #eaeaea', padding:'8px 12px', fontSize:13 }}>
+                  <span style={{ color:'#111' }}>{it.products ? it.products.name : ('#'+it.product_id)}</span>
                   <span style={{ display:'flex', gap:12, alignItems:'center' }}>
                     <span style={{ color:'#d9b45a', fontWeight:700 }}>-{it.discount_pct}%</span>
                     <button onClick={function(){ ppDel(it.id) }} title="Quitar" style={{ background:'none', border:'none', color:'#ef4444', cursor:'pointer', fontSize:14 }}>🗑</button>
@@ -427,7 +427,7 @@ export default function AdminDistribuidoresPage() {
               )})}
             </div>
           )}
-          {ppGroup && ppList.length===0 && <div style={{ marginTop:12, fontSize:12, color:'rgba(255,255,255,0.3)' }}>Sin precios especiales en este grupo.</div>}
+          {ppGroup && ppList.length===0 && <div style={{ marginTop:12, fontSize:12, color:'#9a9a9a' }}>Sin precios especiales en este grupo.</div>}
         </div>
       </div>
 
@@ -435,16 +435,16 @@ export default function AdminDistribuidoresPage() {
       {selDist && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
           onClick={function(e){ if(e.target===e.currentTarget){ setSelDist(null); setEditDist(null) } }}>
-          <div style={{ background:'#111', border:'1px solid #333', borderRadius:8, width:'100%', maxWidth:640, maxHeight:'85vh', overflow:'auto' }}>
+          <div style={{ background:'#f5f5f6', border:'1px solid #333', borderRadius:8, width:'100%', maxWidth:640, maxHeight:'85vh', overflow:'auto' }}>
             {/* Header */}
             <div style={{ padding:'16px 20px', borderBottom:'1px solid #222', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
-                <div style={{ fontWeight:800, fontSize:16, color:'white' }}>{selDist.company_name}</div>
-                <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:2 }}>{selDist.email}</div>
+                <div style={{ fontWeight:800, fontSize:16, color:'#111' }}>{selDist.company_name}</div>
+                <div style={{ fontSize:12, color:'#888888', marginTop:2 }}>{selDist.email}</div>
               </div>
               <div style={{ display:'flex', gap:8, alignItems:'center' }}>
                 <button onClick={function(){ setEditDist({...selDist, level_id: selDist.level_id}) }}
-                  style={{ background:'#1a1a1a', border:'1px solid #444', color:'white', padding:'6px 14px', fontSize:12, cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
+                  style={{ background:'#ffffff', border:'1px solid #444', color:'#111', padding:'6px 14px', fontSize:12, cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
                   ✏️ Editar
                 </button>
                 <button onClick={function(){ deleteDistributor(selDist.id) }}
@@ -460,38 +460,38 @@ export default function AdminDistribuidoresPage() {
               {/* Modo edición */}
               {editDist ? (
                 <div style={{ marginBottom:20 }}>
-                  <div style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', marginBottom:14 }}>Editar datos</div>
+                  <div style={{ fontSize:11, fontWeight:700, color:'#888888', textTransform:'uppercase', marginBottom:14 }}>Editar datos</div>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
                     <div>
                       <label style={{ display:'block', fontSize:10, color:'#888', marginBottom:4 }}>EMPRESA</label>
                       <input value={editDist.company_name} onChange={function(e){ setEditDist(function(p){ return {...p,company_name:e.target.value} }) }}
-                        style={{ width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
+                        style={{ width:'100%', background:'#ffffff', border:'1px solid #333', color:'#111', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
                     </div>
                     <div>
                       <label style={{ display:'block', fontSize:10, color:'#888', marginBottom:4 }}>TELÉFONO</label>
                       <input value={editDist.phone||''} onChange={function(e){ setEditDist(function(p){ return {...p,phone:e.target.value} }) }}
-                        style={{ width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
+                        style={{ width:'100%', background:'#ffffff', border:'1px solid #333', color:'#111', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
                     </div>
                     <div>
                       <label style={{ display:'block', fontSize:10, color:'#888', marginBottom:4 }}>NIF/CIF</label>
                       <input value={editDist.nif||''} onChange={function(e){ setEditDist(function(p){ return {...p,nif:e.target.value} }) }}
-                        style={{ width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
+                        style={{ width:'100%', background:'#ffffff', border:'1px solid #333', color:'#111', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}/>
                     </div>
                     <div>
                       <label style={{ display:'block', fontSize:10, color:'#888', marginBottom:4 }}>GRUPO</label>
                       <select value={editDist.level_id} onChange={function(e){ setEditDist(function(p){ return {...p,level_id:Number(e.target.value)} }) }}
-                        style={{ width:'100%', background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}>
+                        style={{ width:'100%', background:'#ffffff', border:'1px solid #333', color:'#111', padding:'7px 10px', fontSize:13, fontFamily:'inherit', borderRadius:3, boxSizing:'border-box' }}>
                         {levels.map(function(l){ return <option key={l.id} value={l.id}>{l.name} (-{l.discount_pct}%)</option> })}
                       </select>
                     </div>
                   </div>
                   <div style={{ display:'flex', gap:8 }}>
                     <button onClick={saveEditDist} disabled={saving}
-                      style={{ flex:1, background:'#ff1e41', color:'white', border:'none', padding:'10px', fontWeight:700, fontSize:13, cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
+                      style={{ flex:1, background:'#ff1e41', color:'#111', border:'none', padding:'10px', fontWeight:700, fontSize:13, cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
                       {saving ? 'Guardando...' : '✅ Guardar cambios'}
                     </button>
                     <button onClick={function(){ setEditDist(null) }}
-                      style={{ background:'#1a1a1a', border:'1px solid #333', color:'white', padding:'10px 16px', cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
+                      style={{ background:'#ffffff', border:'1px solid #333', color:'#111', padding:'10px 16px', cursor:'pointer', borderRadius:4, fontFamily:'inherit' }}>
                       Cancelar
                     </button>
                   </div>
@@ -507,9 +507,9 @@ export default function AdminDistribuidoresPage() {
                     { l:'Email', v:selDist.email },
                     { l:'Alta', v:fmt(selDist.created_at) },
                   ].map(function(item){ return (
-                    <div key={item.l} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 14px', borderRadius:4 }}>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', marginBottom:4 }}>{item.l}</div>
-                      <div style={{ fontSize:13, color:'white', fontWeight:600 }}>{item.v}</div>
+                    <div key={item.l} style={{ background:'#ffffff', border:'1px solid #eaeaea', padding:'10px 14px', borderRadius:4 }}>
+                      <div style={{ fontSize:10, color:'#888888', textTransform:'uppercase', marginBottom:4 }}>{item.l}</div>
+                      <div style={{ fontSize:13, color:'#111', fontWeight:600 }}>{item.v}</div>
                     </div>
                   )})}
                 </div>
@@ -517,29 +517,29 @@ export default function AdminDistribuidoresPage() {
 
               {/* Historial de pedidos */}
               <div>
-                <div style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', marginBottom:12 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'#888888', textTransform:'uppercase', marginBottom:12 }}>
                   📦 Historial de pedidos ({distOrders.length})
                 </div>
                 {distOrders.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:'20px 0', color:'rgba(255,255,255,0.3)', fontSize:13 }}>
+                  <div style={{ textAlign:'center', padding:'20px 0', color:'#9a9a9a', fontSize:13 }}>
                     Sin pedidos registrados
                   </div>
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                     {distOrders.map(function(o){ return (
-                      <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:4 }}>
+                      <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:'#ffffff', border:'1px solid #eaeaea', borderRadius:4 }}>
                         <div>
                           <div style={{ fontSize:13, fontWeight:700, color:'#ff1e41' }}>{o.order_number}</div>
-                          <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)' }}>{fmt(o.created_at)}</div>
+                          <div style={{ fontSize:11, color:'#888888' }}>{fmt(o.created_at)}</div>
                         </div>
                         <div style={{ textAlign:'right' }}>
-                          <div style={{ fontSize:15, fontWeight:800, color:'white' }}>{Number(o.total||0).toFixed(2)} €</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)' }}>{o.status}</div>
+                          <div style={{ fontSize:15, fontWeight:800, color:'#111' }}>{Number(o.total||0).toFixed(2)} €</div>
+                          <div style={{ fontSize:10, color:'#888888' }}>{o.status}</div>
                         </div>
                       </div>
                     )})}
                     <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 14px', borderTop:'1px solid #333', marginTop:4 }}>
-                      <span style={{ fontSize:13, color:'rgba(255,255,255,0.5)' }}>Total acumulado</span>
+                      <span style={{ fontSize:13, color:'#6a6a6a' }}>Total acumulado</span>
                       <span style={{ fontSize:15, fontWeight:900, color:'#22c55e' }}>
                         {distOrders.reduce(function(s,o){ return s+Number(o.total||0) },0).toFixed(2)} €
                       </span>

@@ -78,11 +78,11 @@ export default function PanelRRSS(){
 
   return(
     <div style={{background:'#f5f5f5',minHeight:'100vh',fontFamily:'Arial,sans-serif'}}>
-      <div style={{background:'#111',color:'white',padding:'24px 32px',display:'flex',alignItems:'center',gap:16}}>
+      <div style={{background:'#f5f5f6',color:'#111',padding:'24px 32px',display:'flex',alignItems:'center',gap:16}}>
         <span style={{fontSize:24}}>📱</span>
         <div>
           <h1 style={{margin:0,fontSize:20,fontWeight:900,textTransform:'uppercase'}}>Panel RRSS</h1>
-          <p style={{margin:0,fontSize:12,color:'rgba(255,255,255,0.6)'}}>Publica en Instagram, Facebook y TikTok desde un solo lugar</p>
+          <p style={{margin:0,fontSize:12,color:'#5a5a5a'}}>Publica en Instagram, Facebook y TikTok desde un solo lugar</p>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ export default function PanelRRSS(){
               Guardar borrador
             </button>
             <button onClick={()=>save('published')} disabled={saving||!form.content||!form.platforms.length}
-              style={{flex:1,padding:'10px',border:'none',background:'#ff1e41',color:'white',cursor:'pointer',fontSize:13,fontWeight:700,fontFamily:'inherit'}}>
+              style={{flex:1,padding:'10px',border:'none',background:'#ff1e41',color:'#111',cursor:'pointer',fontSize:13,fontWeight:700,fontFamily:'inherit'}}>
               {saving?'Guardando...':'Publicar ahora'}
             </button>
           </div>
@@ -165,7 +165,7 @@ export default function PanelRRSS(){
                   <button onClick={()=>deletePost(p.id)} style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:16,padding:0}}>🗑</button>
                 </div>
               </div>
-              <p style={{fontSize:13,color:'#333',margin:'0 0 8px',lineHeight:1.5,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{p.content}</p>
+              <p style={{fontSize:13,color:'#d5d5d5',margin:'0 0 8px',lineHeight:1.5,display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{p.content}</p>
               {p.image_url&&<img src={p.image_url} alt="" style={{width:'100%',height:80,objectFit:'cover',marginBottom:8}}/>}
               <div style={{fontSize:11,color:'#aaa'}}>{fmt(p.created_at)}{p.scheduled_at?' · Programado: '+fmt(p.scheduled_at):''}</div>
             </div>
