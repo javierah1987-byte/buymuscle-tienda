@@ -59,6 +59,10 @@ export default function CarritoPage() {
   const [discountInfo, setDiscountInfo] = useState(null) // { type:'percent'|'fixed', value, discountAmt }
   const [discountMsg, setDiscountMsg] = useState('')
   const [ordering, setOrdering] = useState(false)
+  // Método de pago elegido en el checkout. 'card' por defecto (palanca #1: quitar el
+  // freno de "solo transferencia"). Tarjeta y Bizum van por Redsys; transferencia por el flujo actual.
+  const [payMethod, setPayMethod] = useState('card')
+  const [redsysMsg, setRedsysMsg] = useState('')
   // Clave de idempotencia: una por carga de página. Si la red móvil reintenta
   // o el cliente pulsa dos veces, el servidor devuelve el MISMO pedido en vez
   // de crear un duplicado.
@@ -90,6 +94,13 @@ export default function CarritoPage() {
     },2000)
     return ()=>clearTimeout(t)
   },[paso,form.email,items]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Retorno KO desde Redsys (URLKO = /carrito?pago=ko): el pago no se completó.
+  useEffect(()=>{
+    if(typeof window==='undefined') return
+    const p=new URLSearchParams(window.location.search)
+    if(p.get('pago')==='ko'){ setPaso(2); setRedsysMsg('El pago no se completó. Puedes intentarlo de nuevo o elegir otro método (transferencia o PayPal).') }
+  },[])
 
   const subtotal = items.reduce((s,i)=>s+i.price*i.qty,0)
   const shippingFree = subtotal >= 50
@@ -176,6 +187,44 @@ export default function CarritoPage() {
       alert('Error de conexión al procesar el pedido. Inténtalo de nuevo.')
     }
     setOrdering(false)
+  }
+
+  // Pago con TARJETA o BIZUM vía Redsys (TPV del banco). Crea el pedido 'pending' en
+  // servidor y redirige el navegador al TPV con el formulario firmado. Si Redsys aún
+  // no está configurado (sin claves del banco) el endpoint responde 503 y lo avisamos
+  // con claridad, sin romper el checkout (siguen disponibles transferencia y PayPal).
+  async function doRedsys(method){
+    if(!form.name||!form.email){ alert('Por favor indica tu nombre y email para continuar'); return }
+    if(!items.length) return
+    setOrdering(true); setRedsysMsg('')
+    try{
+      const { data:{ session } } = await supabase.auth.getSession()
+      const headers = { 'Content-Type':'application/json' }
+      if(session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token
+      const r = await fetch('/api/redsys/create', { method:'POST', headers, body: JSON.stringify({ ...orderPayload(), method }) })
+      if(r.status===503){
+        setRedsysMsg('El pago con tarjeta y Bizum se activará en cuanto el banco (BBVA) nos entregue las claves del TPV. Mientras, puedes pagar por transferencia o con PayPal.')
+        setOrdering(false); return
+      }
+      const data = await r.json().catch(()=>({}))
+      if(!r.ok || !data.ok || !data.redsys){
+        if(data.error==='sin_stock') alert('Lo sentimos, uno de los productos se ha quedado sin stock.')
+        else setRedsysMsg('No se pudo iniciar el pago con tarjeta. Inténtalo de nuevo o usa transferencia/PayPal.')
+        setOrdering(false); return
+      }
+      // Redirección al TPV de Redsys: auto-submit de un formulario POST con los 3 campos firmados.
+      const f = document.createElement('form')
+      f.method='POST'; f.action=data.redsys.url
+      const addField=(k,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; f.appendChild(i) }
+      addField('Ds_SignatureVersion', data.redsys.Ds_SignatureVersion)
+      addField('Ds_MerchantParameters', data.redsys.Ds_MerchantParameters)
+      addField('Ds_Signature', data.redsys.Ds_Signature)
+      document.body.appendChild(f)
+      f.submit()  // el carrito se conserva por si el pago sale KO; se vacía al confirmar el pedido pagado
+    }catch(e){
+      setRedsysMsg('Error de conexión al iniciar el pago. Inténtalo de nuevo.')
+      setOrdering(false)
+    }
   }
 
   // Datos del carrito para el flujo PayPal (importe se recalcula en servidor)
@@ -331,17 +380,54 @@ export default function CarritoPage() {
               </button>
             )}
 
-            {/* c3 BOTÓN CON PRECIO */}
+            {/* c3 MÉTODO DE PAGO + CTA */}
             {paso===2&&(
               <div style={{marginTop:16}}>
-                <button onClick={()=>doOrder('transfer')} disabled={ordering||!form.name||!form.email}
-                  style={{width:'100%',padding:'13px',background:ordering?'#ccc':'#ff1e41',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',borderRadius:4,opacity:(!form.name||!form.email||!form.address)?0.6:1}}>
-                  {ordering?'Procesando...':'📦 PEDIDO POR TRANSFERENCIA — '+total.toFixed(2)+' €'}
-                </button>
-                <p style={{fontSize:11,color:'#888',margin:'6px 0 0',textAlign:'center'}}>Te enviaremos los datos bancarios. El pedido se prepara al recibir el pago.</p>
+                <div style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>Método de pago</div>
+                <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
+                  {[
+                    {id:'card',icon:'💳',label:'Tarjeta',desc:'Visa · Mastercard · al instante'},
+                    {id:'bizum',icon:'📱',label:'Bizum',desc:'Paga con tu móvil en segundos'},
+                    {id:'transfer',icon:'🏦',label:'Transferencia',desc:'Te enviamos los datos bancarios'},
+                  ].map(m=>{
+                    const active=payMethod===m.id
+                    return(
+                      <button key={m.id} type="button" onClick={()=>{setPayMethod(m.id);setRedsysMsg('')}} aria-pressed={active}
+                        style={{display:'flex',alignItems:'center',gap:12,padding:'11px 13px',border:active?'2px solid #ff1e41':'2px solid #ececec',background:active?'#fff5f6':'#fff',borderRadius:8,cursor:'pointer',textAlign:'left',width:'100%',fontFamily:'inherit'}}>
+                        <span style={{fontSize:22,lineHeight:1}}>{m.icon}</span>
+                        <span style={{flex:1,minWidth:0}}>
+                          <span style={{display:'block',fontSize:14,fontWeight:800,color:'#111'}}>{m.label}</span>
+                          <span style={{display:'block',fontSize:11,color:'#888'}}>{m.desc}</span>
+                        </span>
+                        <span aria-hidden="true" style={{width:18,height:18,flexShrink:0,borderRadius:'50%',border:active?'5px solid #ff1e41':'2px solid #ccc',boxSizing:'border-box'}}/>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {payMethod==='transfer' ? (
+                  <>
+                    <button onClick={()=>doOrder('transfer')} disabled={ordering||!form.name||!form.email}
+                      style={{width:'100%',padding:'13px',background:ordering?'#ccc':'#ff1e41',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',borderRadius:4,opacity:(!form.name||!form.email)?0.6:1}}>
+                      {ordering?'Procesando...':'📦 PEDIDO POR TRANSFERENCIA — '+total.toFixed(2)+' €'}
+                    </button>
+                    <p style={{fontSize:11,color:'#888',margin:'6px 0 0',textAlign:'center'}}>Te enviaremos los datos bancarios. El pedido se prepara al recibir el pago.</p>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={()=>doRedsys(payMethod)} disabled={ordering||!form.name||!form.email}
+                      style={{width:'100%',padding:'13px',background:ordering?'#ccc':'#ff1e41',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',borderRadius:4,opacity:(!form.name||!form.email)?0.6:1}}>
+                      {ordering?'Redirigiendo al pago seguro...':(payMethod==='card'?'💳 PAGAR CON TARJETA — ':'📱 PAGAR CON BIZUM — ')+total.toFixed(2)+' €'}
+                    </button>
+                    <p style={{fontSize:11,color:'#888',margin:'6px 0 0',textAlign:'center'}}>Pago seguro en el TPV del banco (Redsys). Te redirigimos para completar el pago.</p>
+                  </>
+                )}
+
+                {redsysMsg && <div style={{marginTop:8,padding:'10px 12px',background:'#fff8e1',border:'1px solid #ffe0a3',borderRadius:6,fontSize:12,color:'#8a6d3b'}}>{redsysMsg}</div>}
+
                 {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
                   <>
-                    <div style={{textAlign:'center',margin:'10px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
+                    <div style={{textAlign:'center',margin:'12px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
                     <div style={{marginBottom:8}}>
                       <PayPalButton
                         getPayload={orderPayload}
@@ -352,8 +438,8 @@ export default function CarritoPage() {
                     </div>
                   </>
                 )}
-                <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:10}}>
-                  {['🔒 SSL','PayPal','Transferencia bancaria'].map(t=><span key={t} style={{fontSize:11,color:'#888'}}>{t}</span>)}
+                <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:10,flexWrap:'wrap'}}>
+                  {['🔒 SSL','Tarjeta','Bizum','PayPal','Transferencia'].map(t=><span key={t} style={{fontSize:10,color:'#999'}}>{t}</span>)}
                 </div>
               </div>
             )}

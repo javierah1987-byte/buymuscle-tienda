@@ -48,7 +48,7 @@ const b64url = s => (s||'').replace(/\+/g,'-').replace(/\//g,'_')
 
 // Construye el formulario firmado para redirigir el navegador a Redsys.
 // order: 4-12 chars, los 4 primeros numéricos. channel 'distributor' usa su terminal.
-export function buildRedsysForm({ order, amountEuros, channel='particular', merchantData='' }){
+export function buildRedsysForm({ order, amountEuros, channel='particular', merchantData='', paymethod='' }){
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://tienda.buymuscle.es'
   const params = {
     DS_MERCHANT_AMOUNT: String(Math.round(Number(amountEuros) * 100)),
@@ -62,6 +62,10 @@ export function buildRedsysForm({ order, amountEuros, channel='particular', merc
     DS_MERCHANT_URLKO: site + '/carrito?pago=ko',
     DS_MERCHANT_MERCHANTDATA: String(merchantData || ''), // viaja de vuelta en la notificación (nº de pedido interno)
   }
+  // Método de pago elegido en el checkout: 'C' fuerza TARJETA, 'z' fuerza BIZUM.
+  // Vacío → el terminal ofrece los métodos que tenga activos. Bizum debe estar
+  // habilitado en el terminal por el banco para que 'z' funcione.
+  if (paymethod) params.DS_MERCHANT_PAYMETHODS = paymethod
   const paramsB64 = Buffer.from(JSON.stringify(params)).toString('base64')
   return {
     url: REDSYS_URL,
