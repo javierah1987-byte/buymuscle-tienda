@@ -48,10 +48,16 @@ export default function Devoluciones(){
         setLoading(false)
         return
       }
-      // Marcar pedido como devuelto (funciona con la sesión admin vía RLS)
-      await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:await authHeaders({'Content-Type':'application/json'}),
-        body:JSON.stringify({status:'returned',notes:'Devolucion: '+itemsADevolver.map(l=>l.product_name+'('+selected[l.id]+')').join(', ')})}).catch(()=>{})
-      setMsg('Devolución procesada. Stock repuesto'+(d.creditNoteId?' y rectificativa creada en Holded':'')+'. Total a reembolsar: '+Number(d.total||0).toFixed(2)+' €')
+      // Dejar constancia en el pedido (RLS: solo pasa con sesión admin).
+      // OJO: aquí se mandaba también status:'returned' y NO existe ese estado —
+      // orders_status_check solo admite pending|paid|shipped|completed|cancelled, así
+      // que el PATCH entero se rechazaba... y el .catch(()=>{}) se lo tragaba: la UI
+      // decía "procesada" y el pedido no cambiaba ni una letra. La devolución en sí
+      // queda registrada en la tabla `devoluciones` (que es la fuente de verdad).
+      const rp = await fetch(S+'/rest/v1/orders?id=eq.'+order.id,{method:'PATCH',headers:await authHeaders({'Content-Type':'application/json'}),
+        body:JSON.stringify({notes:'Devolucion: '+itemsADevolver.map(l=>l.product_name+'('+selected[l.id]+')').join(', ')})}).catch(()=>null)
+      const notaOk = !!rp && rp.ok
+      setMsg('Devolución procesada. Stock repuesto'+(d.creditNoteId?' y rectificativa creada en Holded':'')+'. Total a reembolsar: '+Number(d.total||0).toFixed(2)+' €'+(notaOk?'':' (aviso: no se pudo anotar la nota en el pedido)'))
       setDone(true)
     }catch(e){
       setMsg('Error al procesar la devolución: '+String(e?.message||e))

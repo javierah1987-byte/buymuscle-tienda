@@ -2,15 +2,26 @@ import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import { CARD_COLUMNS } from '@/lib/productCard'
 import Link from 'next/link'
+import { rehost } from '@/lib/rehostedImages'
 export const revalidate = 60
 
+// La línea StreetFlavour vive REPARTIDA por el catálogo (Camisetas, Ropa Deportiva,
+// Packs, Accesorios): solo UNA prenda está en la categoría "StreetFlavour". Por eso
+// filtrar por categoría dejaba esta página con 1 producto. Se filtra por NOMBRE
+// (`%street%flavour%` cubre "StreetFlavour", "Street Flavour" y "Street-Flavour") y se
+// suma la categoría, por si algún día entra una prenda sin la palabra en el nombre.
+const NOMBRE_SF = 'name.ilike.%street%flavour%'
+
 async function getProducts() {
-  // StreetFlavour = línea de ropa propia. De momento solo la categoría StreetFlavour
-  // (las prendas de otras categorías se añadirán cuando tengan sus fotos correctas).
-  const { data: catData } = await supabase.from('categories').select('id').or('name.ilike.%street%,name.ilike.%flavour%')
-  const ids = catData?.map((c:any)=>c.id) || []
-  const q = supabase.from('products').select(CARD_COLUMNS + ', categories(name)').eq('active',true).gt('stock',0).order('id',{ascending:false})
-  const { data } = ids.length ? await q.in('category_id',ids).limit(48) : await q.ilike('name','%street%').limit(24)
+  const { data: catData } = await supabase.from('categories').select('id').ilike('name','%street%flavour%')
+  const catIds = (catData || []).map((c:any) => c.id)
+  const filtro = catIds.length ? NOMBRE_SF + ',category_id.in.(' + catIds.join(',') + ')' : NOMBRE_SF
+  const { data } = await supabase
+    .from('products').select(CARD_COLUMNS + ', categories(name)')
+    .eq('active',true).gt('stock',0)
+    .or(filtro)
+    .order('name',{ascending:true})
+    .limit(48)
   return data || []
 }
 
@@ -20,7 +31,7 @@ export default async function StreetFlavourPage() {
     <div style={{background:'#f5f5f5',minHeight:'80vh'}}>
       <section style={{position:'relative',height:300,overflow:'hidden',background:'#0a0a0a'}}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="StreetFlavour"
+        <img src={rehost("https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg")} alt="StreetFlavour"
           style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.7}}/>
         <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 60%)'}}/>
         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 60px'}}>
@@ -42,7 +53,8 @@ export default async function StreetFlavourPage() {
           <h2 style={{fontSize:20,fontWeight:800,textTransform:'uppercase',color:'#111',margin:0}}>
             STREETFLAVOUR <span style={{fontSize:14,fontWeight:400,color:'#999'}}>({products.length} productos)</span>
           </h2>
-          <Link href="/tienda?cat=StreetFlavour" style={{fontSize:12,color:'#47daff',fontWeight:700,textDecoration:'none',border:'1px solid #47daff',padding:'5px 14px'}}>Ver catalogo →</Link>
+          {/* ?q= (busca por nombre) y no ?cat=: la categoría StreetFlavour solo tiene 1 prenda. */}
+          <Link href="/tienda?q=StreetFlavour" style={{fontSize:12,color:'#47daff',fontWeight:700,textDecoration:'none',border:'1px solid #47daff',padding:'5px 14px'}}>Ver catalogo →</Link>
         </div>
         {products.length > 0 ? (
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1px',background:'#e0e0e0'}}>

@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import { CARD_COLUMNS } from '@/lib/productCard'
 import Link from 'next/link'
+import { rehost } from '@/lib/rehostedImages'
 export const revalidate = 60
 
 async function getProducts() {
@@ -22,7 +23,7 @@ export default async function SportWearPage() {
     <div style={{background:'#f5f5f5',minHeight:'80vh'}}>
       <section style={{position:'relative',height:280,overflow:'hidden',background:'#111'}}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="Sport Wear"
+        <img src={rehost("https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg")} alt="Sport Wear"
           style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.45}}/>
         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center'}}>
           <div style={{fontSize:11,fontWeight:700,color:'var(--red)',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:8}}>BUYMUSCLE</div>

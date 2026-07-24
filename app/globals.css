@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap');/* ══════════════════════════════════════   VARIABLES══════════════════════════════════════ */:root {  --red: #ff1e41;  --red-dark: #d41535;  --black: #000;  --bg: #f5f5f5;  --border: #e8e8e8;  --text: #111;  --muted: #595959;  --font-body: 'Heebo', sans-serif;  --transition: 0.18s ease;}/* ══ RESET ══ */*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }html { scroll-behavior: smooth; }body {  font-family: var(--font-body);  background: var(--bg);  color: var(--text);  font-size: 14px;  line-height: 1.5;  -webkit-font-smoothing: antialiased;}a { color: inherit; text-decoration: none; }button { font-family: var(--font-body); }img { display: block; max-width: 100%; }/* ══ LAYOUT ══ */.container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }/* ══ LOGO ══ */
+/* La fuente Heebo la carga next/font en app/layout.tsx (self-host bajo /_next/static/media,
+   con preload y fallback ajustado). NO se importa de fonts.googleapis.com: la CSP
+   (`style-src 'self' 'unsafe-inline'`, `font-src 'self' data:`) BLOQUEA ese @import, así que
+   nunca llegó a cargar — solo dejaba un error en consola y una petición muerta por página. */
+/* ══════════════════════════════════════   VARIABLES══════════════════════════════════════ */:root {  --red: #ff1e41;  --red-dark: #d41535;  --black: #000;  --bg: #f5f5f5;  --border: #e8e8e8;  --text: #111;  --muted: #595959;  --font-body: var(--font-heebo), 'Heebo', sans-serif;  --transition: 0.18s ease;}/* ══ RESET ══ */*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }html { scroll-behavior: smooth; }body {  font-family: var(--font-body);  background: var(--bg);  color: var(--text);  font-size: 14px;  line-height: 1.5;  -webkit-font-smoothing: antialiased;}a { color: inherit; text-decoration: none; }button { font-family: var(--font-body); }img { display: block; max-width: 100%; }/* ══ LAYOUT ══ */.container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }/* ══ LOGO ══ */
 
 /* ═══════════════════════════════════════
    RESPONSIVE MÓVIL — BuyMuscle
@@ -309,11 +313,43 @@ table { width: 100%; overflow-x: auto; display: block; }
 .novedades-grid { grid-template-columns: clamp(180px,22vw,240px) 1fr; }
 .h2-banner > div:last-child { display: flex; }
 
+/* Barra de categorías: chips con aire (.cat-bar-link no tenía CSS → links pegados) */
+.cat-bar { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 12px 0; scrollbar-width: none; }
+.cat-bar::-webkit-scrollbar { display: none; }
+.cat-bar-link {
+  display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
+  padding: 10px 16px; font-size: 13px; font-weight: 600; color: #222; white-space: nowrap;
+  background: #fafafa; border: 1px solid #ebebeb; border-radius: 999px;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+.cat-bar-link:hover { color: var(--red); border-color: var(--red); background: white; }
+
+/* Flechas laterales de los carruseles de producto (sistema PrestaShop
+   "arrows-middle", en rojo de marca) */
+.pc-wrap { position: relative; }
+.pc-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: var(--red); color: white; font-size: 24px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; padding: 0 0 3px;
+  cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  transition: background var(--transition), opacity var(--transition);
+}
+.pc-arrow:hover:not(:disabled) { background: var(--red-dark); }
+.pc-arrow:disabled { opacity: 0.3; cursor: default; }
+.pc-arrow-left { left: -10px; }
+.pc-arrow-right { right: -10px; }
+
 @media (max-width: 768px) {
   .novedades-grid { grid-template-columns: 1fr !important; }
   .novedades-grid > div:first-child { display: none !important; }
   .h2-banner > div:last-child { display: none !important; }
   .h2-banner > div:first-child { padding: 20px 16px !important; }
+  .cat-bar { gap: 6px; padding: 10px 0; }
+  .cat-bar-link { padding: 8px 13px; font-size: 12px; }
+  .pc-arrow { width: 38px; height: 38px; font-size: 20px; }
+  .pc-arrow-left { left: 4px; }
+  .pc-arrow-right { right: 4px; }
 }
 
 /* ── PRODUCTOS GRID ───────────────────────────────── */

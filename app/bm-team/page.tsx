@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
+import { cdn, BM_LOGO } from '@/lib/rehostedImages'
 
 // Formulario modal "Unirse al BM Team" → POST /api/bm-team-apply → email a la tienda.
 function BMTeamFormModal({ onClose }: { onClose: () => void }) {
@@ -53,25 +54,30 @@ function BMTeamFormModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-const BASE = 'https://tienda.buymuscle.es/img/cms/'
-const LOGO_TEAM = BASE + 'Logo-BM-Team.png'
+// Las fotos ya no se hotlinkean del PrestaShop viejo: viven en nuestro storage
+// (ver lib/rehostedImages.ts). `foto:null` = ese atleta no tiene foto en el
+// origen → la tarjeta cae al logo de BuyMuscle en vez de a una imagen rota.
+const LOGO_TEAM = BM_LOGO
 
-const ATLETAS = [
-  { nombre:'Pedro Veiras', foto:'Pedro.jpg', ig:'pedroveirasspro', desc:'Fisiculturista profesional y referente del fitness en Canarias.' },
-  { nombre:'Tino Rinderknecht', foto:'Tino.jpg', ig:'tino_rinderknecht', desc:'Atleta de alto rendimiento y entrenador personal.' },
-  { nombre:'Adassa & Alberto', foto:'duplafitness22.jpg', ig:'duplafitness22', desc:'Pareja fitness y embajadores de vida saludable.' },
-  { nombre:'Pili Hernandez', foto:'Pili-2.jpg', ig:'pili.hdez93', desc:'Atleta y promotora de la vida activa y saludable.' },
-  { nombre:'Cristina Hernandez', foto:'Cristina-2.jpg', ig:'babydollhn', desc:'Modelo fitness e influencer del mundo del culturismo.' },
-  { nombre:'Carolina Espeso', foto:'Carolina.jpg', ig:'carolinaespesoj', desc:'Atleta y apasionada del fitness y la nutricion deportiva.' },
-  { nombre:'Sheila Ramirez', foto:'Sheila.jpg', ig:'sheilaramirezfit', desc:'Fitness coach y embajadora de vida activa.' },
-  { nombre:'Paula Bravo', foto:'Paula.jpg', ig:'paulabravofit', desc:'Atleta y apasionada del deporte y la nutricion.' },
-  { nombre:'Ruben Martin', foto:'Ruben.jpg', ig:'rubenmafit', desc:'Culturista y referente del fitness en la isla.' },
-  { nombre:'Toni Rodriguez', foto:'Toni.jpg', ig:'tonirodriguezfit', desc:'Atleta y entrenador personal certificado.' },
-  { nombre:'Jose Perez', foto:'Jose.jpg', ig:'joseperezfit', desc:'Competidor de fitness y promotor de vida saludable.' },
-  { nombre:'Juan Carlos Palomeque', foto:'JuanCarlos.jpg', ig:'jcpalomeque', desc:'Fisiculturista y embajador de BuyMuscle.' },
-  { nombre:'Maria Gonzalez', foto:'Maria.jpg', ig:'mariagonzalezfit', desc:'Atleta y modelo fitness comprometida con el deporte.' },
-  { nombre:'Angel Sosa', foto:'Angel.jpg', ig:'angelsosafit', desc:'Atleta de alta competicion y embajador de la marca.' },
-  { nombre:'Gabri Hernandez', foto:'Gabri.jpg', ig:'gabrihernandezfit', desc:'Entrenador y atleta con amplia trayectoria deportiva.' },
+const ATLETAS: { nombre:string; foto:string|null; ig:string; desc:string }[] = [
+  { nombre:'Pedro Veiras', foto:cdn('bm-team/pedro.jpg'), ig:'pedroveirasspro', desc:'Fisiculturista profesional y referente del fitness en Canarias.' },
+  { nombre:'Tino Rinderknecht', foto:cdn('bm-team/tino.jpg'), ig:'tino_rinderknecht', desc:'Atleta de alto rendimiento y entrenador personal.' },
+  { nombre:'Adassa & Alberto', foto:cdn('bm-team/adassa-alberto.jpg'), ig:'duplafitness22', desc:'Pareja fitness y embajadores de vida saludable.' },
+  { nombre:'Pili Hernandez', foto:cdn('bm-team/pili.jpg'), ig:'pili.hdez93', desc:'Atleta y promotora de la vida activa y saludable.' },
+  { nombre:'Cristina Hernandez', foto:cdn('bm-team/cristina.jpg'), ig:'babydollhn', desc:'Modelo fitness e influencer del mundo del culturismo.' },
+  { nombre:'Carolina Espeso', foto:cdn('bm-team/carolina.jpg'), ig:'carolinaespesoj', desc:'Atleta y apasionada del fitness y la nutricion deportiva.' },
+  { nombre:'Sheila Ramirez', foto:cdn('bm-team/sheila.jpg'), ig:'sheilaramirezfit', desc:'Fitness coach y embajadora de vida activa.' },
+  { nombre:'Paula Bravo', foto:cdn('bm-team/paula.jpg'), ig:'paulabravofit', desc:'Atleta y apasionada del deporte y la nutricion.' },
+  { nombre:'Ruben Martin', foto:cdn('bm-team/ruben.jpg'), ig:'rubenmafit', desc:'Culturista y referente del fitness en la isla.' },
+  { nombre:'Toni Rodriguez', foto:cdn('bm-team/toni.jpg'), ig:'tonirodriguezfit', desc:'Atleta y entrenador personal certificado.' },
+  { nombre:'Jose Perez', foto:cdn('bm-team/jose.jpg'), ig:'joseperezfit', desc:'Competidor de fitness y promotor de vida saludable.' },
+  // Sin foto en el origen (Jose.jpg y JuanCarlos.jpg daban 403: el fichero ya no
+  // existe). La de Jose se recuperó de Jose-1.jpg; la de Juan Carlos no está en
+  // ninguna variante → hay que pedírsela y subirla a bm-team/juancarlos.jpg.
+  { nombre:'Juan Carlos Palomeque', foto:null, ig:'jcpalomeque', desc:'Fisiculturista y embajador de BuyMuscle.' },
+  { nombre:'Maria Gonzalez', foto:cdn('bm-team/maria.jpg'), ig:'mariagonzalezfit', desc:'Atleta y modelo fitness comprometida con el deporte.' },
+  { nombre:'Angel Sosa', foto:cdn('bm-team/angel.jpg'), ig:'angelsosafit', desc:'Atleta de alta competicion y embajador de la marca.' },
+  { nombre:'Gabri Hernandez', foto:cdn('bm-team/gabri.jpg'), ig:'gabrihernandezfit', desc:'Entrenador y atleta con amplia trayectoria deportiva.' },
 ]
 
 export default function BMTeamPage() {
@@ -163,7 +169,9 @@ export default function BMTeamPage() {
 }
 
 function AtletaCard({ atleta }: { atleta: typeof ATLETAS[0] }) {
-  const imgSrc = 'https://tienda.buymuscle.es/img/cms/' + atleta.foto
+  // Sin foto → logo de BuyMuscle encajado (contain + padding), no una imagen rota.
+  const hasFoto = !!atleta.foto
+  const imgSrc = atleta.foto || BM_LOGO
   const igUrl = 'https://www.instagram.com/' + atleta.ig
 
   return (
@@ -173,8 +181,10 @@ function AtletaCard({ atleta }: { atleta: typeof ATLETAS[0] }) {
       {/* Imagen */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imgSrc} alt={atleta.nombre}
-        style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 0.4s' }}
-        onError={e=>{ const t=e.target as HTMLImageElement; if(!t.dataset.fb){ t.dataset.fb='1'; t.src='https://placehold.co/400x600/111111/ff1e41?text=BUYMUSCLE'; t.style.objectFit='contain'; t.style.padding='30px'; } }}/>
+        style={ hasFoto
+          ? { width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 0.4s' }
+          : { width:'100%', height:'100%', objectFit:'contain', display:'block', padding:'30px', boxSizing:'border-box' } }
+        onError={e=>{ const t=e.target as HTMLImageElement; if(!t.dataset.fb){ t.dataset.fb='1'; t.src=BM_LOGO; t.style.objectFit='contain'; t.style.padding='30px'; t.style.boxSizing='border-box'; } }}/>
       {/* Overlay hover */}
       <div className="overlay" style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.3) 60%,transparent 100%)', opacity:0, transition:'opacity 0.3s', display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'1.5rem' }}>
         <div style={{ fontSize:11, fontWeight:700, color:'#00F399', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:4 }}>BM TEAM</div>

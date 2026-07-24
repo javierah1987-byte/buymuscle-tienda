@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import{createClient}from'@supabase/supabase-js'
 import{cache}from'react'
+import{rehost}from'@/lib/rehostedImages'
 
 // Server Component con ISR (mismo patrón que el índice del blog en app/blog/page.tsx).
 export const revalidate=3600
@@ -61,7 +62,7 @@ export default async function BlogPost({params}:any){
     <div style={{background:'white',fontFamily:'Arial,sans-serif'}}>
       {/* Portada */}
       {post.cover_image&&<div style={{width:'100%',height:320,overflow:'hidden',position:'relative'}}>
-        <img src={post.cover_image} alt={post.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+        <img src={rehost(post.cover_image)} alt={post.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
         <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.7))'}}/>
       </div>}
 
@@ -120,7 +121,7 @@ export default async function BlogPost({params}:any){
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20}}>
             {related.map(p=>(
               <Link key={p.id} href={'/blog/'+p.slug} style={{textDecoration:'none',background:'white',border:'1px solid #e8e8e8',padding:16,display:'block'}}>
-                {p.cover_image&&<img src={p.cover_image} alt={p.title} style={{width:'100%',height:100,objectFit:'cover',marginBottom:12}}/>}
+                {p.cover_image&&<img src={rehost(p.cover_image)} alt={p.title} style={{width:'100%',height:100,objectFit:'cover',marginBottom:12}}/>}
                 <div style={{fontSize:14,fontWeight:700,color:'#111',marginBottom:6}}>{p.title}</div>
                 <div style={{fontSize:12,color:'#ff1e41',fontWeight:700}}>Leer →</div>
               </Link>

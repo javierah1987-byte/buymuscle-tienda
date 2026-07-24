@@ -91,7 +91,7 @@ export async function POST(req){
 
       // 6. Crear pedido pagado. Si persistOrder devuelve !ok (sin_stock por carrera) → refund.
       const res = await persistOrder(db, body, {
-        status: 'paid', payment_method: 'paypal', channel: 'web', paypal_capture_id: captureId,
+        status: 'paid', payment_method: 'paypal', channel: 'online_retail', paypal_capture_id: captureId,
       })
       if(!res.ok) return await refundAndFail({ ok:false, ...res }, res.status || 409)
 

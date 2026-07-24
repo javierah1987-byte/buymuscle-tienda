@@ -10,6 +10,16 @@ export const IGIC = 0.07           // Canarias: IGIC general 7%
 export const SHIP_FREE_FROM = 50
 export const SHIP_COST = 4.90
 
+// Canales VÁLIDOS de un pedido. No es una convención: es la restricción
+// `orders_channel_check` de la tabla, y un valor fuera de esta lista hace FALLAR el
+// INSERT del pedido entero. (Era el caso de 'web' y 'distributor', que usaba el
+// checkout: ningún pedido web podía nacer — en PayPal, además, el fallo llegaba
+// DESPUÉS de cobrar y disparaba el reembolso.)
+// El canal lo decide siempre el SERVIDOR: si se aceptara del cliente, un pedido web
+// podría declararse 'tpv_retail' y contaminar el arqueo de caja (tpv-caja y
+// tpv-stats suman las ventas del turno filtrando por canal).
+export const CANALES = ['online_retail', 'online_distributor', 'tpv_retail', 'tpv_distributor']
+
 // El order_number actúa como token de capacidad (se consulta el pedido por él
 // en /api/order-lookup), así que debe ser IMPREDECIBLE. Math.random no sirve:
 // 10 bytes aleatorios criptográficos en base32 → inenumerable.
@@ -245,7 +255,8 @@ export async function persistOrder(db, body, opts = {}){
   const customer = opts.customer || body.customer || {}
   const status = opts.status || 'pending'
   const payment_method = opts.payment_method || body.payment_method || 'card'
-  const channel = opts.channel || body.channel || 'web'
+  // Ver CANALES arriba: valor no permitido → INSERT rechazado; y nunca del cliente.
+  const channel = CANALES.includes(opts.channel) ? opts.channel : 'online_retail'
 
   const order_number = genId()
   const { data: orderRow, error: orderErr } = await db.from('orders').insert({

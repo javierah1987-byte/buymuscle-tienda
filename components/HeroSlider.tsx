@@ -1,6 +1,6 @@
 // @ts-nocheck
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
@@ -12,6 +12,14 @@ const FALLBACK=[
   {id:3,image_url:'https://tienda.buymuscle.es/img/cms/Banner-Canal-Whatsapp-BM-1600x630.jpg',url:'/tienda',title:'BuyMuscle',subtitle:'Tu suplementacion en Canarias'},
 ]
 
+const AUTOPLAY_MS=6000
+const FADE='opacity 900ms ease-in-out'
+
+// Un slide con title/subtitle se pinta con overlay + bloque de texto (banners
+// del admin, p.ej. Distribuidores). Un slide SIN texto es un arte final de
+// campaña (el texto ya viene en la imagen): se pinta limpio y clicable entero.
+const hasTextOf=b=>!!(b&&(b.title||b.subtitle))
+
 // initialBanners llega del servidor (app/page.tsx, ISR): así el primer banner
 // sale ya en el HTML inicial (mejor LCP) y no hay doble descarga fallback→real.
 // Sin prop (otros usos), conserva el fetch en cliente.
@@ -19,6 +27,7 @@ export default function HeroSlider({initialBanners=null}){
   const hasInitial=Array.isArray(initialBanners)&&initialBanners.length>0
   const[slides,setSlides]=useState(hasInitial?initialBanners:FALLBACK)
   const[idx,setIdx]=useState(0)
+  const touchX=useRef(null)
 
   useEffect(()=>{
     if(hasInitial) return
@@ -32,28 +41,48 @@ export default function HeroSlider({initialBanners=null}){
   const prev=useCallback(()=>setIdx(i=>(i-1+slides.length)%slides.length),[slides.length])
   const next=useCallback(()=>setIdx(i=>(i+1)%slides.length),[slides.length])
 
+  // Autoplay suave: setTimeout dependiente de idx → cada navegación (manual o
+  // automática) reinicia la cuenta. Sin saltos a destiempo tras interactuar.
   useEffect(()=>{
-    const t=setInterval(next,5000)
-    return()=>clearInterval(t)
-  },[next])
+    const t=setTimeout(next,AUTOPLAY_MS)
+    return()=>clearTimeout(t)
+  },[idx,next])
+
+  // Swipe táctil (móvil)
+  const onTouchStart=e=>{touchX.current=e.touches[0].clientX}
+  const onTouchEnd=e=>{
+    if(touchX.current===null) return
+    const dx=e.changedTouches[0].clientX-touchX.current
+    if(Math.abs(dx)>50)(dx<0?next:prev)()
+    touchX.current=null
+  }
 
   const s=slides[idx]||{}
+  const hasText=hasTextOf(s)
 
   return(
-    <div style={{position:'relative',width:'100%',aspectRatio:'1600 / 630',maxHeight:720,background:'#111',overflow:'hidden',userSelect:'none'}}>
-      {/* Imagen */}
-      {s.image_url&&(
+    <div style={{position:'relative',width:'100%',aspectRatio:'1600 / 630',maxHeight:720,background:'#111',overflow:'hidden',userSelect:'none'}}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Todas las imágenes apiladas: crossfade real con easing (no corte seco) */}
+      {slides.map((b,i)=>b.image_url&&(
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={s.image_url} alt={s.title||'Banner'} key={s.id||idx}
-          fetchPriority={idx===0?'high':'auto'} decoding="async"
-          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.85,transition:'opacity 0.4s'}}/>
+        <img key={b.id??i} src={b.image_url} alt={b.alt||b.title||'Campaña BuyMuscle'}
+          fetchPriority={i===0?'high':'auto'} loading={i===0?'eager':'lazy'} decoding="async"
+          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',
+            opacity:i===idx?(hasTextOf(b)?0.85:1):0,transition:FADE,pointerEvents:'none'}}/>
+      ))}
+
+      {/* Overlay solo bajo bloque de texto (las campañas planchadas van limpias) */}
+      {hasText&&<div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.1) 60%,transparent 100%)'}}/>}
+
+      {/* Campañas: el slide entero es el enlace */}
+      {!hasText&&s.url&&(s.external
+        ? <a href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.alt||'Ver campaña'} style={{position:'absolute',inset:0,zIndex:1}}/>
+        : <Link href={s.url} aria-label={s.alt||'Ver campaña'} style={{position:'absolute',inset:0,zIndex:1}}/>
       )}
 
-      {/* Overlay */}
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.1) 60%,transparent 100%)'}}/>
-
-      {/* Texto */}
-      {(s.title||s.subtitle)&&(
+      {/* Texto (banners del admin con title/subtitle) */}
+      {hasText&&(
         <div style={{position:'absolute',left:'5%',top:'50%',transform:'translateY(-50%)',zIndex:2,maxWidth:'45%'}}>
           {s.title&&<h2 style={{margin:0,fontSize:'clamp(18px,3vw,42px)',fontWeight:900,color:'white',textTransform:'uppercase',textShadow:'0 2px 8px rgba(0,0,0,0.6)',lineHeight:1.1}}>{s.title}</h2>}
           {s.subtitle&&<p style={{margin:'8px 0 0',fontSize:'clamp(12px,1.5vw,18px)',color:'rgba(255,255,255,0.85)',textShadow:'0 1px 4px rgba(0,0,0,0.5)'}}>{s.subtitle}</p>}

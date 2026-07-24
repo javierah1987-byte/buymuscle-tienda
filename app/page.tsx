@@ -6,6 +6,7 @@ import ProductCarousel from '@/components/ProductCarousel'
 import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
 import LazyBgVideo from '@/components/LazyBgVideo'
+import { rehost } from '@/lib/rehostedImages'
 
 // ISR: la home se regenera cada 5 min (catálogo, no sensible al stock en tiempo real)
 export const revalidate = 300
@@ -28,11 +29,35 @@ async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'i
   let q = supabase.from('products').select(CARD_COLS).eq('active',true).gt('stock',0)
   if(cat){
     const {data:cd} = await supabase.from('categories').select('id').eq('name',cat).single()
-    if(cd) q = q.eq('category_id', cd.id)
+    // Fail-closed: si la categoría pedida no existe, la sección queda vacía
+    // (y no se renderiza) — nunca "todo el catálogo" en silencio.
+    if(!cd) return []
+    q = q.eq('category_id', cd.id)
   }
-  q = orderBy === 'stock' ? q.order('stock',{ascending:false}) : q.order('id',{ascending:false})
+  q = orderBy === 'stock' ? q.order('stock',{ascending:false}).order('id',{ascending:false}) : q.order('id',{ascending:false})
   const {data} = await q.limit(limit)
   // Las tarjetas solo usan CARD_COLS; el tipo Product completo no aplica aquí.
+  return (data || []) as any[]
+}
+
+// Familias de proteína (IDs verificados contra la tabla categories).
+const PROTEIN_CAT_IDS = [8, 16, 17, 43, 44, 39]
+
+// Productos de proteína con foto (feedback Javier): image_url NOT NULL para que
+// un producto sin foto no pueda colarse en un carrusel visual, por construcción.
+// id desc = lo último en llegar. `offset` reparte VENTANAS DISJUNTAS de la misma
+// lista entre secciones (novedades = 1-8, carrusel proteínas = 9-16): cero
+// producto repetido entre ambas por construcción. (Ordenar por "ventas" no es
+// posible — no hay columna de ventas — y por stock tampoco: 28/29 empatados.)
+// La categoría suelta 'Proteinas' NO existe en la tabla — por eso esta lista de
+// familias y no getProducts('Proteinas') (que devolvía todo el catálogo).
+async function getProteinProducts(limit = 8, offset = 0) {
+  const { data } = await supabase.from('products').select(CARD_COLS)
+    .eq('active', true).gt('stock', 0)
+    .in('category_id', PROTEIN_CAT_IDS)
+    .not('image_url', 'is', null)
+    .order('id', { ascending: false })
+    .range(offset, offset + limit - 1)
   return (data || []) as any[]
 }
 
@@ -44,6 +69,26 @@ async function getBanners() {
     .eq('active', true).order('order_pos', { ascending: true })
   return data || []
 }
+
+// Campañas del slider (artes finales 1600×630 con el texto ya incorporado — se
+// pintan limpias, sin overlay ni título encima). Rehospedadas en nuestro
+// storage: cero hotlink al PrestaShop (destinado a apagarse).
+const SLIDES_CDN = 'https://awwlbepjxuoxaigztugh.supabase.co/storage/v1/object/public/product-images/clon-home/'
+const CAMPAIGN_SLIDES = [
+  {id:'camp-proteinas-matrix', image_url:SLIDES_CDN+'slide-1-proteinas-matrix.jpg', url:'/tienda?cat=Proteinas', alt:'Nuevas proteínas iO.GENIX: Whey Nova Matrix y Milk Protein Isolate'},
+  {id:'camp-salsas',           image_url:SLIDES_CDN+'slide-2-salsas-siropes.jpg',   url:'/tienda?cat='+encodeURIComponent('Salsas y Siropes'), alt:'Salsas y siropes Gourmet Selection iO.GENIX'},
+  {id:'camp-isolate',          image_url:SLIDES_CDN+'slide-3-isolate-sabores.jpg',  url:'/tienda?cat='+encodeURIComponent('Proteína Isolatada'), alt:'Isolate iO.GENIX: nuevos sabores'},
+  {id:'camp-protein-rings',    image_url:SLIDES_CDN+'slide-4-protein-rings.jpg',    url:'/producto/1697', alt:'Protein Rings iO.GENIX'},
+  {id:'camp-whatsapp',         image_url:SLIDES_CDN+'slide-5-canal-whatsapp.jpg',   url:'https://www.whatsapp.com/channel/0029VbAZetpF6smwmI1pv20X', external:true, alt:'Canal de WhatsApp de BuyMuscle'},
+  {id:'camp-streetflavour',    image_url:SLIDES_CDN+'slide-6-streetflavour.jpg',    url:'/streetflavour', alt:'StreetFlavour: moda callejera'},
+  {id:'camp-bm-vip',           image_url:SLIDES_CDN+'slide-7-bm-vip.jpg',           url:'/login', alt:'BM VIP: club de ventajas BuyMuscle'},
+]
+// Banners de la tabla ya CUBIERTOS por su campaña planchada de arriba (mismos
+// artes, pero hotlinkeados al PrestaShop y con un título desalineado pintado
+// encima). Verificados 23-jul contra la BD: 6 isolate · 7 streetflavour ·
+// 8 whatsapp · 9 protein-rings. Se omiten del slider; cualquier banner nuevo
+// creado en el admin sigue saliendo detrás de las campañas. BD intacta.
+const LEGACY_COVERED_BANNER_IDS = [6, 7, 8, 9]
 
 const QUICK_CATS = [
   {name:'Proteinas',    icon:'🥛', slug:'Proteinas'},
@@ -60,9 +105,9 @@ const QUICK_CATS = [
 
 export default async function Home() {
   const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
-    getProducts(undefined, 8, 'id'),
+    getProteinProducts(8),
     getProducts(undefined, 8, 'stock'),
-    getProducts('Proteinas', 8, 'id'),
+    getProteinProducts(8, 8),
     getProducts('Pre-entrenos', 8, 'id'),
     getProducts('Veganos', 8, 'id'),
     getBanners(),
@@ -71,7 +116,7 @@ export default async function Home() {
   return (
     <main style={{background:'#f5f5f5'}}>
       <h1 style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
-      <HeroSlider initialBanners={banners as any} />
+      <HeroSlider initialBanners={[...CAMPAIGN_SLIDES, ...banners.filter((b:any)=>!LEGACY_COVERED_BANNER_IDS.includes(b.id))] as any} />
 
       {/* h2 BANNER OFERTA PRINCIPAL */}
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
@@ -143,7 +188,7 @@ export default async function Home() {
       {/* Categorias rapidas */}
       <section style={{background:'white',borderBottom:'1px solid #ebebeb',boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px'}}>
-          <div style={{display:'flex',overflowX:'auto'}}>
+          <div className="cat-bar">
             {QUICK_CATS.map(cat=>(
               <Link key={cat.name} href={`/tienda?cat=${encodeURIComponent(cat.slug)}`} className="cat-bar-link">
                 <span style={{fontSize:22}}>{cat.icon}</span>
@@ -218,7 +263,7 @@ export default async function Home() {
       {/* BM SPORTSWEAR banner */}
       <section style={{position:'relative',overflow:'hidden',height:260,background:'#111'}}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg" alt="BM Sportswear"
+        <img src={rehost('https://tienda.buymuscle.es/img/cms/BANNER-WEB-1600X630-STREETFLAVOUR.jpg')} alt="BM Sportswear"
           style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',opacity:0.75}}/>
         <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'}}/>
         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 60px'}}>
@@ -270,7 +315,7 @@ export default async function Home() {
                 style={{background:'white',textDecoration:'none',color:'inherit',display:'flex',flexDirection:'column'}}>
                 <div style={{height:180,overflow:'hidden',background:'#f0f0f0',flexShrink:0}}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={BASE_BLOG+post.img} alt={post.titulo} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  <img src={rehost(BASE_BLOG+post.img)} alt={post.titulo} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                 </div>
                 <div style={{padding:'1rem',flex:1,display:'flex',flexDirection:'column'}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:'0.5rem'}}>
