@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import PayPalButton from '@/components/PayPalButton'
 import { trackBeginCheckout } from '@/lib/analytics'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth'
 
 const S='https://awwlbepjxuoxaigztugh.supabase.co'
 const K=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -45,8 +46,20 @@ function RecomendadosVacio() {
   )
 }
 
+// Catálogo del selector de pago. El servidor elige el TERMINAL/canal de forma
+// autoritativa (resolveDistributor → tabla distributors.active); aquí solo se
+// condiciona QUÉ se ofrece, con la misma señal B2B que usa toda la tienda.
+const PAY_METHODS = {
+  card:     { id:'card',     icon:'💳', label:'Tarjeta',       desc:'Visa · Mastercard · al instante' },
+  bizum:    { id:'bizum',    icon:'📱', label:'Bizum',         desc:'Paga con tu móvil en segundos' },
+  transfer: { id:'transfer', icon:'🏦', label:'Transferencia', desc:'Te enviamos los datos bancarios' },
+}
+
 export default function CarritoPage() {
   const { items, updateQty, remove, clear } = useCart()
+  // Segmento de cliente. Distribuidores (B2B, canal online_distributor): los tres
+  // métodos. Particulares (retail): solo Tarjeta + Bizum, sin transferencia.
+  const { isDistributor } = useAuth()
   const [paso, setPaso] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   useEffect(function(){
@@ -63,6 +76,17 @@ export default function CarritoPage() {
   // freno de "solo transferencia"). Tarjeta y Bizum van por Redsys; transferencia por el flujo actual.
   const [payMethod, setPayMethod] = useState('card')
   const [redsysMsg, setRedsysMsg] = useState('')
+  // Métodos visibles según segmento. Distribuidor → Transferencia + Bizum + Tarjeta;
+  // particular → Tarjeta + Bizum (transferencia fuera).
+  const payMethods = isDistributor
+    ? [PAY_METHODS.transfer, PAY_METHODS.bizum, PAY_METHODS.card]
+    : [PAY_METHODS.card, PAY_METHODS.bizum]
+  // Si el método elegido deja de estar disponible al resolverse el segmento (la sesión
+  // de distribuidor puede cargar tras el primer render), cae al primero válido — así el
+  // CTA de abajo nunca queda en 'transfer' cuando la transferencia no se ofrece.
+  useEffect(()=>{
+    if(!payMethods.some(m=>m.id===payMethod)) setPayMethod(payMethods[0].id)
+  },[isDistributor]) // eslint-disable-line react-hooks/exhaustive-deps
   // Clave de idempotencia: una por carga de página. Si la red móvil reintenta
   // o el cliente pulsa dos veces, el servidor devuelve el MISMO pedido en vez
   // de crear un duplicado.
@@ -385,11 +409,7 @@ export default function CarritoPage() {
               <div style={{marginTop:16}}>
                 <div style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>Método de pago</div>
                 <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
-                  {[
-                    {id:'card',icon:'💳',label:'Tarjeta',desc:'Visa · Mastercard · al instante'},
-                    {id:'bizum',icon:'📱',label:'Bizum',desc:'Paga con tu móvil en segundos'},
-                    {id:'transfer',icon:'🏦',label:'Transferencia',desc:'Te enviamos los datos bancarios'},
-                  ].map(m=>{
+                  {payMethods.map(m=>{
                     const active=payMethod===m.id
                     return(
                       <button key={m.id} type="button" onClick={()=>{setPayMethod(m.id);setRedsysMsg('')}} aria-pressed={active}
@@ -439,7 +459,7 @@ export default function CarritoPage() {
                   </>
                 )}
                 <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:10,flexWrap:'wrap'}}>
-                  {['🔒 SSL','Tarjeta','Bizum','PayPal','Transferencia'].map(t=><span key={t} style={{fontSize:10,color:'#999'}}>{t}</span>)}
+                  {['🔒 SSL','Tarjeta','Bizum','PayPal',...(isDistributor?['Transferencia']:[])].map(t=><span key={t} style={{fontSize:10,color:'#999'}}>{t}</span>)}
                 </div>
               </div>
             )}
