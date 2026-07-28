@@ -135,7 +135,7 @@ export default function LoginDistribuidoresPage() {
           <div style={{textAlign:'center', marginTop:'1.5rem'}}>
             <p style={{fontSize:13, color:'rgba(255,255,255,0.3)'}}>
               ¿No tienes acceso todavía?{' '}
-              <Link href="/distribuidores#solicitar" style={{color:'var(--red)', fontWeight:700}}>
+              <Link href="/distribuidores/solicitar" style={{color:'var(--red)', fontWeight:700}}>
                 Solicitar acceso
               </Link>
             </p>

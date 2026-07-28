@@ -100,7 +100,7 @@ export async function PATCH(req){
 
     // Ventas del turno (canales TPV, pagadas)
     const { data: orders, error: oErr } = await db.from('orders')
-      .select('total,payment_method')
+      .select('total,payment_method,payment_breakdown')
       .eq('status', 'paid')
       .gte('created_at', since)
       .in('channel', ['tpv_retail', 'tpv_distributor'])
@@ -112,7 +112,12 @@ export async function PATCH(req){
     for(const o of (orders || [])){
       const amt = Number(o.total || 0)
       const m = (o.payment_method || 'tarjeta')
-      if(m.includes('efectivo')) totalEfectivo += amt
+      const bd = o.payment_breakdown
+      if(m === 'mixto' && bd){
+        // Pago mixto: cada parte a su bucket (bizum se agrupa con tarjeta, igual que los puros).
+        totalEfectivo += Number(bd.efectivo || 0)
+        totalTarjeta  += Number(bd.tarjeta || 0) + Number(bd.bizum || 0)
+      } else if(m.includes('efectivo')) totalEfectivo += amt
       else totalTarjeta += amt
       numTickets += 1
     }

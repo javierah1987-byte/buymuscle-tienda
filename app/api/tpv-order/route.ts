@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { tpvAuthorized } from '@/lib/tpvAuth'
 import crypto from 'crypto'
+import { createInvoiceV2 } from '@/lib/holdedV2'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,33 +17,8 @@ const IGIC = 0.07           // Canarias: IGIC general 7%
 function genId(){ return 'BM-TPV-' + crypto.randomBytes(8).toString('hex').toUpperCase() }
 function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 }
 
-// ── HOLDED (factura del TPV, IGIC 7%) ────────────────────
-async function createHoldedInvoice(order, lines){
-  const key = process.env.HOLDED_API_KEY
-  if(!key) return null
-  try{
-    const isDistrib = (order.channel||'').includes('distributor')
-    const serie = isDistrib ? process.env.HOLDED_SERIE_DIST_ID : process.env.HOLDED_SERIE_T_ID
-    const email = order.customer_email || 'tpv@buymuscle.es'
-    const cRes = await fetch('https://api.holded.com/api/invoicing/v1/contacts?email='+encodeURIComponent(email),{headers:{key}})
-    const contacts = await cRes.json()
-    let contactId = contacts?.[0]?.id
-    if(!contactId){
-      const nc = await fetch('https://api.holded.com/api/invoicing/v1/contacts',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify({name:order.customer_name||email,email,type:'client'})}).then(r=>r.json())
-      contactId = nc?.id
-    }
-    const inv = {
-      contactId,
-      date: Math.floor(Date.now()/1000),
-      notes: 'Venta TPV '+order.order_number,
-      // Holded espera precio SIN impuesto; nuestros precios llevan IGIC incluido → desglosamos
-      items: lines.map(l => ({ name: l.product_name||'Producto', units: l.qty||1, subtotal: round2(Number(l.unit_price)/(1+IGIC)), tax: 7 })),
-      ...(serie && { numSerieId: serie })
-    }
-    const invRes = await fetch('https://api.holded.com/api/invoicing/v1/documents/invoice',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify(inv)}).then(r=>r.json())
-    return invRes?.id || null
-  }catch(e){ console.error('holded tpv error:', e); return null }
-}
+// ── HOLDED v2 — migrado a lib/holdedV2 (API v2 Bearer). Antes v1 (key header).
+async function createHoldedInvoice(order, lines){ return createInvoiceV2(order, lines) }
 
 // ── POST /api/tpv-order ──────────────────────────────────
 export async function POST(req){
@@ -56,6 +32,7 @@ export async function POST(req){
       items = [],
       discount_pct = 0,
       payment_method = 'efectivo',
+      payment_breakdown = null,   // compra mixta: { tarjeta, bizum } (el efectivo es el resto)
       customer = {},
       channel = 'tpv_retail',
     } = body
@@ -115,6 +92,20 @@ export async function POST(req){
     const base = round2(totalGross / (1 + IGIC))
     const taxAmount = round2(totalGross - base)
 
+    // 3-bis. Pago MIXTO (compra mixta TPV): el cliente manda cuánto va por tarjeta/bizum;
+    // el EFECTIVO es el RESTO, calculado sobre el total AUTORITATIVO del servidor (no se
+    // confía en el importe de efectivo del cliente). Se guarda el desglose para que el
+    // arqueo cuente la parte de efectivo correctamente. Sin mixto → breakdown = null.
+    let breakdown = null
+    if(payment_method === 'mixto'){
+      const bTarjeta = round2(Math.max(0, Number(payment_breakdown?.tarjeta) || 0))
+      const bBizum   = round2(Math.max(0, Number(payment_breakdown?.bizum) || 0))
+      if(bTarjeta + bBizum > totalGross + 0.01)
+        return NextResponse.json({ ok:false, error:'mixto_supera_total' }, { status:400 })
+      const bEfectivo = round2(totalGross - bTarjeta - bBizum)
+      breakdown = { efectivo: bEfectivo, tarjeta: bTarjeta, bizum: bBizum }
+    }
+
     // 4. Crear pedido (status 'paid' = venta presencial cobrada)
     const order_number = genId()
     const { data: orderRow, error: orderErr } = await db.from('orders').insert({
@@ -129,6 +120,7 @@ export async function POST(req){
       total: totalGross,
       discount_pct: disc,
       payment_method,
+      payment_breakdown: breakdown,
       status: 'paid',
       // Venta presencial ya cobrada: el stock se descuenta aquí mismo (paso 6),
       // así que se marca aplicado para que un cambio de estado posterior en

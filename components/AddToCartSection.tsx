@@ -1,6 +1,7 @@
 // @ts-nocheck
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart'
 import { useAuth } from '@/lib/auth'
 import { SITE_URL } from '@/lib/site'
@@ -19,6 +20,7 @@ const DIST_ACCENT = '#d9b45a'
 
 export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants, formatSlot = null }: Props) {
   const { add } = useCart()
+  const router = useRouter()
   const { isDistributor, levelName, discountPct, overrides } = useAuth()
   const [selected, setSelected] = useState<Record<string,Variant>>({})
   const [qty, setQty] = useState(1)
@@ -36,20 +38,29 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
   const variantStock = selectedVariant ? selectedVariant.stock : product.stock
   const inStock = variantStock > 0
 
+  // Ítem de carrito con formato/sabor/cantidad y precio (con dto. distribuidor si aplica).
+  const buildCartItem = () => ({
+    id: product.id,
+    name: product.name,
+    price: discountedPrice,
+    image: product.image_url,
+    variant: variantLabel,
+    variantId: selectedVariant ? selectedVariant.variantId : null,
+    stock: variantStock,
+    qty,
+  })
   const handleAdd = () => {
     if (hasVariants && !allTypesSelected) return
-    add({
-      id: product.id,
-      name: product.name,
-      price: discountedPrice,
-      image: product.image_url,
-      variant: variantLabel,
-      variantId: selectedVariant ? selectedVariant.variantId : null,
-      stock: variantStock,
-      qty,
-    })
+    add(buildCartItem())
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
+  }
+  // COMPRAR YA: añade el ítem (respeta sabor/formato/cantidad) y salta DIRECTO al
+  // checkout (carrito paso DATOS+pago), sin pasar por la revisión del carrito.
+  const handleBuyNow = () => {
+    if (!inStock || (hasVariants && !allTypesSelected)) return
+    add(buildCartItem())
+    router.push('/carrito?comprar=1')
   }
 
   return (
@@ -133,6 +144,14 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
         style={{ width:'100%', padding:'14px', border:'none', fontFamily:'var(--font-body)', fontSize:14, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', cursor: inStock && allTypesSelected ? 'pointer' : 'not-allowed',
           background: added ? '#22c55e' : inStock && allTypesSelected ? 'var(--red)' : '#ccc', color:'white', transition:'background 0.2s' }}>
         {added ? '✓ Añadido al carrito' : !inStock ? 'Sin stock' : !allTypesSelected ? 'Selecciona opciones' : '🛒 AÑADIR AL CARRITO'}
+      </button>
+      {/* COMPRAR YA — checkout directo con este producto (respeta sabor/formato/cantidad) */}
+      <button
+        onClick={handleBuyNow}
+        disabled={!inStock || (hasVariants && !allTypesSelected)}
+        style={{ width:'100%', marginTop:8, padding:'14px', border:'none', fontFamily:'var(--font-body)', fontSize:14, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.05em', cursor: inStock && allTypesSelected ? 'pointer' : 'not-allowed',
+          background: inStock && allTypesSelected ? '#111' : '#ccc', color:'white', transition:'background 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+        ⚡ COMPRAR YA
       </button>
       <a href={'https://wa.me/?text='+encodeURIComponent('¡Mira este producto! '+product.name+' - '+SITE_URL+'/producto/'+product.id)}
         target="_blank" rel="noopener noreferrer"

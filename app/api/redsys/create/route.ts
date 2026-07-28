@@ -60,7 +60,9 @@ export async function POST(req){
     // en MerchantData y regresa en la notificación (no hace falta columna nueva).
     const redsysOrder = (String(Date.now()).slice(-8) + String(crypto.randomInt(1000, 9999))).slice(0, 12)
     const channel = dist.channel === 'distributor' ? 'distributor' : 'particular'
-    const form = buildRedsysForm({ order: redsysOrder, amountEuros: res.total, channel, merchantData: res.order_number })
+    // Método elegido en el checkout → hint a Redsys: 'C' tarjeta, 'z' Bizum.
+    const paymethod = ({ card: 'C', bizum: 'z' })[body?.method] || ''
+    const form = buildRedsysForm({ order: redsysOrder, amountEuros: res.total, channel, merchantData: res.order_number, paymethod })
 
     return NextResponse.json({ ok:true, order_number: res.order_number, redsys: form })
   }catch(e){

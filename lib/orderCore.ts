@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { SITE_URL } from './site'
+import { createInvoiceV2 } from './holdedV2'
 
 export const IGIC = 0.07           // Canarias: IGIC general 7%
 export const SHIP_FREE_FROM = 50
@@ -65,38 +66,10 @@ async function notifyWhatsApp(order){
   await fetch('https://waba.360dialog.io/v1/messages',{method:'POST',headers:{'D360-API-KEY':wkey,'Content-Type':'application/json'},body:JSON.stringify({messaging_product:'whatsapp',to:phone,type:'text',text:{body:msg}})}).catch(console.error)
 }
 
-// ── HOLDED (factura, IGIC 7%) ────────────────────────────
-async function createHoldedInvoice(order, lines){
-  const key = process.env.HOLDED_API_KEY
-  if(!key) return null
-  try{
-    const isDistrib = (order.channel||'').includes('distributor')
-    const serie = isDistrib ? process.env.HOLDED_SERIE_DIST_ID : process.env.HOLDED_SERIE_T_ID
-    const cRes = await fetch('https://api.holded.com/api/invoicing/v1/contacts?email='+encodeURIComponent(order.customer_email||''),{headers:{key}})
-    const contacts = await cRes.json()
-    let contactId = contacts?.[0]?.id
-    if(!contactId){
-      const nc = await fetch('https://api.holded.com/api/invoicing/v1/contacts',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify({name:order.customer_name||order.customer_email,email:order.customer_email,type:'client'})}).then(r=>r.json())
-      contactId = nc?.id
-    }
-    const inv = {
-      contactId,
-      date: Math.floor(Date.now()/1000),
-      notes: 'Pedido '+order.order_number,
-      // Holded espera precio SIN impuesto; nuestros precios llevan IGIC incluido → desglosamos
-      items: [
-        ...lines.map(l => ({ name: l.product_name||'Producto', units: l.qty||1, subtotal: round2(Number(l.unit_price)/(1+IGIC)), tax: 7 })),
-        // Línea de envío: sin ella la factura quedaba por debajo de lo cobrado.
-        ...(Number(order.shipping_cost) > 0
-          ? [{ name: 'Gastos de envío', units: 1, subtotal: round2(Number(order.shipping_cost)/(1+IGIC)), tax: 7 }]
-          : []),
-      ],
-      ...(serie && { numSerieId: serie })
-    }
-    const invRes = await fetch('https://api.holded.com/api/invoicing/v1/documents/invoice',{method:'POST',headers:{key,'Content-Type':'application/json'},body:JSON.stringify(inv)}).then(r=>r.json())
-    return invRes?.id || null
-  }catch(e){ console.error('holded error:', e); return null }
-}
+// ── HOLDED v2 — migrado a lib/holdedV2 (API v2 Bearer). Antes v1 (key header).
+// El guard (prod / preview con HOLDED_ALLOW_PREVIEW=1) y el mapeo de serie (particular→Tienda,
+// distribuidor→Distribucion) viven en el módulo. Best-effort: devuelve el id o null.
+async function createHoldedInvoice(order, lines){ return createInvoiceV2(order, lines) }
 
 // Calcula líneas y totales autoritativos a partir del carrito del cliente.
 // No persiste nada: sirve también para crear la orden de PayPal por el importe correcto.
@@ -328,26 +301,34 @@ export async function persistOrder(db, body, opts = {}){
     throw stockErr
   }
 
+  // NOTA best-effort: el query builder de supabase-js (v2) es "thenable" pero NO
+  // implementa .catch() → `builder.catch(()=>{})` lanzaba "catch is not a function"
+  // DESPUÉS de insertar el pedido, así que el checkout devolvía 500 y se saltaba
+  // email de confirmación + Holded, y ni el customer ni el abandoned_cart se
+  // tocaban (la query nunca llegaba a await). Fix: await dentro de try/catch.
   if(couponRow){
     // Incremento atómico (uses = uses + 1) vía RPC: un update leído-y-escrito
     // permitía superar max_uses con pedidos simultáneos.
-    await db.rpc('increment_coupon_uses', { p_id: couponRow.id }).catch(()=>{})
+    try { await db.rpc('increment_coupon_uses', { p_id: couponRow.id }) } catch {}
   }
 
   if(customer.email){
-    await db.from('customers').upsert({
-      email: customer.email,
-      name: customer.name || '',
-      phone: customer.phone || '',
-      last_order_date: new Date().toISOString(),
-    }, { onConflict: 'email' }).catch(()=>{})
+    try {
+      await db.from('customers').upsert({
+        email: customer.email,
+        name: customer.name || '',
+        phone: customer.phone || '',
+        last_order_date: new Date().toISOString(),
+      }, { onConflict: 'email' })
+    } catch {}
     // Si dejó un carrito abandonado registrado, marcarlo recuperado para que
     // el cron no le mande el email de "olvidaste tu carrito" tras comprar.
-    await db.from('abandoned_carts')
-      .update({ recovered: true })
-      .eq('email', String(customer.email).toLowerCase())
-      .eq('recovered', false)
-      .catch(()=>{})
+    try {
+      await db.from('abandoned_carts')
+        .update({ recovered: true })
+        .eq('email', String(customer.email).toLowerCase())
+        .eq('recovered', false)
+    } catch {}
   }
 
   const orderObj = { ...orderRow }

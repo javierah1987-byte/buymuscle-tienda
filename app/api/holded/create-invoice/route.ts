@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAdminUser } from '@/lib/adminAuth'
+import { createInvoiceV2, holdedInvoicingEnabled } from '@/lib/holdedV2'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,9 +52,12 @@ export async function POST(req: Request) {
     const admin = await getAdminUser()
     if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
+    // 🔒 Guard v2: en preview solo factura si HOLDED_ALLOW_PREVIEW=1 (+ key presente). Prod: sí.
+    if (!holdedInvoicingEnabled())
+      return NextResponse.json({ ok: true, skipped: true, reason: 'facturacion Holded deshabilitada en este entorno' })
+
     const { orderId } = await req.json()
     if (!orderId) throw new Error('orderId requerido')
-    if (!HOLDED_KEY) throw new Error('HOLDED_API_KEY no configurada')
 
     const supabase = adminDb()
 
@@ -68,55 +72,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, invoiceId: order.holded_invoice_id, cached: true })
     }
 
-    // Cargar líneas
+    // Cargar líneas y crear la factura en Holded v2 (serie por canal, en lib/holdedV2).
     const { data: lines } = await supabase
       .from('order_lines').select('*').eq('order_id', orderId)
+    const invoiceId = await createInvoiceV2(order, lines || [])
+    if (!invoiceId) throw new Error('No se pudo crear la factura en Holded v2')
 
-    // Buscar o crear contacto en Holded
-    const contactId = await findOrCreateContact(
-      order.customer_email || 'cliente@buymuscle.es',
-      order.customer_name || 'Cliente',
-      order.customer_phone
-    )
-    if (!contactId) throw new Error('No se pudo crear contacto en Holded')
+    const isDistributor = String(order.channel || '').includes('distributor')
+    const series = isDistributor ? 'Distribucion' : 'Tienda'
+    await supabase.from('orders').update({ holded_invoice_id: invoiceId, holded_series: series }).eq('id', orderId)
 
-    // Preparar líneas de factura. Nuestros precios llevan IGIC incluido →
-    // Holded espera el precio SIN impuesto, así que desglosamos (÷1.07) y tax 7%.
-    const items = (lines || []).map((line: any) => ({
-      name: line.product_name,
-      units: line.quantity,
-      subtotal: round2(Number(line.unit_price) / (1 + IGIC)),
-      tax: 7,
-    }))
-
-    // Añadir envío si aplica
-    if (Number(order.shipping_cost) > 0) {
-      items.push({ name: 'Gastos de envío', units: 1, subtotal: round2(Number(order.shipping_cost) / (1 + IGIC)), tax: 7 })
-    }
-
-    // Serie B2C o B2B
-    const isDistributor = order.channel === 'online_distributor' || order.channel === 'tpv_distributor'
-    const series = isDistributor ? 'B2B' : 'B2C'
-
-    // Crear factura en Holded
-    const invoice = await holdedFetch('/documents/invoice', 'POST', {
-      contactId,
-      date: Math.floor(new Date(order.created_at).getTime() / 1000),
-      notes: `Pedido ${order.order_number}${order.notes ? ' — ' + order.notes : ''}`,
-      items,
-    })
-
-    if (!invoice?.id) {
-      throw new Error('Holded no devolvió ID: ' + JSON.stringify(invoice))
-    }
-
-    // Guardar en Supabase
-    await supabase.from('orders').update({
-      holded_invoice_id: invoice.id,
-      holded_series: series,
-    }).eq('id', orderId)
-
-    return NextResponse.json({ ok: true, invoiceId: invoice.id, series })
+    return NextResponse.json({ ok: true, invoiceId, series })
 
   } catch (err: any) {
     console.error('Holded error:', err.message)

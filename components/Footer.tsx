@@ -95,7 +95,7 @@ export default function Footer(){
                 {h:'/privacidad',l:'Privacidad'},
                 {h:'/aviso-legal',l:'Aviso legal'},
                 {h:'/devoluciones',l:'Devoluciones'},
-                {h:'/cookies',l:'Politica de cookies'},
+                {h:'/politica-cookies',l:'Politica de cookies'},
               ].map(x=><li key={x.l}><Link href={x.h} style={LS} onMouseEnter={ho} onMouseLeave={le}>{x.l}</Link></li>)}
             </ul>
           </div>

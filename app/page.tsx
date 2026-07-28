@@ -7,6 +7,7 @@ import HeroSlider from '@/components/HeroSlider'
 import OfertaDia from '@/components/OfertaDia'
 import LazyBgVideo from '@/components/LazyBgVideo'
 import { rehost } from '@/lib/rehostedImages'
+import { canaryWeekStart, salePrice } from '@/lib/weeklyOffers'
 
 // ISR: la home se regenera cada 5 min (catálogo, no sensible al stock en tiempo real)
 export const revalidate = 300
@@ -40,6 +41,19 @@ async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'i
   return (data || []) as any[]
 }
 
+// LOS MÁS VENDIDOS: lista CURADA por data en products.is_bestseller / bestseller_rank
+// (columnas aditivas, pobladas 2026-07-28). Antes era una heurística por stock; ahora es
+// dato. Orden por bestseller_rank asc (1 = más vendido). active + stock>0 como el resto de
+// carruseles (no mostrar inactivos / sin stock en una sección de compra).
+async function getBestsellers(limit = 24) {
+  const { data } = await supabase.from('products').select(CARD_COLS)
+    .eq('active', true).gt('stock', 0)
+    .eq('is_bestseller', true)
+    .order('bestseller_rank', { ascending: true })
+    .limit(limit)
+  return (data || []) as any[]
+}
+
 // Familias de proteína (IDs verificados contra la tabla categories).
 const PROTEIN_CAT_IDS = [8, 16, 17, 43, 44, 39]
 
@@ -59,6 +73,24 @@ async function getProteinProducts(limit = 8, offset = 0) {
     .order('id', { ascending: false })
     .range(offset, offset + limit - 1)
   return (data || []) as any[]
+}
+
+// OFERTA DE LA SEMANA — fuente única weekly_offers (slot 'week'), que Javier
+// rellena en /admin/ofertas-semana. El descuento SIEMPRE es real (discount_pct
+// sobre el PVP); el precio de oferta se deriva, no se escribe en products. Si no
+// hay oferta configurada (o el producto no está disponible) devuelve null y la
+// home cae a un "destacado" SIN inventar ningún descuento (mata el humo del
+// novedades[0] mal etiquetado + del price*0.8).
+async function getWeekHeroOffer() {
+  try {
+    const { data } = await supabase.from('weekly_offers')
+      .select('discount_pct,products(id,name,image_url,price_incl_tax,stock,active)')
+      .eq('week_start', canaryWeekStart()).eq('slot', 'week').eq('active', true).maybeSingle()
+    const p: any = data?.products
+    if (!p || !p.active || Number(p.stock) <= 0) return null
+    const price = Number(p.price_incl_tax); const pct = Number(data.discount_pct)
+    return { id: p.id, name: p.name, image_url: p.image_url, price, pct, sale: salePrice(price, pct) }
+  } catch { return null }
 }
 
 // Banners del hero en servidor (ISR): el primer slide sale en el HTML inicial
@@ -104,40 +136,49 @@ const QUICK_CATS = [
 ]
 
 export default async function Home() {
-  const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
+  const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners, weekOffer] = await Promise.all([
     getProteinProducts(8),
-    getProducts(undefined, 8, 'stock'),
+    getBestsellers(),
     getProteinProducts(8, 8),
     getProducts('Pre-entrenos', 8, 'id'),
     getProducts('Veganos', 8, 'id'),
     getBanners(),
+    getWeekHeroOffer(),
   ])
+
+  // Héroe de la sección: la oferta real de la semana si está configurada; si no,
+  // el producto más nuevo como "destacado" SIN descuento (nunca un % inventado).
+  const hero = weekOffer || (novedades[0]
+    ? { id: novedades[0].id, name: novedades[0].name, image_url: novedades[0].image_url, price: Number(novedades[0].price_incl_tax), sale: Number(novedades[0].price_incl_tax), pct: 0 }
+    : null)
 
   return (
     <main style={{background:'#f5f5f5'}}>
       <h1 style={{position:'absolute',width:1,height:1,padding:0,margin:-1,overflow:'hidden',clip:'rect(0,0,0,0)',whiteSpace:'nowrap',border:0}}>BuyMuscle — Tienda de Suplementación Deportiva en Canarias</h1>
       <HeroSlider initialBanners={[...CAMPAIGN_SLIDES, ...banners.filter((b:any)=>!LEGACY_COVERED_BANNER_IDS.includes(b.id))] as any} />
 
-      {/* h2 BANNER OFERTA PRINCIPAL */}
+      {/* h2 OFERTA DE LA SEMANA — leída de weekly_offers (fuente única con el
+          email del lunes). Sin oferta configurada → "destacado" sin descuento. */}
       <section style={{background:'linear-gradient(135deg,#111 0%,#1a0a0a 50%,#2a0808 100%)',padding:'0',overflow:'hidden',position:'relative'}}>
         <div style={{maxWidth:1280,margin:'0 auto',padding:'0 20px',display:'flex',alignItems:'center',gap:0,minHeight:120,flexWrap:'wrap'}} className="h2-banner">
           <div style={{flex:1,padding:'24px 0'}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>⚡ OFERTA DE LA SEMANA</div>
-            {novedades[0] && <>
+            <div style={{fontSize:10,fontWeight:700,color:'#ff1e41',textTransform:'uppercase',letterSpacing:'0.15em',marginBottom:6}}>⚡ {weekOffer ? 'OFERTA DE LA SEMANA' : 'DESTACADO DE LA SEMANA'}</div>
+            {hero && <>
               <div style={{fontSize:'clamp(18px,3vw,26px)',fontWeight:900,color:'white',lineHeight:1.1,marginBottom:8}}>
-                {novedades[0].name.slice(0,40)}{novedades[0].name.length>40?'...':''}
+                {hero.name.slice(0,40)}{hero.name.length>40?'...':''}
               </div>
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-                <span style={{fontSize:26,fontWeight:900,color:'white'}}>{novedades[0].sale_price ? Number(novedades[0].sale_price).toFixed(2) : Number(novedades[0].price_incl_tax).toFixed(2)} €</span>
-                {novedades[0].sale_price && <span style={{fontSize:15,color:'rgba(255,255,255,0.4)',textDecoration:'line-through'}}>{Number(novedades[0].price_incl_tax).toFixed(2)} €</span>}
+                <span style={{fontSize:26,fontWeight:900,color:'white'}}>{(hero.pct>0?hero.sale:hero.price).toFixed(2)} €</span>
+                {hero.pct>0 && <span style={{fontSize:15,color:'rgba(255,255,255,0.4)',textDecoration:'line-through'}}>{hero.price.toFixed(2)} €</span>}
+                {hero.pct>0 && <span style={{background:'#ff1e41',color:'white',fontSize:12,fontWeight:800,padding:'2px 8px',borderRadius:10}}>−{Math.round(hero.pct)}%</span>}
               </div>
-              <Link href={'/producto/'+novedades[0].id} style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'11px 28px',fontWeight:800,fontSize:13,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.06em'}}>
+              <Link href={'/producto/'+hero.id} style={{display:'inline-block',background:'#ff1e41',color:'white',padding:'11px 28px',fontWeight:800,fontSize:13,textDecoration:'none',textTransform:'uppercase',letterSpacing:'0.06em'}}>
                 Comprar ahora →
               </Link>
             </>}
           </div>
           <div style={{width:'clamp(140px,25vw,260px)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 0'}}>
-            {novedades[0]?.image_url && <img src={novedades[0].image_url} alt={novedades[0].name} style={{maxWidth:'100%',maxHeight:200,objectFit:'contain',filter:'drop-shadow(0 8px 24px rgba(255,30,65,0.3))'}} loading="eager"/>}
+            {hero?.image_url && <img src={hero.image_url} alt={hero.name} style={{maxWidth:'100%',maxHeight:200,objectFit:'contain',filter:'drop-shadow(0 8px 24px rgba(255,30,65,0.3))'}} loading="eager"/>}
           </div>
         </div>
       </section>
@@ -245,7 +286,7 @@ export default async function Home() {
         products={masVendidos}
         title="LOS MAS VENDIDOS"
         titleIcon="🏆"
-        href="/tienda"
+        href="/lo-mas-vendido"
         hrefLabel="Ver todos →"
       />
 

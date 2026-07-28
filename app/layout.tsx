@@ -29,7 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={heebo.variable}>
       <body className={heebo.className}>
-        <script dangerouslySetInnerHTML={{__html: "if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.log('SW error:',e)})})}"}} />
+        {/* Registro del SW + AUTO-RECARGA al entrar un SW nuevo (controllerchange). `wc` = la
+            página ya estaba controlada (es una actualización, no la 1ª instalación) → recarga
+            UNA vez para servir la versión nueva sin recargar a mano. Guarda __bmR evita bucle. */}
+        <script dangerouslySetInnerHTML={{__html: "if('serviceWorker' in navigator){window.addEventListener('load',function(){var wc=!!navigator.serviceWorker.controller;navigator.serviceWorker.register('/sw.js').catch(function(e){console.log('SW error:',e)});navigator.serviceWorker.addEventListener('controllerchange',function(){if(wc&&!window.__bmR){window.__bmR=1;window.location.reload()}})})}"}} />
         {/* Datos estructurados (SEO): negocio + buscador del sitio */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({"@context":"https://schema.org","@type":"Store","name":"BuyMuscle","image":"https://tienda.buymuscle.es/icon?size=180","url":"https://tienda.buymuscle.es","telephone":"+34828048310","email":"tienda@buymuscle.es","priceRange":"€€","address":{"@type":"PostalAddress","streetAddress":"Alcalde Manuel Amador Rodríguez 23","addressLocality":"Telde","addressRegion":"Las Palmas","postalCode":"35200","addressCountry":"ES"}})}} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({"@context":"https://schema.org","@type":"WebSite","name":"BuyMuscle","url":"https://tienda.buymuscle.es","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://tienda.buymuscle.es/tienda?q={search_term_string}"},"query-input":"required name=search_term_string"}})}} />

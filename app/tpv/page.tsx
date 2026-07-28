@@ -43,6 +43,9 @@ export default function TPVPage() {
   const [customerNif, setCustomerNif] = useState('')
   const [discManual, setDiscManual] = useState(0)
   const [entregado, setEntregado] = useState('') // efectivo entregado por el cliente (para calcular cambio)
+  const [mixEfectivo, setMixEfectivo] = useState('') // compra MIXTA (particular): importe por método
+  const [mixTarjeta, setMixTarjeta] = useState('')
+  const [mixBizum, setMixBizum] = useState('')
   const [saving, setSaving] = useState(false)
   const [ticket, setTicket] = useState(null)
   const [variantModal, setVariantModal] = useState(null)
@@ -216,9 +219,24 @@ export default function TPVPage() {
   const igic = total - subtotal
   const descTotal = subtotalPVP - subtotal // importe total descontado (base sin IGIC)
 
+  // ── Compra MIXTA (solo particular): importe por método; los 3 deben sumar el total.
+  // El importe de EFECTIVO asignado es lo que se guarda/cuenta en caja; "entregado" solo
+  // sirve para calcular el cambio (no cambia el desglose). El servidor recalcula el
+  // efectivo como el resto autoritativo (total − tarjeta − bizum) al guardar.
+  const r2 = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100
+  const isMixto = payMethod === 'mixto'
+  const mixEfN = Math.max(0, Number(mixEfectivo) || 0)
+  const mixTaN = Math.max(0, Number(mixTarjeta) || 0)
+  const mixBiN = Math.max(0, Number(mixBizum) || 0)
+  const mixAsignado = r2(mixEfN + mixTaN + mixBiN)
+  const mixDiff = r2(mixAsignado - total)          // <0 falta · >0 sobra · 0 cuadra
+  const mixCuadra = Math.abs(mixDiff) <= 0.005 && total > 0
+  const mixCambio = (mixEfN > 0 && (Number(entregado) || 0) > mixEfN) ? r2((Number(entregado) || 0) - mixEfN) : 0
+
   // ── COBRAR ─────────────────────────────────────────────
   const cobrar = async () => {
     if (!lines.length) return
+    if (isMixto && !mixCuadra) { alert('El reparto del pago mixto debe sumar exactamente el total'); return }
     setSaving(true)
     try {
       // Toda la venta se procesa en el servidor (precios autoritativos,
@@ -236,6 +254,7 @@ export default function TPVPage() {
           })),
           discount_pct: discount,
           payment_method: payMethod,
+          ...(isMixto ? { payment_breakdown: { tarjeta: mixTaN, bizum: mixBiN } } : {}),
           channel: clientType === 'distribuidor' ? 'tpv_distributor' : 'tpv_retail',
           customer: { name: customerName || '', nif: customerNif || '' },
         }),
@@ -247,7 +266,7 @@ export default function TPVPage() {
       }
 
       setTicket({ num: data.order_number, lines: lines.map(l => ({ ...l, unitPrice: l.basePrice * (1 - effDisc(l) / 100) })), total: data.total, subtotal: data.subtotal, igic: data.igic, payMethod, clientType, customerName, discount })
-      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0); setLineDisc({}); setEntregado('')
+      setLines([]); setCustomerName(''); setCustomerNif(''); setDiscManual(0); setLineDisc({}); setEntregado(''); setMixEfectivo(''); setMixTarjeta(''); setMixBizum('')
       await recargarVentas(cajaAbierta?.opened_at)
     } catch (e) { alert('Error al cobrar: ' + e.message) }
     setSaving(false)
@@ -430,7 +449,7 @@ export default function TPVPage() {
 
   // ── VISTA TICKET COMPLETADO ────────────────────────────
   if (ticket) return (
-    <div style={{ background:'#f8fafc', color:'#111', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>
+    <div style={{ background:'#f8fafc', color:'#111', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', overflowY:'auto', padding:'24px 16px', boxSizing:'border-box', fontFamily:'inherit' }}>
       <div style={{ textAlign:'center', maxWidth:380, padding:32 }}>
         <div style={{ fontSize:72, marginBottom:12 }}>✅</div>
         <h2 style={{ fontSize:28, fontWeight:900, margin:'0 0 6px', color:'#ff1e41' }}>¡Cobrado!</h2>
@@ -448,11 +467,13 @@ export default function TPVPage() {
           </div>
           <div style={{ fontSize:12, color:'#555', marginTop:4, textAlign:'right' }}>IGIC incluido · {ticket.payMethod.toUpperCase()}</div>
         </div>
-        <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
-          <button onClick={imprimirTicket} style={{ ...btnGray, flex:'none' }}>🖨️ Imprimir ticket</button>
-          <button onClick={()=>setTicket(null)} style={{ background:'#ff1e41', color:'white', border:'none', padding:'10px 24px', fontWeight:700, fontSize:14, cursor:'pointer', borderRadius:3, fontFamily:'inherit' }}>
-            Nuevo ticket →
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {/* VOLVER AL TPV — botón principal, grande y claro (autoFocus: Enter también vuelve) para que el cajero nunca se quede atascado */}
+          <button onClick={()=>setTicket(null)} autoFocus
+            style={{ background:'#ff1e41', color:'white', border:'none', padding:'16px 24px', fontWeight:800, fontSize:17, cursor:'pointer', borderRadius:6, fontFamily:'inherit', width:'100%', boxShadow:'0 2px 8px rgba(255,30,65,0.3)' }}>
+            🔄 VOLVER AL TPV · nueva venta
           </button>
+          <button onClick={imprimirTicket} style={{ ...btnGray, width:'100%', flex:'none' }}>🖨️ Imprimir ticket</button>
         </div>
         {/* Mini stats del día */}
         <div style={{ marginTop:24, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
@@ -789,9 +810,9 @@ export default function TPVPage() {
 
           {/* Forma de pago */}
           <div style={ST.payRow}>
-            {['efectivo','tarjeta','bizum'].map(m => (
+            {['efectivo','tarjeta','bizum', ...(clientType!=='distribuidor'?['mixto']:[])].map(m => (
               <button key={m} style={ST.payBtn(payMethod===m)} onClick={()=>setPayMethod(m)}>
-                {m==='efectivo'?'💵':m==='tarjeta'?'💳':'📱'} {m}
+                {m==='efectivo'?'💵':m==='tarjeta'?'💳':m==='bizum'?'📱':'🔀'} {m}
               </button>
             ))}
           </div>
@@ -849,8 +870,38 @@ export default function TPVPage() {
             </div>
           )}
 
-          <button style={ST.cobraBtn} onClick={cobrar} disabled={saving||!lines.length}>
-            {saving ? 'Procesando...' : lines.length ? `COBRAR ${total.toFixed(2)} €` : 'TICKET VACÍO'}
+          {/* Compra MIXTA (particular): importe por método; los 3 deben sumar el total */}
+          {isMixto && lines.length>0 && (
+            <div style={{ marginBottom:8, padding:'10px', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:6, display:'flex', flexDirection:'column', gap:7 }}>
+              <div style={{ fontSize:10.5, fontWeight:800, color:'#334155', textTransform:'uppercase', letterSpacing:'0.03em' }}>Reparte el pago · debe sumar {total.toFixed(2)} €</div>
+              {[['💵 Efectivo',mixEfectivo,setMixEfectivo],['💳 Tarjeta',mixTarjeta,setMixTarjeta],['📱 Bizum',mixBizum,setMixBizum]].map(([lab,val,setter]) => (
+                <div key={lab} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
+                  <span style={{ fontSize:12, color:'#555', fontWeight:700 }}>{lab}</span>
+                  <input type="number" min="0" step="0.01" value={val} onChange={e=>setter(e.target.value)} placeholder="0.00"
+                    style={{ width:120, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'6px 8px', fontSize:15, textAlign:'right', fontWeight:700, fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+                </div>
+              ))}
+              <button onClick={()=>setMixEfectivo(String((total - mixTaN - mixBiN) > 0 ? r2(total - mixTaN - mixBiN) : 0))}
+                style={{ alignSelf:'flex-end', padding:'5px 10px', fontSize:11, fontWeight:700, background:'#dcfce7', color:'#166534', border:'1px solid #bbf7d0', borderRadius:4, cursor:'pointer', fontFamily:'inherit' }}>
+                Resto en efectivo
+              </button>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:14, fontWeight:900, color: mixCuadra ? '#16a34a' : (mixDiff<0 ? '#ef4444' : '#f59e0b') }}>
+                <span>{mixCuadra ? '✓ Cuadra' : mixDiff<0 ? 'Falta' : 'Sobra'}</span>
+                <span>{mixCuadra ? mixAsignado.toFixed(2)+' €' : Math.abs(mixDiff).toFixed(2)+' €'}</span>
+              </div>
+              {mixEfN>0 && (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8, borderTop:'1px dashed #e2e8f0', paddingTop:6 }}>
+                  <span style={{ fontSize:11, color:'#888' }}>Entregado efvo.</span>
+                  <input type="number" min="0" step="0.01" value={entregado} onChange={e=>setEntregado(e.target.value)} placeholder="opcional"
+                    style={{ width:96, background:'white', border:'1px solid #d1d5db', color:'#111', padding:'5px 8px', fontSize:13, textAlign:'right', fontFamily:'inherit', outline:'none', borderRadius:4 }}/>
+                  {mixCambio>0 && <span style={{ fontSize:13, fontWeight:800, color:'#16a34a', whiteSpace:'nowrap' }}>Cambio {mixCambio.toFixed(2)} €</span>}
+                </div>
+              )}
+            </div>
+          )}
+
+          <button style={ST.cobraBtn} onClick={cobrar} disabled={saving||!lines.length||(isMixto&&!mixCuadra)}>
+            {saving ? 'Procesando...' : !lines.length ? 'TICKET VACÍO' : (isMixto&&!mixCuadra) ? `AJUSTA EL REPARTO · ${mixDiff<0?'falta':'sobra'} ${Math.abs(mixDiff).toFixed(2)} €` : `COBRAR ${total.toFixed(2)} €`}
           </button>
 
           {/* Ventas resumen del día debajo del cobrar */}

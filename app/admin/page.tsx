@@ -25,6 +25,7 @@ const GRUPOS=[
     {icon:'⭐',t:'Reseñas',href:'/admin/resenas',c:'#f59e0b'},
   ]},
   {g:'📣 Marketing', items:[
+    {icon:'📅',t:'Ofertas de la semana',href:'/admin/ofertas-semana',c:'#ff1e41'},
     {icon:'✍️',t:'Blog',href:'/admin/blog',c:'#8b5cf6'},
     {icon:'📱',t:'RRSS',href:'/admin/rrss',c:'#E1306C'},
     {icon:'📧',t:'Newsletter',href:'/admin/newsletter',c:'#3b82f6'},
@@ -34,6 +35,7 @@ const GRUPOS=[
   {g:'👥 Clientes y distribución', items:[
     {icon:'👥',t:'Clientes',href:'/admin/clientes',c:'#8b5cf6'},
     {icon:'🤝',t:'Distribuidores',href:'/distribuidores',c:'#3b82f6'},
+    {icon:'📥',t:'Solicitudes distrib.',href:'/admin/solicitudes',c:'#f59e0b'},
   ]},
   {g:'📊 Análisis y finanzas', items:[
     {icon:'📊',t:'Métricas',href:'/admin/metricas',c:'#22c55e'},

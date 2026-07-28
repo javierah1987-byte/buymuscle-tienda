@@ -86,10 +86,8 @@ export default function ProductCard({ product }) {
         <div className="product-card-name" style={{ fontSize:13, fontWeight:700, color:'#111', lineHeight:1.35, marginBottom:6, flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
           {product.name}
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:6 }}>
-          <div aria-hidden="true" style={{ color:'#f59e0b', fontSize:11, letterSpacing:1 }}>★★★★★</div>
-          <span style={{ fontSize:10, color:'#ccc', fontStyle:'italic' }}>Sin reseñas aún</span>
-        </div>
+        {/* Sin estrellas fantasma: la tarjeta NO muestra valoración inventada. Las
+            reseñas reales (product_reviews, moderadas) se ven en la ficha del producto. */}
         <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:'0.75rem', flexWrap:'wrap' }}>
           <span className="product-card-price" style={{ fontSize:21, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em' }}>{distPrice.toFixed(2)} €</span>
           {effPct
