@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { invoicePdfV2 } from '@/lib/holdedV2'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,9 +27,15 @@ export async function GET(req: Request) {
     if (!order) return NextResponse.json({ error: 'not_found' }, { status: 404 })
     if (!order.holded_invoice_id) return NextResponse.json({ error: 'sin_factura' }, { status: 404 })
 
-    // Holded v2: PDF en base64 vía lib/holdedV2 (Bearer). Antes v1 (key header).
-    const pdf = await invoicePdfV2(order.holded_invoice_id)
-    if (!pdf) return NextResponse.json({ error: 'pdf_no_disponible' }, { status: 502 })
+    // Holded devuelve el PDF como base64 en { status, data }
+    const r = await fetch(
+      `https://api.holded.com/api/invoicing/v1/documents/invoice/${order.holded_invoice_id}/pdf`,
+      { headers: { key: HOLDED_KEY, Accept: 'application/json' } }
+    )
+    const j = await r.json().catch(() => null)
+    if (!j?.data) return NextResponse.json({ error: 'pdf_no_disponible' }, { status: 502 })
+
+    const pdf = Buffer.from(j.data, 'base64')
     return new NextResponse(pdf, {
       status: 200,
       headers: {
