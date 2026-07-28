@@ -113,3 +113,28 @@ export function offerEmoji(name = '', category = ''): string {
 export function weekRotation(weekStart: string): number {
   return weekStart.split('').reduce((a, c) => a + (c >= '0' && c <= '9' ? Number(c) : 0), 0)
 }
+
+// % de oferta ACTIVA que aplica HOY para un conjunto de productos: slot 'week' (vale
+// toda la semana) + slot del día de HOY (Atlantic/Canary). Devuelve Map(product_id →
+// pct máximo aplicable). Recibe un cliente supabase (server: service role o anon con
+// RLS active=true) — NO importa supabase aquí, así el módulo sigue usable en cliente.
+// Es la MISMA fuente que la home/OfertaDia/email → el precio cobrado no puede divergir
+// del anunciado. Ante error, devuelve mapa vacío (fail-safe: no inventa descuento).
+export async function activeOfferPctByProduct(db: any, productIds: number[]): Promise<Map<number, number>> {
+  const out = new Map<number, number>()
+  const ids = [...new Set((productIds || []).map(Number).filter(Boolean))]
+  if (!ids.length) return out
+  try {
+    const { data } = await db.from('weekly_offers')
+      .select('product_id,discount_pct')
+      .eq('week_start', canaryWeekStart()).eq('active', true)
+      .in('slot', ['week', todayDaySlot()])
+      .in('product_id', ids)
+    for (const r of (data || [])) {
+      const pid = Number(r.product_id)
+      const pct = Number(r.discount_pct)
+      if (pid && pct > 0) out.set(pid, Math.max(out.get(pid) || 0, pct))
+    }
+  } catch { /* fail-safe: sin oferta */ }
+  return out
+}

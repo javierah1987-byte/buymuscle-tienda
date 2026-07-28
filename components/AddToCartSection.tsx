@@ -13,12 +13,13 @@ interface Props {
   variantsByType: Record<string, Variant[]>
   sortedTypes: string[]
   hasVariants: boolean
+  offerPct?: number   // % de oferta activa (weekly_offers), inyectado por el server
   formatSlot?: any   // ADR-BM-001: pills de formato renderizadas por el server (entre precio y sabor)
 }
 
 const DIST_ACCENT = '#d9b45a'
 
-export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants, formatSlot = null }: Props) {
+export default function AddToCartSection({ product, variantsByType, sortedTypes, hasVariants, offerPct = 0, formatSlot = null }: Props) {
   const { add } = useCart()
   const router = useRouter()
   const { isDistributor, levelName, discountPct, overrides } = useAuth()
@@ -26,11 +27,17 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
 
-  const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : Number(product.price_incl_tax)
+  const listPrice = Number(product.price_incl_tax)
+  const basePrice = product.on_sale && product.sale_price ? Number(product.sale_price) : listPrice
   // % de distribuidor EFECTIVO: override por producto > % de grupo (igual que el servidor en
   // orderCore) → el precio mostrado coincide con el cobrado. Sin override, el % de grupo.
   const effPct = isDistributor ? (overrides?.[product.id] ?? discountPct) : 0
-  const discountedPrice = effPct ? basePrice * (1 - effPct / 100) : basePrice
+  const distPrice = effPct ? basePrice * (1 - effPct / 100) : basePrice
+  // OFERTA (weekly_offers): % sobre el PVP. Se muestra/cobra el MENOR (idéntico a quoteOrder):
+  // el cliente nunca paga más que lo anunciado, y los descuentos NO se apilan.
+  const offerPrice = offerPct ? listPrice * (1 - offerPct / 100) : Infinity
+  const discountedPrice = Math.round(Math.min(distPrice, offerPrice) * 100) / 100
+  const showOffer = offerPct > 0 && !isDistributor && discountedPrice < basePrice
   const allTypesSelected = hasVariants ? sortedTypes.every(t => selected[t]) : true
 
   const selectedVariant = hasVariants && sortedTypes.length > 0 ? selected[sortedTypes[0]] : null
@@ -74,10 +81,15 @@ export default function AddToCartSection({ product, variantsByType, sortedTypes,
             </span>
           </div>
         ) : null}
+        {showOffer ? (
+          <div style={{ display:'inline-block', fontSize:12, fontWeight:800, color:'white', background:'var(--red)', padding:'2px 8px', borderRadius:4, marginBottom:6 }}>
+            ⚡ OFERTA −{Math.round(offerPct)}%
+          </div>
+        ) : null}
         <div style={{ display:'flex', alignItems:'baseline', gap:10 }}>
           <span style={{ fontSize:38, fontWeight:900, color:'var(--red)', letterSpacing:'-0.03em', lineHeight:1 }}>{discountedPrice.toFixed(2)} €</span>
-          {product.on_sale && product.sale_price && !isDistributor && (
-            <span style={{ fontSize:16, color:'#bbb', textDecoration:'line-through' }}>{Number(product.price_incl_tax).toFixed(2)} €</span>
+          {!isDistributor && discountedPrice < listPrice && (
+            <span style={{ fontSize:16, color:'#bbb', textDecoration:'line-through' }}>{listPrice.toFixed(2)} €</span>
           )}
         </div>
         <div style={{ fontSize:11, color:'#aaa', marginTop:2 }}>IVA incluido · Compralo ahora y te lo entregamos en 24-48 horas.</div>
