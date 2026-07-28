@@ -39,6 +39,36 @@ const NAV_DIRECT = [
   {l:'BLOG',h:'/blog'},
 ]
 
+// ── MENÚ MÓVIL (acordeón) ────────────────────────────────────────────────────
+// SOLO móvil. Refleja los desplegables de DESKTOP (Nutrición Deportiva, Objetivos)
+// como secciones COLAPSABLES; el resto son enlaces directos. El nav de escritorio
+// (Fila 2, arriba) NO cambia. Objetivos reusa OBJETIVOS_ITEMS (misma fuente que desktop).
+const NUTRICION_MOBILE = [
+  {l:'Proteínas',          h:'/tienda?cat=Proteinas'},
+  {l:'Creatinas',          h:'/tienda?cat=Creatinas Monohidratos'},
+  {l:'Pre-entrenos',       h:'/tienda?cat=Pre-entrenos'},
+  {l:'Aminoácidos / BCAA', h:'/tienda?cat=BCAA'},
+  {l:'Vitaminas',          h:'/tienda?cat=Vitaminas'},
+  {l:'Quemadores',         h:'/tienda?cat=Quemadores'},
+  {l:'Ganadores de Peso',  h:'/tienda?cat=Ganadores de Peso'},
+  {l:'Barritas y Snacks',  h:'/tienda?cat=Alimentos y Snacks'},
+  {l:'Carbohidratos',      h:'/tienda?cat=Carbohidratos'},
+  {l:'Accesorios',         h:'/tienda?cat=Accesorios'},
+]
+const MOBILE_NAV = [
+  { type:'link',  icon:'🏠', l:'Inicio',              h:'/' },
+  { type:'link',  icon:'🛍️', l:'Tienda',              h:'/tienda' },
+  { type:'group', icon:'🏋️', l:'Nutrición Deportiva', items:NUTRICION_MOBILE },
+  { type:'group', icon:'🎯', l:'Objetivos',           items:OBJETIVOS_ITEMS },
+  { type:'link',  icon:'🌱', l:'Veganos',             h:'/veganos' },
+  { type:'link',  icon:'🎽', l:'StreetFlavour',       h:'/streetflavour' },
+  { type:'link',  icon:'👕', l:'Sport Wear',          h:'/sport-wear' },
+  { type:'link',  icon:'🏆', l:'Ofertas',             h:'/tienda?ofertas=1' },
+  { type:'link',  icon:'🟢', l:'BM Team',             h:'/bm-team' },
+  { type:'link',  icon:'📰', l:'Blog',                h:'/blog' },
+  { type:'link',  icon:'📞', l:'Distribuidores',      h:'/distribuidores' },
+]
+
 function MegaLink({href,children}:{href:string;children:React.ReactNode}){
   return(
     <Link href={href} style={{display:'block',padding:'5px 0',fontSize:13,color:'#444',textDecoration:'none',lineHeight:1.4}}
@@ -58,6 +88,7 @@ export default function Navbar(){
   const[cartOpen,setCartOpen]=useState(false)
   const[mobileOpen,setMobileOpen]=useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [openSection,setOpenSection]=useState<string|null>(null)  // acordeón móvil: sección abierta
 
   useEffect(function(){
     function checkMobile(){
@@ -250,25 +281,30 @@ export default function Navbar(){
           <button onClick={()=>setMobileOpen(false)} aria-label="Cerrar menú" style={{background:'none',border:'none',color:'white',cursor:'pointer',fontSize:28,lineHeight:1}}>✕</button>
         </div>
         <div style={{padding:'12px 0'}}>
-          {[
-            {l:'🏠 Inicio', h:'/'},
-            {l:'🛍️ Tienda', h:'/tienda'},
-            {l:'🥛 Proteínas', h:'/tienda?cat=Proteinas'},
-            {l:'⚡ Creatinas', h:'/tienda?cat=Creatinas Monohidratos'},
-            {l:'🔥 Pre-entrenos', h:'/tienda?cat=Pre-entrenos'},
-            {l:'💪 BCAA', h:'/tienda?cat=BCAA'},
-            {l:'💊 Vitaminas', h:'/tienda?cat=Vitaminas'},
-            {l:'🌱 Veganos', h:'/veganos'},
-            {l:'👕 Sport Wear', h:'/sport-wear'},
-            {l:'🎽 StreetFlavour', h:'/streetflavour'},
-            {l:'🏆 Ofertas', h:'/tienda?ofertas=1'},
-            {l:'📰 Blog', h:'/blog'},
-            {l:'📞 Distribuidores', h:'/distribuidores'},
-          ].map(({l,h})=>(
-            <Link key={h} href={h} onClick={()=>setMobileOpen(false)}
+          {MOBILE_NAV.map(entry=> entry.type==='link' ? (
+            <Link key={entry.l} href={entry.h||'#'} onClick={()=>setMobileOpen(false)}
               style={{display:'block',padding:'14px 24px',color:'white',fontSize:15,fontWeight:600,borderBottom:'1px solid rgba(255,255,255,0.05)',textDecoration:'none'}}>
-              {l}
+              {entry.icon} {entry.l}
             </Link>
+          ) : (
+            <div key={entry.l} style={{borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
+              {/* Padre colapsable: toca para expandir/plegar sus subcategorías */}
+              <button onClick={()=>setOpenSection(s=>s===entry.l?null:entry.l)} aria-expanded={openSection===entry.l}
+                style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'14px 24px',background:'none',border:'none',cursor:'pointer',color:'white',fontSize:15,fontWeight:600,fontFamily:'inherit',textAlign:'left'}}>
+                <span>{entry.icon} {entry.l}</span>
+                <span aria-hidden="true" style={{fontSize:12,color:'rgba(255,255,255,0.55)',transition:'transform 0.2s',transform:openSection===entry.l?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
+              </button>
+              {openSection===entry.l&&(
+                <div style={{background:'rgba(255,255,255,0.03)',paddingBottom:6}}>
+                  {(entry.items||[]).map(it=>(
+                    <Link key={it.l} href={it.h} onClick={()=>setMobileOpen(false)}
+                      style={{display:'block',padding:'11px 24px 11px 46px',color:'rgba(255,255,255,0.82)',fontSize:14,fontWeight:500,textDecoration:'none'}}>
+                      {it.l}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
           <div style={{padding:'20px 24px',display:'flex',flexDirection:'column',gap:10}}>
             <Link href="/carrito" onClick={()=>setMobileOpen(false)}

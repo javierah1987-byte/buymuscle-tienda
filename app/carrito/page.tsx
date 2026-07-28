@@ -130,6 +130,8 @@ export default function CarritoPage() {
     if(typeof window==='undefined') return
     const p=new URLSearchParams(window.location.search)
     if(p.get('pago')==='ko'){ setPaso(2); setRedsysMsg('El pago no se completó. Puedes intentarlo de nuevo o elegir otro método (transferencia o PayPal).') }
+    // "Comprar ya" desde la ficha: salta la revisión del carrito y va directo a DATOS + pago.
+    else if(p.get('comprar')==='1'){ setPaso(2) }
   },[])
 
   const subtotal = items.reduce((s,i)=>s+i.price*i.qty,0)
