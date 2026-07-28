@@ -449,7 +449,7 @@ export default function TPVPage() {
 
   // ── VISTA TICKET COMPLETADO ────────────────────────────
   if (ticket) return (
-    <div style={{ background:'#f8fafc', color:'#111', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'inherit' }}>
+    <div style={{ background:'#f8fafc', color:'#111', minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', overflowY:'auto', padding:'24px 16px', boxSizing:'border-box', fontFamily:'inherit' }}>
       <div style={{ textAlign:'center', maxWidth:380, padding:32 }}>
         <div style={{ fontSize:72, marginBottom:12 }}>✅</div>
         <h2 style={{ fontSize:28, fontWeight:900, margin:'0 0 6px', color:'#ff1e41' }}>¡Cobrado!</h2>
@@ -467,11 +467,13 @@ export default function TPVPage() {
           </div>
           <div style={{ fontSize:12, color:'#555', marginTop:4, textAlign:'right' }}>IGIC incluido · {ticket.payMethod.toUpperCase()}</div>
         </div>
-        <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap' }}>
-          <button onClick={imprimirTicket} style={{ ...btnGray, flex:'none' }}>🖨️ Imprimir ticket</button>
-          <button onClick={()=>setTicket(null)} style={{ background:'#ff1e41', color:'white', border:'none', padding:'10px 24px', fontWeight:700, fontSize:14, cursor:'pointer', borderRadius:3, fontFamily:'inherit' }}>
-            Nuevo ticket →
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {/* VOLVER AL TPV — botón principal, grande y claro (autoFocus: Enter también vuelve) para que el cajero nunca se quede atascado */}
+          <button onClick={()=>setTicket(null)} autoFocus
+            style={{ background:'#ff1e41', color:'white', border:'none', padding:'16px 24px', fontWeight:800, fontSize:17, cursor:'pointer', borderRadius:6, fontFamily:'inherit', width:'100%', boxShadow:'0 2px 8px rgba(255,30,65,0.3)' }}>
+            🔄 VOLVER AL TPV · nueva venta
           </button>
+          <button onClick={imprimirTicket} style={{ ...btnGray, width:'100%', flex:'none' }}>🖨️ Imprimir ticket</button>
         </div>
         {/* Mini stats del día */}
         <div style={{ marginTop:24, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>

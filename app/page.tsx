@@ -40,6 +40,19 @@ async function getProducts(cat?: string, limit = 8, orderBy: 'id' | 'stock' = 'i
   return (data || []) as any[]
 }
 
+// LOS MÁS VENDIDOS: lista CURADA por data en products.is_bestseller / bestseller_rank
+// (columnas aditivas, pobladas 2026-07-28). Antes era una heurística por stock; ahora es
+// dato. Orden por bestseller_rank asc (1 = más vendido). active + stock>0 como el resto de
+// carruseles (no mostrar inactivos / sin stock en una sección de compra).
+async function getBestsellers(limit = 24) {
+  const { data } = await supabase.from('products').select(CARD_COLS)
+    .eq('active', true).gt('stock', 0)
+    .eq('is_bestseller', true)
+    .order('bestseller_rank', { ascending: true })
+    .limit(limit)
+  return (data || []) as any[]
+}
+
 // Familias de proteína (IDs verificados contra la tabla categories).
 const PROTEIN_CAT_IDS = [8, 16, 17, 43, 44, 39]
 
@@ -106,7 +119,7 @@ const QUICK_CATS = [
 export default async function Home() {
   const [novedades, masVendidos, proteinas, preEntrenos, veganos, banners] = await Promise.all([
     getProteinProducts(8),
-    getProducts(undefined, 8, 'stock'),
+    getBestsellers(),
     getProteinProducts(8, 8),
     getProducts('Pre-entrenos', 8, 'id'),
     getProducts('Veganos', 8, 'id'),
