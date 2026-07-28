@@ -87,6 +87,12 @@ export default function CarritoPage() {
   useEffect(()=>{
     if(!payMethods.some(m=>m.id===payMethod)) setPayMethod(payMethods[0].id)
   },[isDistributor]) // eslint-disable-line react-hooks/exhaustive-deps
+  // PayPal retirado del modelo segmentado (decisión Javier 2026-07-28): NO se ofrece a
+  // NINGÚN segmento — ni particulares ni distribuidores (su spec = sus tres métodos
+  // bancarios: transferencia + Bizum + tarjeta). Mismo criterio que la transferencia: el
+  // SEGMENTO decide qué se muestra; aquí, nadie. La integración PayPal (backend
+  // capture/refund) se mantiene intacta por si se reactiva → basta con volver esto a true.
+  const showPaypal = false
   // Clave de idempotencia: una por carga de página. Si la red móvil reintenta
   // o el cliente pulsa dos veces, el servidor devuelve el MISMO pedido en vez
   // de crear un duplicado.
@@ -445,7 +451,7 @@ export default function CarritoPage() {
 
                 {redsysMsg && <div style={{marginTop:8,padding:'10px 12px',background:'#fff8e1',border:'1px solid #ffe0a3',borderRadius:6,fontSize:12,color:'#8a6d3b'}}>{redsysMsg}</div>}
 
-                {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
+                {showPaypal && process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
                   <>
                     <div style={{textAlign:'center',margin:'12px 0 4px',fontSize:11,color:'#bbb',letterSpacing:'0.05em'}}>— o paga con —</div>
                     <div style={{marginBottom:8}}>
@@ -459,7 +465,7 @@ export default function CarritoPage() {
                   </>
                 )}
                 <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:10,flexWrap:'wrap'}}>
-                  {['🔒 SSL','Tarjeta','Bizum','PayPal',...(isDistributor?['Transferencia']:[])].map(t=><span key={t} style={{fontSize:10,color:'#999'}}>{t}</span>)}
+                  {['🔒 SSL','Tarjeta','Bizum',...(isDistributor?['Transferencia']:[])].map(t=><span key={t} style={{fontSize:10,color:'#999'}}>{t}</span>)}
                 </div>
               </div>
             )}
