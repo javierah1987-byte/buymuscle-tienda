@@ -25,6 +25,7 @@ const GRUPOS=[
     {icon:'⭐',t:'Reseñas',href:'/admin/resenas',c:'#f59e0b'},
   ]},
   {g:'📣 Marketing', items:[
+    {icon:'📅',t:'Ofertas de la semana',href:'/admin/ofertas-semana',c:'#ff1e41'},
     {icon:'✍️',t:'Blog',href:'/admin/blog',c:'#8b5cf6'},
     {icon:'📱',t:'RRSS',href:'/admin/rrss',c:'#E1306C'},
     {icon:'📧',t:'Newsletter',href:'/admin/newsletter',c:'#3b82f6'},
