@@ -1,10 +1,12 @@
-// BuyMuscle Service Worker v4 - PWA
-// v4: el SW YA NO intercepta imágenes (ver el bloque `destination === 'image'` abajo).
-// Subir la versión es parte del arreglo: `activate` borra todos los caches que no sean
-// los de esta versión, así que al actualizar se PURGAN las entradas de imagen envenenadas
-// que la v3 dejó en los navegadores (era lo que hacía ver fotos rotas aunque el
-// servidor las sirviera con 200).
-const CACHE_VERSION = 'bm-v4'
+// BuyMuscle Service Worker v5 - PWA
+// v5 (fix "no veo los cambios desplegados"): subir la versión PURGA todos los caches viejos
+// en `activate`; el registro (app/layout.tsx) AUTO-RECARGA la página una vez cuando entra un
+// SW nuevo (controllerchange) → tras un deploy, una recarga NORMAL ya trae la versión nueva
+// sin borrar caché a mano. Además el HTML se pide con {cache:'no-store'} (network-first, sin
+// caché HTTP) para que la página referencie siempre los chunks /_next/static nuevos (hashed).
+// v4: el SW dejó de interceptar imágenes (bloque `destination === 'image'` abajo) para no
+// servir fotos rotas cacheadas.
+const CACHE_VERSION = 'bm-v5'
 const STATIC_CACHE = CACHE_VERSION + '-static'
 const DYNAMIC_CACHE = CACHE_VERSION + '-dynamic'
 
@@ -94,10 +96,11 @@ self.addEventListener('fetch', function(e) {
     return
   }
 
-  // Páginas HTML: network first, cache fallback, offline fallback
+  // Páginas HTML: network first (sin caché HTTP → siempre HTML fresco con los chunks nuevos),
+  // cache fallback, offline fallback.
   if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: 'no-store' })
         .then(function(res) {
           if (res && res.status === 200) {
             const resClone = res.clone()
