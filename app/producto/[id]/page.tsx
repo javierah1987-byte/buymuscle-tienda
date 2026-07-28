@@ -7,6 +7,7 @@ import WishlistBtn from '@/components/WishlistBtn'
 import ProductReviews from '@/components/ProductReviews'
 import ProductTabs from '@/components/ProductTabs'
 import AddToCartSection from '@/components/AddToCartSection'
+import { activeOfferPctByProduct } from '@/lib/weeklyOffers'
 import ProductCard from '@/components/ProductCard'
 import ImageGallery from '@/components/ImageGallery'
 import ProductoGrid from '@/components/ProductoGrid'
@@ -91,8 +92,13 @@ export default async function ProductoPage({ params }) {
   const catName = product.categories?.name || ''
   const price = Number(product.price_incl_tax)
   const salePrice = product.sale_price ? Number(product.sale_price) : null
-  const displayPrice = salePrice || price
-  const discount = salePrice ? Math.round((1 - salePrice/price)*100) : null
+  // OFERTA activa (weekly_offers): % sobre el PVP, MISMA fuente que home/OfertaDia/email y
+  // que el servidor cobra en quoteOrder → lo mostrado coincide con lo cobrado.
+  const offerPct = (await activeOfferPctByProduct(supabase, [product.id])).get(product.id) || 0
+  const offerPrice = offerPct ? Math.round(price * (1 - offerPct/100) * 100) / 100 : null
+  // precio mostrado = el MENOR de {PVP, sale_price, oferta} (así nunca se muestra más que lo cobrado)
+  const displayPrice = Math.min(price, salePrice ?? Infinity, offerPrice ?? Infinity)
+  const discount = displayPrice < price ? Math.round((1 - displayPrice/price)*100) : null
   const desc = product.description || ''
   const images = coverFirst(product.image_url, product.images) || []
   const avgRating = reviews.length>0 ? (reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1) : null
@@ -144,7 +150,7 @@ export default async function ProductoPage({ params }) {
             {product.stock>0&&product.stock<=10&&<div style={{background:'#fff3cd',border:'1px solid #ffc107',padding:'8px 14px',marginBottom:12,fontSize:13,fontWeight:700,color:'#856404'}}>
               Solo quedan {product.stock} unidades!
             </div>}
-            <AddToCartSection product={product} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}
+            <AddToCartSection product={product} offerPct={offerPct} variantsByType={variantsByType} sortedTypes={typeOrder} hasVariants={hasVariants}
               formatSlot={<FormatPills items={formatSiblings} activeId={product.id}/>}/>
 
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:10,marginTop:18}}>

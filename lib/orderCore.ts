@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { SITE_URL } from './site'
+import { activeOfferPctByProduct } from './weeklyOffers'
 import { createInvoiceV2 } from './holdedV2'
 
 export const IGIC = 0.07           // Canarias: IGIC general 7%
@@ -83,6 +84,11 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
     .select('id,name,price_incl_tax,sale_price,on_sale,active,hide_from_distributors').in('id', productIds)
   const prodMap = new Map((prods||[]).map(p => [p.id, p]))
 
+  // OFERTA de la semana/día (weekly_offers): % activo por producto, derivado en SERVIDOR de
+  // la MISMA tabla que muestran home/OfertaDia/email → lo cobrado NO puede divergir de lo
+  // anunciado. Autoritativo: el cliente no puede manipularlo. Sin oferta → mapa vacío.
+  const offerMap = await activeOfferPctByProduct(db, productIds)
+
   // Override de % por producto para el grupo del distribuidor (manda sobre el % general).
   let distOverride = new Map()
   if(distributorLevelId && productIds.length){
@@ -110,16 +116,22 @@ export async function quoteOrder(db, { items = [], discount_code = '', distribut
     if(distributorLevelId && p.hide_from_distributors)
       return { ok:false, error:'no_disponible_distribuidor:'+pid, status:400 }
     const qty = Math.max(1, parseInt(it.qty ?? it.quantity ?? 1))
-    let unit = (p.on_sale && p.sale_price) ? Number(p.sale_price) : Number(p.price_incl_tax)
     const vid = Number(it.variant_id) || null
-    if(vid && varMap.has(vid)) unit += Number(varMap.get(vid).price_modifier || 0)
-    unit = round2(unit)
-    // Precio de distribuidor: descuento aplicado en SERVIDOR (autoritativo, nunca del cliente).
-    // El % por producto (override del grupo) manda sobre el % general del grupo.
-    {
-      const dpct = distOverride.has(pid) ? distOverride.get(pid) : distributorDiscountPct
-      if(dpct > 0) unit = round2(unit * (1 - dpct/100))
-    }
+    const modifier = (vid && varMap.has(vid)) ? Number(varMap.get(vid).price_modifier || 0) : 0
+    // Precio de LISTA (PVP con IGIC) y precio retail BASE (respeta sale_price si on_sale),
+    // ambos con el modificador de la variante.
+    const listPrice  = round2(Number(p.price_incl_tax) + modifier)
+    const retailBase = round2((p.on_sale && p.sale_price ? Number(p.sale_price) : Number(p.price_incl_tax)) + modifier)
+    // Se COBRA el MENOR de los precios aplicables → el cliente nunca paga más que lo
+    // anunciado en ninguna superficie, y los descuentos NO se apilan multiplicativos.
+    const candidates = [retailBase]
+    // (1) OFERTA semana/día: % sobre el PVP, igual que muestran home/OfertaDia/email.
+    const opct = offerMap.get(pid) || 0
+    if(opct > 0) candidates.push(round2(listPrice * (1 - opct/100)))
+    // (2) Precio de DISTRIBUIDOR (override por producto > % de grupo), en SERVIDOR.
+    const dpct = distOverride.has(pid) ? distOverride.get(pid) : distributorDiscountPct
+    if(dpct > 0) candidates.push(round2(retailBase * (1 - dpct/100)))
+    const unit = round2(Math.min(...candidates))
     lines.push({
       product_id: pid,
       variant_id: vid,
