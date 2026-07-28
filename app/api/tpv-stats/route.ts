@@ -25,7 +25,7 @@ export async function GET(req){
     // SOLO ventas de los canales TPV (no las web PayPal/transferencia): si no se filtra,
     // el arqueo de caja física contaba pedidos online y salía inflado.
     const { data: orders } = await db.from('orders')
-      .select('total,payment_method')
+      .select('total,payment_method,payment_breakdown')
       .eq('status', 'paid')
       .in('channel', ['tpv_retail', 'tpv_distributor'])
       .gte('created_at', since.toISOString())
@@ -34,7 +34,13 @@ export async function GET(req){
       acc.total += Number(o.total)
       acc.count += 1
       const m = o.payment_method || 'tarjeta'
-      if (m.includes('efectivo')) acc.efectivo += Number(o.total)
+      const bd = o.payment_breakdown
+      if (m === 'mixto' && bd) {
+        acc.efectivo += Number(bd.efectivo || 0)
+        acc.tarjeta  += Number(bd.tarjeta || 0)
+        acc.bizum    += Number(bd.bizum || 0)
+      }
+      else if (m.includes('efectivo')) acc.efectivo += Number(o.total)
       else if (m.includes('bizum')) acc.bizum += Number(o.total)
       else acc.tarjeta += Number(o.total)
       return acc

@@ -56,6 +56,7 @@ export async function POST(req){
       items = [],
       discount_pct = 0,
       payment_method = 'efectivo',
+      payment_breakdown = null,   // compra mixta: { tarjeta, bizum } (el efectivo es el resto)
       customer = {},
       channel = 'tpv_retail',
     } = body
@@ -115,6 +116,20 @@ export async function POST(req){
     const base = round2(totalGross / (1 + IGIC))
     const taxAmount = round2(totalGross - base)
 
+    // 3-bis. Pago MIXTO (compra mixta TPV): el cliente manda cuánto va por tarjeta/bizum;
+    // el EFECTIVO es el RESTO, calculado sobre el total AUTORITATIVO del servidor (no se
+    // confía en el importe de efectivo del cliente). Se guarda el desglose para que el
+    // arqueo cuente la parte de efectivo correctamente. Sin mixto → breakdown = null.
+    let breakdown = null
+    if(payment_method === 'mixto'){
+      const bTarjeta = round2(Math.max(0, Number(payment_breakdown?.tarjeta) || 0))
+      const bBizum   = round2(Math.max(0, Number(payment_breakdown?.bizum) || 0))
+      if(bTarjeta + bBizum > totalGross + 0.01)
+        return NextResponse.json({ ok:false, error:'mixto_supera_total' }, { status:400 })
+      const bEfectivo = round2(totalGross - bTarjeta - bBizum)
+      breakdown = { efectivo: bEfectivo, tarjeta: bTarjeta, bizum: bBizum }
+    }
+
     // 4. Crear pedido (status 'paid' = venta presencial cobrada)
     const order_number = genId()
     const { data: orderRow, error: orderErr } = await db.from('orders').insert({
@@ -129,6 +144,7 @@ export async function POST(req){
       total: totalGross,
       discount_pct: disc,
       payment_method,
+      payment_breakdown: breakdown,
       status: 'paid',
       // Venta presencial ya cobrada: el stock se descuenta aquí mismo (paso 6),
       // así que se marca aplicado para que un cambio de estado posterior en
