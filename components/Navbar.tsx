@@ -35,7 +35,7 @@ const OBJETIVOS_ITEMS = [
 const NAV_DIRECT = [
   {l:'SPORT WEAR',h:'/sport-wear'},
   {l:'VEGANOS',h:'/veganos'},
-  {l:'LO MÁS VENDIDO',h:'/tienda'},
+  {l:'LO MÁS VENDIDO',h:'/lo-mas-vendido'},
   {l:'BLOG',h:'/blog'},
 ]
 
@@ -58,6 +58,7 @@ const NUTRICION_MOBILE = [
 const MOBILE_NAV = [
   { type:'link',  icon:'🏠', l:'Inicio',              h:'/' },
   { type:'link',  icon:'🛍️', l:'Tienda',              h:'/tienda' },
+  { type:'link',  icon:'🏆', l:'Lo más vendido',      h:'/lo-mas-vendido' },
   { type:'group', icon:'🏋️', l:'Nutrición Deportiva', items:NUTRICION_MOBILE },
   { type:'group', icon:'🎯', l:'Objetivos',           items:OBJETIVOS_ITEMS },
   { type:'link',  icon:'🌱', l:'Veganos',             h:'/veganos' },
@@ -155,7 +156,7 @@ export default function Navbar(){
                   </div>
                 ):(
                   <>
-                  <Link href="/mi-cuenta" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
+                  <Link href="/cuenta" className="nav-hide-mobile" style={{color:'rgba(255,255,255,0.65)',display:'flex',flexDirection:'column',alignItems:'center',gap:2,textDecoration:'none',fontSize:11,fontWeight:600}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Acceder
                   </Link>
@@ -203,7 +204,7 @@ export default function Navbar(){
                       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'1.5rem'}}>
                         <div style={{borderRight:'1px solid #f0f0f0',paddingRight:'1rem'}}>
                           <div style={{fontSize:11,fontWeight:800,color:'#999',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'0.75rem'}}>ACCESO RAPIDO</div>
-                          {[{l:'Packs',h:'/tienda?cat=Packs'},{l:'Novedades',h:'/tienda'},{l:'Ofertas',h:'/tienda?ofertas=1'},{l:'Mas vendidos',h:'/tienda'}].map(item=>(
+                          {[{l:'Packs',h:'/tienda?cat=Packs'},{l:'Novedades',h:'/tienda'},{l:'Ofertas',h:'/tienda?ofertas=1'},{l:'Mas vendidos',h:'/lo-mas-vendido'}].map(item=>(
                             <Link key={item.l} href={item.h} style={{display:'block',padding:'6px 0',fontSize:13,color:'#333',textDecoration:'none',fontWeight:600}}>{item.l}</Link>
                           ))}
                         </div>

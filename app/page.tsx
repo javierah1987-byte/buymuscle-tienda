@@ -258,7 +258,7 @@ export default async function Home() {
         products={masVendidos}
         title="LOS MAS VENDIDOS"
         titleIcon="🏆"
-        href="/tienda"
+        href="/lo-mas-vendido"
         hrefLabel="Ver todos →"
       />
 

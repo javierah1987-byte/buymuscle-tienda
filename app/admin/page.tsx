@@ -34,6 +34,7 @@ const GRUPOS=[
   {g:'👥 Clientes y distribución', items:[
     {icon:'👥',t:'Clientes',href:'/admin/clientes',c:'#8b5cf6'},
     {icon:'🤝',t:'Distribuidores',href:'/distribuidores',c:'#3b82f6'},
+    {icon:'📥',t:'Solicitudes distrib.',href:'/admin/solicitudes',c:'#f59e0b'},
   ]},
   {g:'📊 Análisis y finanzas', items:[
     {icon:'📊',t:'Métricas',href:'/admin/metricas',c:'#22c55e'},
