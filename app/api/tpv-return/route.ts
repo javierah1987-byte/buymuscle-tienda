@@ -21,6 +21,9 @@ function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100 
 // Crea una factura rectificativa (abono/creditnote) en Holded por los items
 // devueltos. Best-effort: si Holded falla no se interrumpe la devolución.
 async function createHoldedCreditNote(order, itemsDev){
+  // 🔒 Seguridad Holded: SOLO producción emite rectificativas en el Holded real. En
+  // preview/dev (VERCEL_ENV != 'production') se salta — la devolución/stock ya está hecha.
+  if (process.env.VERCEL_ENV !== 'production') return null
   const key = process.env.HOLDED_API_KEY
   if(!key || !order?.customer_email) return null
   try{

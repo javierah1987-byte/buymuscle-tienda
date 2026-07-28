@@ -51,6 +51,10 @@ export async function POST(req: Request) {
     const admin = await getAdminUser()
     if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
+    // 🔒 Seguridad Holded: en preview/dev NO se factura al Holded real (skip con gracia, 200).
+    if (process.env.VERCEL_ENV !== 'production')
+      return NextResponse.json({ ok: true, skipped: true, reason: 'facturacion Holded deshabilitada fuera de produccion' })
+
     const { orderId } = await req.json()
     if (!orderId) throw new Error('orderId requerido')
     if (!HOLDED_KEY) throw new Error('HOLDED_API_KEY no configurada')

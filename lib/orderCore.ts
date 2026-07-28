@@ -67,6 +67,9 @@ async function notifyWhatsApp(order){
 
 // ── HOLDED (factura, IGIC 7%) ────────────────────────────
 async function createHoldedInvoice(order, lines){
+  // 🔒 Seguridad Holded: SOLO producción factura al Holded real. En preview/dev/local
+  // (VERCEL_ENV != 'production') se salta con gracia — el pedido se crea igual.
+  if (process.env.VERCEL_ENV !== 'production') return null
   const key = process.env.HOLDED_API_KEY
   if(!key) return null
   try{
