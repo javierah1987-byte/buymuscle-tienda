@@ -301,26 +301,34 @@ export async function persistOrder(db, body, opts = {}){
     throw stockErr
   }
 
+  // NOTA best-effort: el query builder de supabase-js (v2) es "thenable" pero NO
+  // implementa .catch() → `builder.catch(()=>{})` lanzaba "catch is not a function"
+  // DESPUÉS de insertar el pedido, así que el checkout devolvía 500 y se saltaba
+  // email de confirmación + Holded, y ni el customer ni el abandoned_cart se
+  // tocaban (la query nunca llegaba a await). Fix: await dentro de try/catch.
   if(couponRow){
     // Incremento atómico (uses = uses + 1) vía RPC: un update leído-y-escrito
     // permitía superar max_uses con pedidos simultáneos.
-    await db.rpc('increment_coupon_uses', { p_id: couponRow.id }).catch(()=>{})
+    try { await db.rpc('increment_coupon_uses', { p_id: couponRow.id }) } catch {}
   }
 
   if(customer.email){
-    await db.from('customers').upsert({
-      email: customer.email,
-      name: customer.name || '',
-      phone: customer.phone || '',
-      last_order_date: new Date().toISOString(),
-    }, { onConflict: 'email' }).catch(()=>{})
+    try {
+      await db.from('customers').upsert({
+        email: customer.email,
+        name: customer.name || '',
+        phone: customer.phone || '',
+        last_order_date: new Date().toISOString(),
+      }, { onConflict: 'email' })
+    } catch {}
     // Si dejó un carrito abandonado registrado, marcarlo recuperado para que
     // el cron no le mande el email de "olvidaste tu carrito" tras comprar.
-    await db.from('abandoned_carts')
-      .update({ recovered: true })
-      .eq('email', String(customer.email).toLowerCase())
-      .eq('recovered', false)
-      .catch(()=>{})
+    try {
+      await db.from('abandoned_carts')
+        .update({ recovered: true })
+        .eq('email', String(customer.email).toLowerCase())
+        .eq('recovered', false)
+    } catch {}
   }
 
   const orderObj = { ...orderRow }

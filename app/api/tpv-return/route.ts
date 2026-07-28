@@ -74,8 +74,11 @@ export async function POST(req){
     // Rectificativa en Holded (best-effort, no bloquea la devolución: ya está registrada
     // y el stock repuesto de forma atómica; si Holded falla, se emite a mano).
     const creditNoteId = await createHoldedCreditNote(order, itemsDev)
-    if(creditNoteId && dev?.dev_id)
-      await db.from('devoluciones').update({ holded_creditnote_id: creditNoteId }).eq('id', dev.dev_id).catch(()=>{})
+    if(creditNoteId && dev?.dev_id){
+      // best-effort: el builder de supabase-js (v2) no tiene .catch() (lanzaba
+      // "catch is not a function"). await + try/catch preserva el best-effort.
+      try { await db.from('devoluciones').update({ holded_creditnote_id: creditNoteId }).eq('id', dev.dev_id) } catch {}
+    }
 
     return NextResponse.json({ ok:true, total: totalDev, method, items: itemsDev, creditNoteId })
   }catch(e){
